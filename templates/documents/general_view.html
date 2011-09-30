@@ -44,7 +44,7 @@
 </head>
 
 
-<table valign="top">
+<table valign="top" width="100%">
     <tr>
         <td>
             <a class="css_button" href="{$web_path}" onclick="top.restoreSession()"><span>{xl t='Download'}</span></a>
@@ -151,7 +151,7 @@
                         <a href="javascript:;" onclick="document.forms['notes'].submit();">(<span>{xl t='add'}</span>)</a>
                     </div>
                 <div>
-                    <textarea cols="53" rows="4" wrap="virtual" name="note"></textarea><br>
+                    <textarea cols="53" rows="8" wrap="virtual" name="note" style="width:100%"></textarea><br>
                     <input type="hidden" name="process" value="{$PROCESS}" />
                     <input type="hidden" name="foreign_id" value="{$file->get_id()}" />
 
@@ -182,9 +182,9 @@
 			 $file->get_mimetype() eq "image/jpeg" or
 			 $file->get_mimetype() eq "image/gif" or
 			 $file->get_mimetype() eq "application/pdf" }
-			<iframe frameborder="0" type="{$file->get_mimetype()}" src="{$web_path}as_file=false"></iframe>
+			<iframe frameborder="0" type="{$file->get_mimetype()}" src="{$web_path}as_file=false" style="height:300pt"></iframe>
 			{else}
-			<iframe frameborder="0" type="{$file->get_mimetype()}" src="{$web_path}as_file=true"></iframe>
+			<iframe frameborder="0" type="{$file->get_mimetype()}" src="{$web_path}as_file=true" style="height:300pt"></iframe>
 			{/if}
 		</td>
 	</tr>
