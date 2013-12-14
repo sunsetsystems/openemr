@@ -32,7 +32,7 @@
 // |         Harald Radi <harald.radi@nme.at>                              |
 // +-----------------------------------------------------------------------+
 //
-// $Id$
+// $Id: DocumentTreeMenu.js,v 1.1.1.3 2005/06/23 05:21:01 drbowen Exp $
 
 /**
 * Function to create copies of objects which are

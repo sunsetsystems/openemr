@@ -1,5 +1,5 @@
 <?php
- // Copyright (C) 2006, 2009 Rod Roark <rod@sunsetsystems.com>
+ // Copyright (C) 2006-2010 Rod Roark <rod@sunsetsystems.com>
  //
  // This program is free software; you can redistribute it and/or
  // modify it under the terms of the GNU General Public License
@@ -10,6 +10,7 @@
  require_once("$srcdir/acl.inc");
  require_once("drugs.inc.php");
  require_once("$srcdir/options.inc.php");
+ require_once("$srcdir/formatting.inc.php");
 
  // Check authorization.
  $thisauth = acl_check('admin', 'drugs');
@@ -20,7 +21,7 @@
   "di.inventory_id, di.lot_number, di.expiration, di.manufacturer, di.on_hand " .
   "FROM drugs AS d " .
   "LEFT OUTER JOIN drug_inventory AS di ON di.drug_id = d.drug_id " .
-  "AND di.on_hand != 0 AND di.destroy_date IS NULL " .
+  "AND di.destroy_date IS NULL " .
   "ORDER BY d.name, d.drug_id, di.expiration, di.lot_number");
 ?>
 <html>
@@ -71,7 +72,7 @@ function doiclick(id, lot) {
   <td><?php  xl('Form','e'); ?></td>
   <td><?php  xl('Size','e'); ?></td>
   <td><?php  xl('Unit','e'); ?></td>
-  <td title=<?php xl('Click to receive (add) new lot','e','\'','\''); ?>><?php  xl('Add','e'); ?></td>
+  <td title=<?php xl('Click to receive (add) new lot','e','\'','\''); ?>><?php  xl('New','e'); ?></td>
   <td title=<?php xl('Click to edit','e','\'','\''); ?>><?php  xl('Lot','e'); ?></td>
   <td><?php  xl('QOH','e'); ?></td>
   <td><?php  xl('Expires','e'); ?></td>
@@ -97,8 +98,8 @@ function doiclick(id, lot) {
    echo "  <td>" .
 	generate_display_field(array('data_type'=>'1','list_id'=>'drug_units'), $row['unit']) .
 	"</td>\n";
-   echo "  <td onclick='doiclick($lastid,0)'>" .
-    "<a href='' onclick='return false'>" . xl('Add') . "</a></td>\n";
+   echo "  <td onclick='doiclick($lastid,0)' title='" . xl('Add new lot and transaction') . "'>" .
+    "<a href='' onclick='return false'>" . xl('New') . "</a></td>\n";
   } else {
    echo " <tr class='detail' bgcolor='$bgcolor'>\n";
    echo "  <td colspan='7'>&nbsp;</td>\n";
@@ -108,7 +109,7 @@ function doiclick(id, lot) {
    echo "  <td onclick='doiclick($lastid," . $row['inventory_id'] . ")'>" .
     "<a href='' onclick='return false'>$lot_number</a></td>\n";
    echo "  <td>" . $row['on_hand'] . "</td>\n";
-   echo "  <td>" . $row['expiration'] . "</td>\n";
+   echo "  <td>" . oeFormatShortDate($row['expiration']) . "</td>\n";
   } else {
    echo "  <td colspan='3'>&nbsp;</td>\n";
   }

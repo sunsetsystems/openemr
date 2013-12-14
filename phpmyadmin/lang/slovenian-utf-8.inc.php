@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: slovenian-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:19 bradymiller Exp $ */
 
 /* By: urska.colner, agenda d.o.o. <urska.colner@agenda.si>, uros kositer, agenda d.o.o. <urosh@agenda.si> */
 

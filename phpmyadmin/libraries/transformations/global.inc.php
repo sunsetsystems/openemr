@@ -19,7 +19,7 @@
  *
  * Please provide a comment for your function, what it does and what parameters are available.
  *
- * @version $Id$
+ * @version $Id: global.inc.php,v 1.1.1.1 2009/05/12 21:26:46 bradymiller Exp $
  */
 
 /**

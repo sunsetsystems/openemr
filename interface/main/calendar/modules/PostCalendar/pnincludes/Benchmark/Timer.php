@@ -16,7 +16,7 @@
 // | Authors: Sebastian Bergmann <sb@sebastian-bergmann.de>               |
 // +----------------------------------------------------------------------+
 //
-// $Id$
+// $Id: Timer.php,v 1.1.1.3 2005/06/23 05:33:15 drbowen Exp $
 //
 
 /**
@@ -37,7 +37,7 @@
  *     $profiling = $timer->getProfiling();
  * 
  * @author   Sebastian Bergmann <sb@sebastian-bergmann.de>
- * @version  $Revision$
+ * @version  $Revision: 1.1.1.3 $
  * @access   public
  */
 

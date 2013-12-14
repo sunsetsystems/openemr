@@ -3,7 +3,7 @@
 /**
  * Code for displaying language selection
  *
- * @version $Id$
+ * @version $Id: display_select_lang.lib.php,v 1.1.1.1 2009/05/12 21:26:44 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

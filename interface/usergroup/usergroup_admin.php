@@ -4,6 +4,7 @@ require_once("../../library/acl.inc");
 require_once("$srcdir/md5.js");
 require_once("$srcdir/sql.inc");
 require_once("$srcdir/formdata.inc.php");
+require_once("$srcdir/options.inc.php");
 require_once(dirname(__FILE__) . "/../../library/classes/WSProvider.class.php");
 
 $alertmsg = '';
@@ -42,7 +43,9 @@ if (isset($_POST["mode"])) {
         "', facility_id = '"   . trim(formData('facility_id'  )) .
         "', specialty = '"     . trim(formData('specialty'    )) .
         "', see_auth = '"      . trim(formData('see_auth'     )) .
-	"', cal_ui = '"        . trim(formData('cal_ui'       )) .			
+        "', cal_ui = '"        . trim(formData('cal_ui'       )) .			
+        "', default_warehouse = '" . trim(formData('default_warehouse')) .
+        "', irnpool = '"       . trim(formData('irnpool'      )) .
         "', calendar = '"      . $calvar                         .
         "'");
       //set the facility name from the selected facility_id
@@ -239,7 +242,7 @@ if ($fres) {
 <td><input type="entry" name="taxonomy" size="20" value="207Q00000X"></td>
 <td><span class="text"><?php xl('Calendar UI','e'); ?>: </span></td><td><select name="cal_ui">
 <?php
- foreach (array(3 => xl('Outlook'), 1 => xl('Original'), 2 => xl('Fancy')) as $key => $value)
+ foreach (array(1 => xl('Original'), 2 => xl('Fancy'), 3 => xl('Outlook')) as $key => $value)
  {
   echo " <option value='$key'";
   if ($key == $iter['cal_ui']) echo " selected";
@@ -249,6 +252,25 @@ if ($fres) {
 </select></td>
 </tr>
 <!-- END (CHEMED) Calendar UI preference -->
+
+<?php if ($GLOBALS['inhouse_pharmacy']) { ?>
+<tr>
+ <td class="text"><?php xl('Default Warehouse','e'); ?>: </td>
+ <td class='text'>
+<?php
+echo generate_select_list('default_warehouse', 'warehouse',
+  $iter['default_warehouse'], '');
+?>
+ </td>
+ <td class="text"><?php xl('Invoice Refno Pool','e'); ?>: </td>
+ <td class='text'>
+<?php
+echo generate_select_list('irnpool', 'irnpool', $iter['irnpool'],
+  xl('Invoice reference number pool, if used'));
+?>
+ </td>
+</tr>
+<?php } ?>
 
 <?php
  // List the access control groups if phpgacl installed

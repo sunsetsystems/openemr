@@ -1,6 +1,6 @@
 <?php
 /**
- *  $Id$
+ *  $Id: common.api.php,v 1.6 2008/03/27 19:32:00 cfapress Exp $
  *
  *  PostCalendar::PostNuke Events Calendar Module
  *  Copyright (C) 2002  The PostCalendar Team

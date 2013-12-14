@@ -1,4 +1,9 @@
 <?php
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+
 // add_transaction is a misnomer, as this script will now also edit
 // existing transactions.
 
@@ -7,7 +12,7 @@ require_once("$srcdir/transactions.inc");
 require_once("$srcdir/options.inc.php");
 
 // Referral plugin support.
-$fname = "../../../custom/LBF/REF.plugin.php";
+$fname = $GLOBALS['OE_SITE_DIR'] . "/LBF/REF.plugin.php";
 if (file_exists($fname)) include_once($fname);
 
 $transid = empty($_REQUEST['transid']) ? 0 : $_REQUEST['transid'] + 0;
@@ -34,7 +39,10 @@ if ($mode) {
     if ($field_id == 'body' && $title != 'Referral') {
       $value = $_POST["body"];
     }
-    $sets .= ", $field_id = '$value'";
+    if ($data_type == 4 && empty($value))
+      $sets .= ", $field_id = NULL";
+    else
+      $sets .= ", $field_id = '$value'";
   }
 
   if ($transid) {
@@ -150,10 +158,13 @@ function divclick(cb, divid) {
  return true;
 }
 
+// The ID of the input element to receive a found code.
+var current_sel_name = '';
+
 // This is for callback by the find-code popup.
 // Appends to or erases the current list of related codes.
 function set_related(codetype, code, selector, codedesc) {
- var frc = document.getElementById('form_related_code');
+ var frc = document.forms[0][current_sel_name];
  var s = frc.value;
  if (code) {
   if (s.length > 0) s += ';';
@@ -165,8 +176,9 @@ function set_related(codetype, code, selector, codedesc) {
 }
 
 // This invokes the find-code popup.
-function sel_related() {
- dlgopen('../encounter/find_code_popup.php<?php if ($GLOBALS['ippf_specific']) echo '?codetype=IPPF' ?>', '_blank', 500, 400);
+function sel_related(e) {
+ current_sel_name = e.name;
+ dlgopen('../encounter/find_code_popup.php<?php if ($GLOBALS['ippf_specific']) echo '?codetype=REF' ?>', '_blank', 500, 400);
 }
 
 // Process click on Delete link.

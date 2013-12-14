@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: afrikaans-iso-8859-1.inc.php,v 1.1.1.1 2009/05/12 21:27:22 bradymiller Exp $ */
 
 /*
      translated by Andreas Pauley <pauley@buitegroep.org.za>

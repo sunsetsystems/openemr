@@ -3,7 +3,7 @@
 /**
  * functions for displaying the sql query form
  *
- * @version $Id$
+ * @version $Id: sql_query_form.lib.php,v 1.1.1.1 2009/05/12 21:26:44 bradymiller Exp $
  * @usedby  server_sql.php
  * @usedby  db_sql.php
  * @usedby  tbl_sql.php

@@ -1,7 +1,7 @@
 <?php
 @define('__POSTCALENDAR__','PostCalendar');
 /**
- *  $Id$
+ *  $Id: pnuser.php,v 1.12 2009/12/06 10:09:57 bradymiller Exp $
  *
  *  PostCalendar::PostNuke Events Calendar Module
  *  Copyright (C) 2002  The PostCalendar Team

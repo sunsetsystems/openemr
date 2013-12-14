@@ -2,7 +2,7 @@
 /**
  * function used for password change form
  *
- * @version $Id$
+ * @version $Id: user_password.js,v 1.1.1.1 2009/05/12 21:27:29 bradymiller Exp $
  */
 
 /**

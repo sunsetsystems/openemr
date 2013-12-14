@@ -5,7 +5,7 @@
  * Thanks to Piotr Roszatycki <d3xter at users.sourceforge.net> and
  * Dan Wilson who built this patch for the Debian package.
  *
- * @version $Id$
+ * @version $Id: cookie.auth.lib.php,v 1.1.1.1 2009/05/12 21:26:45 bradymiller Exp $
  */
 
 if (! defined('PHPMYADMIN')) {

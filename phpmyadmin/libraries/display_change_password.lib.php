@@ -3,7 +3,7 @@
 /**
  * Displays form for password change 
  *
- * @version $Id$
+ * @version $Id: display_change_password.lib.php,v 1.1.1.1 2009/05/12 21:26:44 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

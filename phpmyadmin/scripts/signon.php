@@ -7,7 +7,7 @@
  * not intended to be perfect code and look, only shows how you can
  * integrate this functionality in your application.
  *
- * @version $Id$
+ * @version $Id: signon.php,v 1.1.1.1 2009/05/12 21:27:30 bradymiller Exp $
  * @package phpMyAdmin
  * @subpacke Example
  */

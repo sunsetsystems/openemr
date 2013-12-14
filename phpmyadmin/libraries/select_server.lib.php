@@ -3,7 +3,7 @@
 /**
  * Code for displaying server selection written by nijel
  *
- * @version $Id$
+ * @version $Id: select_server.lib.php,v 1.1.1.1 2009/05/12 21:26:45 bradymiller Exp $
  */
 
 /**

@@ -1,4 +1,8 @@
 <?php
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
 
 require_once($GLOBALS['fileroot'] . "/library/classes/Controller.class.php");
 require_once($GLOBALS['fileroot'] . "/library/classes/Prescription.class.php");
@@ -104,10 +108,10 @@ class C_Prescription extends Controller {
 		else {
 			$this->assign("prescriptions", Prescription::prescriptions_factory($id));
 		}
-
+                
                 // flag to indicate the CAMOS form is regsitered and active
                 $this->assign("CAMOS_FORM", isRegistered("CAMOS"));
-
+		
                 $this->display($GLOBALS['template_dir'] . "prescription/" . $this->template_mod . "_list.html");
 	}
 
@@ -124,21 +128,6 @@ class C_Prescription extends Controller {
 		}
 		//print_r(Prescription::prescriptions_factory($id));
 		$this->display($GLOBALS['template_dir'] . "prescription/" . $this->template_mod . "_block.html");
-	}
-
-	function fragment_action($id,$sort = "") {
-		if (empty($id)) {
-		 	$this->function_argument_error();
-			exit;
-		}
-		if (!empty($sort)) {
-			$this->assign("prescriptions", Prescription::prescriptions_factory($id,$sort));
-		}
-		else {
-			$this->assign("prescriptions", Prescription::prescriptions_factory($id));
-		}
-		//print_r(Prescription::prescriptions_factory($id));
-		$this->display($GLOBALS['template_dir'] . "prescription/" . $this->template_mod . "_fragment.html");
 	}
 
 	function lookup_action() {
@@ -265,7 +254,7 @@ class C_Prescription extends Controller {
 	        echo ("<table cellspacing='0' cellpadding='0' width='100%'>\n");
 	        echo ("<tr>\n");
 	        echo ("<td></td>\n");
-	        echo ("<td>\n");
+	        echo ("<td>\n");	    
                 echo ("<img WIDTH='68pt' src='./interface/pic/" . $GLOBALS['oer_config']['prescriptions']['logo_pic'] . "' />");
                 echo ("</td>\n");
 	        echo ("</tr>\n");
@@ -284,7 +273,7 @@ class C_Prescription extends Controller {
 	        echo ("</td>\n");
 	        echo ("</tr>\n");
 	        echo ("<tr>\n");
-	        echo ("<td rowspan='2' class='bordered'>\n");
+	        echo ("<td rowspan='2' class='bordered'>\n");	        
                 echo ('<b><span class="small">' . xl('Patient Name & Address') . '</span></b>'. '<br>');
                 echo ($p->patient->get_name_display() . '<br>');
                 $res = sqlQuery("SELECT  concat(street,'\n',city,', ',state,' ',postal_code,'\n',if(phone_home!='',phone_home,if(phone_cell!='',phone_cell,if(phone_biz!='',phone_biz,'')))) addr from patient_data where pid =". mysql_real_escape_string ($p->patient->id));
@@ -334,7 +323,7 @@ class C_Prescription extends Controller {
 	        echo ("span.small {\n");
 	        echo (" font-size: 6pt;\n");
 	        echo ("}\n");
-	        echo ("td {\n");
+	        echo ("td {\n");   
 	        echo (" vertical-align: top;\n");
 	        echo (" width: 50%;\n");
 	        echo (" font-size: 10pt;\n");
@@ -359,13 +348,13 @@ class C_Prescription extends Controller {
                 echo (" font-size: 12pt;\n");
 	        echo ("}\n");
                 echo ("</style>\n");
-
+	    
                 echo ("<title>" . xl('Prescription') . "</title>\n");
                 echo ("</head>\n");
                 echo ("<body>\n");
         }
 
-	function multiprintfax_footer( & $pdf ) {
+	function multiprintfax_footer( & $pdf ) { 
 		return $this->multiprint_footer( $pdf );
 	}
 
@@ -480,7 +469,7 @@ class C_Prescription extends Controller {
 
 	function multiprintfax_action($id = "") {
 		$this->is_print_to_fax=true;
-		return $this->multiprint_action( $id );
+		return $this->multiprint_action( $id ); 
 	}
 
 	function multiprint_action($id = "") {
@@ -530,7 +519,7 @@ class C_Prescription extends Controller {
                 if(empty($id)) {
                         $this->function_argument_error();
                 }
-
+	    
 	        $this->multiprintcss_preheader();
 
                 $this->_state = false; // Added by Rod - see Controller.class.php
@@ -550,7 +539,7 @@ class C_Prescription extends Controller {
                         $this->multiprintcss_body($p);
                 }
                 $this->multiprintcss_footer();
-                $this->multiprintcss_postfooter();
+                $this->multiprintcss_postfooter();	        
                 return;
         }
 
@@ -577,7 +566,7 @@ class C_Prescription extends Controller {
 		                break;
 		case xl("Print To Fax"):
 				$this->_state = false;
-				$this->is_print_to_fax = true;
+				$this->is_print_to_fax = true; 
 				return $this->_print_prescription($p, $dummy);
 				break;
 		case xl("Email"):
@@ -651,15 +640,15 @@ class C_Prescription extends Controller {
 	}
 
         function _print_prescription_css($p, & $toFile) {
-
+                
                 $this->multiprintcss_preheader();
                 $this->multiprintcss_header($p);
                 $this->multiprintcss_body($p);
-                $this->multiprintcss_footer();
-	        $this->multiprintcss_postfooter();
-
+                $this->multiprintcss_footer(); 
+	        $this->multiprintcss_postfooter();	
+	    
         }
-
+    
 	function _print_prescription_old($p, & $toFile) {
 		require_once ($GLOBALS['fileroot'] . "/library/classes/class.ezpdf.php");
 		$pdf =& new Cezpdf($GLOBALS['oer_config']['prescriptions']['paper_size']);
@@ -776,8 +765,8 @@ class C_Prescription extends Controller {
 					$err .= " _print_prescription returned empty file";
 					break;
 				}
-				$fileName = dirname(__FILE__)."/../documents/".$p->get_id()
-								.$p->get_patient_id()."_fax_.pdf";
+        $fileName = $GLOBALS['OE_SITE_DIR'] . "/documents/" . $p->get_id() .
+          $p->get_patient_id() . "_fax_.pdf";
 				//print "filename is $fileName";
 				touch($fileName); // php bug
 				$handle = fopen($fileName,"w");

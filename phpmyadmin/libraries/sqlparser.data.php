@@ -19,7 +19,7 @@
  * It's easier to use only uppercase for proper sorting. In case of
  * doubt, use the DEBUG code after this function's definition.
  *
- * @version$Id$
+ * @version$Id: sqlparser.data.php,v 1.1.1.1 2009/05/12 21:26:45 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: azerbaijani-iso-8859-9.inc.php,v 1.1.1.1 2009/05/12 21:27:05 bradymiller Exp $ */
 
 // tercümedeki eksiklerimi ve ya sehv olduðunu düþündüyünüz yerleri shehriyari@trcomm.net adresine göndere bilersiniz...
 // Þehriyar Ýmanov 30 Avqust 2003... Shehi

@@ -1,6 +1,6 @@
 <?php
 
-/* $Id$ */
+/* $Id: persian-windows-1256.inc.php,v 1.1.1.1 2009/05/12 21:27:28 bradymiller Exp $ */
 /*
 Persian(Farsi) translation by : Bornis Group
 www.BornisGroup.com

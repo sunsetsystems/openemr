@@ -1,5 +1,5 @@
 <?php
-// Copyright (C) 2005, 2008 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2005-2010 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -11,13 +11,14 @@
 // insurance.
 
 require_once("../globals.php");
-require_once("../../library/patient.inc");
-require_once("../../library/sql-ledger.inc");
+require_once("$srcdir/patient.inc");
+require_once("$srcdir/sql-ledger.inc");
+require_once("$srcdir/formatting.inc.php");
 
 $alertmsg = '';
 
 function bucks($amount) {
-  if ($amount) return sprintf("%.2f", $amount);
+  if ($amount) return oeFormatMoney($amount);
   return "";
 }
 
@@ -30,7 +31,7 @@ if (!$INTEGRATED_AR) SLConnect();
 ?>
 <html>
 <head>
-<? html_header_show();?>
+<?php html_header_show(); ?>
 <link rel=stylesheet href="<?php echo $css_header;?>" type="text/css">
 <title><?php xl('Indigent Patients Report','e')?></title>
 
@@ -182,10 +183,10 @@ if (!$INTEGRATED_AR) SLConnect();
    &nbsp;<?php  echo $invnumber ?></a>
   </td>
   <td class="detail">
-   &nbsp;<?php  echo substr($row['date'], 0, 10) ?>
+   &nbsp;<?php  echo oeFormatShortDate(substr($row['date'], 0, 10)) ?>
   </td>
   <td class="detail">
-   &nbsp;<?php  echo $inv_duedate ?>
+   &nbsp;<?php  echo oeFormatShortDate($inv_duedate) ?>
   </td>
   <td class="detail" align="right">
    <?php  echo bucks($inv_amount) ?>&nbsp;

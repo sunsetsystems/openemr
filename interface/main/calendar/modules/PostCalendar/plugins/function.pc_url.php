@@ -1,6 +1,6 @@
 <?php
 /**
- *  $Id$
+ *  $Id: function.pc_url.php,v 1.2 2008/02/04 17:58:37 sunsetsystems Exp $
  *
  *  PostCalendar::PostNuke Events Calendar Module
  *  Copyright (C) 2002  The PostCalendar Team

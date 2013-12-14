@@ -2,7 +2,7 @@
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
  *
- * @version $Id$
+ * @version $Id: iconv_wrapper.lib.php,v 1.1.1.1 2009/05/12 21:26:44 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

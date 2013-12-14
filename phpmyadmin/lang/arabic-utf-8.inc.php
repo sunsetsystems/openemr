@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: arabic-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:26:59 bradymiller Exp $ */
 
 /**
  * Original translation to Arabic by Fisal <fisal77 at hotmail.com>

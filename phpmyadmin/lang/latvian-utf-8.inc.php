@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: latvian-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:14 bradymiller Exp $ */
 
 /**
  * Latvian language file by Sandis Jērics <sandisj at parks.lv>

@@ -1,5 +1,5 @@
 <?php
-// Copyright (C) 2007-2009 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2007-2010 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -40,6 +40,39 @@ if ($_POST['formaction']=='save' && $list_id) {
             }
         }
     }
+    else if ($list_id == 'code_types') {
+      // special case for code types
+      sqlStatement("DELETE FROM code_types");
+      for ($lino = 1; isset($opt["$lino"]['ct_key']); ++$lino) {
+        $iter = $opt["$lino"];
+        $ct_key  = formTrim($iter['ct_key']);
+        $ct_id   = formTrim($iter['ct_id']) + 0;
+        $ct_seq  = formTrim($iter['ct_seq']) + 0;
+        $ct_mod  = formTrim($iter['ct_mod']) + 0;
+        $ct_just = formTrim($iter['ct_just']);
+        $ct_mask = formTrim($iter['ct_mask']);
+        $ct_fee  = empty($iter['ct_fee' ]) ? 0 : 1;
+        $ct_rel  = empty($iter['ct_rel' ]) ? 0 : 1;
+        $ct_nofs = empty($iter['ct_nofs']) ? 0 : 1;
+        $ct_diag = empty($iter['ct_diag']) ? 0 : 1;
+        if (strlen($ct_key) > 0 && $ct_id > 0) {
+          sqlInsert("INSERT INTO code_types ( " .
+            "ct_key, ct_id, ct_seq, ct_mod, ct_just, ct_mask, ct_fee, ct_rel, ct_nofs, ct_diag " .
+            ") VALUES ( "   .
+            "'$ct_key' , " .
+            "'$ct_id'  , " .
+            "'$ct_seq' , " .
+            "'$ct_mod' , " .
+            "'$ct_just', " .
+            "'$ct_mask', " .
+            "'$ct_fee' , " .
+            "'$ct_rel' , " .
+            "'$ct_nofs', " .
+            "'$ct_diag' "  .
+            ")");
+        }
+      }
+    }
     else {
         // all other lists
         //
@@ -54,7 +87,7 @@ if ($_POST['formaction']=='save' && $list_id) {
               if ($list_id == 'lbfnames' && substr($id,0,3) != 'LBF')
                 $id = "LBF$id";
               sqlInsert("INSERT INTO list_options ( " .
-                "list_id, option_id, title, seq, is_default, option_value, mapping " .
+                "list_id, option_id, title, seq, is_default, option_value, mapping, notes " .
                 ") VALUES ( " .
                 "'$list_id', "                       .
                 "'" . $id                        . "', " .
@@ -62,7 +95,8 @@ if ($_POST['formaction']=='save' && $list_id) {
                 "'" . formTrim($iter['seq'])     . "', " .
                 "'" . formTrim($iter['default']) . "', " .
                 "'" . $value                     . "', " .
-                "'" . formTrim($iter['mapping']) . "' "  .
+                "'" . formTrim($iter['mapping']) . "', " .
+                "'" . formTrim($iter['notes'])   . "' "  .
                 ")");
             }
         }
@@ -128,7 +162,7 @@ function getCodeDescriptions($codes) {
 
 // Write one option line to the form.
 //
-function writeOptionLine($option_id, $title, $seq, $default, $value, $mapping='') {
+function writeOptionLine($option_id, $title, $seq, $default, $value, $mapping='', $notes='') {
   global $opt_line_no, $list_id;
   ++$opt_line_no;
   $bgcolor = "#" . (($opt_line_no & 1) ? "ddddff" : "ffdddd");
@@ -138,7 +172,7 @@ function writeOptionLine($option_id, $title, $seq, $default, $value, $mapping=''
 
   echo "  <td align='center' class='optcell'>";
   echo "<input type='text' name='opt[$opt_line_no][id]' value='" .
-       htmlspecialchars($option_id, ENT_QUOTES) . "' size='20' maxlength='63' class='optin' />";
+       htmlspecialchars($option_id, ENT_QUOTES) . "' size='12' maxlength='63' class='optin' />";
   echo "</td>\n";
 
   echo "  <td align='center' class='optcell'>";
@@ -162,10 +196,8 @@ function writeOptionLine($option_id, $title, $seq, $default, $value, $mapping=''
   echo "</td>\n";
 
   // Tax rates and contraceptive methods have an additional attribute.
-  // IPPF used the additional attribute for all other lists to indicate a
-  // global master identifier for the list item.
   //
-  if ($list_id == 'taxrate' || $list_id == 'contrameth') {
+  if ($list_id == 'taxrate' || $list_id == 'contrameth' || $list_id == 'lbfnames') {
     echo "  <td align='center' class='optcell'>";
     echo "<input type='text' name='opt[$opt_line_no][value]' value='" .
         htmlspecialchars($value, ENT_QUOTES) . "' size='8' maxlength='15' class='optin' />";
@@ -173,13 +205,19 @@ function writeOptionLine($option_id, $title, $seq, $default, $value, $mapping=''
   }
 
   // IPPF includes the ability to map each list item to a "master" identifier.
+  // Sports teams use this for some extra info for fitness levels.
   //
-  if ($GLOBALS['ippf_specific']) {
+  if ($GLOBALS['ippf_specific'] || $list_id == 'fitness') {
     echo "  <td align='center' class='optcell'>";
     echo "<input type='text' name='opt[$opt_line_no][mapping]' value='" .
-        htmlspecialchars($mapping, ENT_QUOTES) . "' size='5' maxlength='15' class='optin' />";
+        htmlspecialchars($mapping, ENT_QUOTES) . "' size='12' maxlength='15' class='optin' />";
     echo "</td>\n";
   }
+
+  echo "  <td align='center' class='optcell'>";
+  echo "<input type='text' name='opt[$opt_line_no][notes]' value='" .
+      htmlspecialchars($notes, ENT_QUOTES) . "' size='25' maxlength='255' class='optin' />";
+  echo "</td>\n";
 
   echo " </tr>\n";
 }
@@ -207,22 +245,84 @@ function writeFSLine($category, $option, $codes) {
   echo "</td>\n";
 
   echo "  <td align='left' class='optcell'>";
-  echo "<a href='' id='codelist_$opt_line_no' onclick='return select_code($opt_line_no)'>";
+  echo "   <div id='codelist_$opt_line_no'>";
   if (strlen($descs)) {
     $arrdescs = explode('~', $descs);
+    $i = 0;
     foreach ($arrdescs as $desc) {
-      echo "$desc<br />";
+      echo "<a href='' onclick='return delete_code($opt_line_no,$i)' title='" . xl('Delete') . "'>";
+      echo "[x]&nbsp;</a>$desc<br />";
+      ++$i;
     }
   }
-  else {
-    echo "[Add]";
-  }
-  echo "</a>";
+  echo "</div>";
+  echo "<a href='' onclick='return select_code($opt_line_no)'>";
+  echo "[" . xl('Add') . "]</a>";
+
   echo "<input type='hidden' name='opt[$opt_line_no][codes]' value='" .
        htmlspecialchars($codes, ENT_QUOTES) . "' />";
   echo "<input type='hidden' name='opt[$opt_line_no][descs]' value='" .
        htmlspecialchars($descs, ENT_QUOTES) . "' />";
   echo "</td>\n";
+
+  echo " </tr>\n";
+}
+
+// Helper functions for writeCTLine():
+
+function ctGenCell($opt_line_no, $ct_array, $name, $size, $maxlength, $title='') {
+  $value = isset($ct_array[$name]) ? $ct_array[$name] : '';
+  $s = "  <td align='center' class='optcell'";
+  if ($title) $s .= " title='" . addslashes($title) . "'";
+  $s .= ">";
+  $s .= "<input type='text' name='opt[$opt_line_no][$name]' value='";
+  $s .= htmlspecialchars($value, ENT_QUOTES);
+  $s .= "' size='$size' maxlength='$maxlength' class='optin' />";
+  $s .= "</td>\n";
+  return $s;
+}
+
+function ctGenCbox($opt_line_no, $ct_array, $name, $title='') {
+  $checked = empty($ct_array[$name]) ? '' : 'checked ';
+  $s = "  <td align='center' class='optcell'";
+  if ($title) $s .= " title='" . addslashes($title) . "'";
+  $s .= ">";
+  $s .= "<input type='checkbox' name='opt[$opt_line_no][$name]' value='1' ";
+  $s .= "$checked/>";
+  $s .= "</td>\n";
+  return $s;
+}
+
+// Write a form line as above but for the special case of Code Types.
+//
+function writeCTLine($ct_array) {
+  global $opt_line_no;
+
+  ++$opt_line_no;
+  $bgcolor = "#" . (($opt_line_no & 1) ? "ddddff" : "ffdddd");
+
+  echo " <tr bgcolor='$bgcolor'>\n";
+
+  echo ctGenCell($opt_line_no, $ct_array, 'ct_key' , 4, 15,
+    xl('Unique human-readable identifier for this type'));
+  echo ctGenCell($opt_line_no, $ct_array, 'ct_id'  , 2, 11,
+    xl('Unique numeric identifier for this type'));
+  echo ctGenCell($opt_line_no, $ct_array, 'ct_seq' , 2,  3,
+    xl('Numeric display order'));
+  echo ctGenCell($opt_line_no, $ct_array, 'ct_mod' , 1,  2,
+    xl('Length of modifier, 0 if none'));
+  echo ctGenCell($opt_line_no, $ct_array, 'ct_just', 4, 15,
+    xl('If billing justification is used enter the name of the diagnosis code type.'));
+  echo ctGenCell($opt_line_no, $ct_array, 'ct_mask', 6,  9,
+    xl('Specifies formatting for codes. # = digit, * = any character. Empty if not used.'));
+  echo ctGenCBox($opt_line_no, $ct_array, 'ct_fee',
+    xl('Are fees charged for this type?'));
+  echo ctGenCBox($opt_line_no, $ct_array, 'ct_rel',
+    xl('Does this type allow related codes?'));
+  echo ctGenCBox($opt_line_no, $ct_array, 'ct_nofs',
+    xl('Is this type hidden in the fee sheet?'));
+  echo ctGenCBox($opt_line_no, $ct_array, 'ct_diag',
+    xl('Is this a diagnosis type?'));
 
   echo " </tr>\n";
 }
@@ -279,11 +379,41 @@ function displayCodes(lino) {
  if (descs.length) {
   var arrdescs = descs.split('~');
   for (var i = 0; i < arrdescs.length; ++i) {
-   s += arrdescs[i] + '<br />';
+   s += "<a href='' onclick='return delete_code(" + lino + "," + i + ")' title='<?php xl('Delete','e'); ?>'>";
+   s += "[x]&nbsp;</a>" + arrdescs[i] + "<br />";
   }
  }
- if (s.length == 0) s = '[Add]';
  setDivContent('codelist_' + lino, s);
+}
+
+// Helper function to remove a Fee Sheet code.
+function dc_substring(s, i) {
+ var r = '';
+ var j = s.indexOf('~', i);
+ if (j < 0) { // deleting last segment
+  if (i > 0) r = s.substring(0, i-1); // omits trailing ~
+ }
+ else { // not last segment
+  r = s.substring(0, i) + s.substring(j + 1);
+ }
+ return r;
+}
+
+// Remove a generated Fee Sheet code.
+function delete_code(lino, seqno) {
+ var f = document.forms[0];
+ var celem = f['opt[' + lino + '][codes]'];
+ var delem = f['opt[' + lino + '][descs]'];
+ var ci = 0;
+ var di = 0;
+ for (var i = 0; i < seqno; ++i) {
+  ci = celem.value.indexOf('~', ci) + 1;
+  di = delem.value.indexOf('~', di) + 1;
+ }
+ celem.value = dc_substring(celem.value, ci);
+ delem.value = dc_substring(delem.value, di);
+ displayCodes(lino);
+ return false;
 }
 
 // This invokes the find-code popup.
@@ -327,12 +457,34 @@ function defClicked(lino) {
  }
 }
 
+// Form validation and submission.
+// This needs more validation.
+function mysubmit() {
+ var f = document.forms[0];
+ if (f.list_id.value == 'code_types') {
+  for (var i = 1; f['opt[' + i + '][ct_key]'].value; ++i) {
+   var ikey = 'opt[' + i + ']';
+   for (var j = i+1; f['opt[' + j + '][ct_key]'].value; ++j) {
+    var jkey = 'opt[' + j + ']';
+    if (f[ikey+'[ct_key]'].value == f[jkey+'[ct_key]'].value) {
+     alert('<?php echo xl('Error: duplicated name on line') ?>' + ' ' + j);
+     return;
+    }
+    if (parseInt(f[ikey+'[ct_id]'].value) == parseInt(f[jkey+'[ct_id]'].value)) {
+     alert('<?php echo xl('Error: duplicated ID on line') ?>' + ' ' + j);
+     return;
+    }
+   }
+  }
+ }
+ f.submit();
+}
+
 </script>
 
 </head>
 
 <body class="body_top">
-
 
 <form method='post' name='theform' id='theform' action='edit_list.php'>
 <input type="hidden" name="formaction" id="formaction">
@@ -340,16 +492,35 @@ function defClicked(lino) {
 <p><b><?php xl('Edit list','e'); ?>:</b>&nbsp;
 <select name='list_id' id="list_id">
 <?php
-// The list of lists is also kept incestuously in the lists table.
-// It could include itself, but to maintain sanity we avoid that.
-$res = sqlStatement("SELECT * FROM list_options WHERE " .
-  "list_id = 'lists' ORDER BY seq,title");
+
+// List order depends on language translation options.
+$lang_id = empty($_SESSION['language_choice']) ? '1' : $_SESSION['language_choice'];
+
+if (($lang_id == '1' && !empty($GLOBALS['skip_english_translation'])) ||
+  !$GLOBALS['translate_lists'])
+{
+  $res = sqlStatement("SELECT option_id, title FROM list_options WHERE " .
+    "list_id = 'lists' ORDER BY title, seq");
+}
+else {
+  // Use and sort by the translated list name.
+  $res = sqlStatement("SELECT lo.option_id, " .
+    "IF(LENGTH(ld.definition),ld.definition,lo.title) AS title " .
+    "FROM list_options AS lo " .
+    "LEFT JOIN lang_constants AS lc ON lc.constant_name = lo.title " .
+    "LEFT JOIN lang_definitions AS ld ON ld.cons_id = lc.cons_id AND " .
+    "ld.lang_id = '$lang_id' " .
+    "WHERE lo.list_id = 'lists' " .
+    "ORDER BY IF(LENGTH(ld.definition),ld.definition,lo.title), lo.seq");
+}
+
 while ($row = sqlFetchArray($res)) {
   $key = $row['option_id'];
   echo "<option value='$key'";
   if ($key == $list_id) echo " selected";
-  echo ">" . xl($row['title']) . "</option>\n";
+  echo ">" . $row['title'] . "</option>\n";
 }
+
 ?>
 </select>
 <input type="button" id="<?php echo $list_id; ?>" class="deletelist" value=<?php xl('Delete List','e','\'','\''); ?>>
@@ -364,6 +535,17 @@ while ($row = sqlFetchArray($res)) {
   <td><b><?php xl('Group'    ,'e'); ?></b></td>
   <td><b><?php xl('Option'   ,'e'); ?></b></td>
   <td><b><?php xl('Generates','e'); ?></b></td>
+<?php } else if ($list_id == 'code_types') { ?>
+  <td><b><?php xl('Name'        ,'e'); ?></b></td>
+  <td><b><?php xl('ID'          ,'e'); ?></b></td>
+  <td><b><?php xl('Seq'         ,'e'); ?></b></td>
+  <td><b><?php xl('ModLength'   ,'e'); ?></b></td>
+  <td><b><?php xl('Justify'     ,'e'); ?></b></td>
+  <td><b><?php xl('Mask'        ,'e'); ?></b></td>
+  <td><b><?php xl('Fees'        ,'e'); ?></b></td>
+  <td><b><?php xl('Relations'   ,'e'); ?></b></td>
+  <td><b><?php xl('Hide'        ,'e'); ?></b></td>
+  <td><b><?php xl('Diagnosis'   ,'e'); ?></b></td>
 <?php } else { ?>
   <td title=<?php xl('Click to edit','e','\'','\''); ?>><b><?php  xl('ID','e'); ?></b></td>
   <td><b><?php xl('Title'  ,'e'); ?></b></td>	
@@ -377,9 +559,14 @@ while ($row = sqlFetchArray($res)) {
   <td><b><?php xl('Rate'   ,'e'); ?></b></td>
 <?php } else if ($list_id == 'contrameth') { ?>
   <td><b><?php xl('Effectiveness','e'); ?></b></td>
+<?php } else if ($list_id == 'lbfnames') { ?>
+  <td title='<?php xl('Number of past history columns','e'); ?>'><b><?php xl('Repeats','e'); ?></b></td>
+<?php } else if ($list_id == 'fitness') { ?>
+  <td><b><?php xl('Color:Abbr','e'); ?></b></td>
 <?php } if ($GLOBALS['ippf_specific']) { ?>
   <td><b><?php xl('Global ID','e'); ?></b></td>
 <?php } ?>
+  <td><b><?php xl('Notes','e'); ?></b></td>	
 <?php } // end not fee sheet ?>
  </tr>
 
@@ -396,12 +583,23 @@ if ($list_id) {
       writeFSLine('', '', '');
     }
   }
+  else if ($list_id == 'code_types') {
+    $res = sqlStatement("SELECT * FROM code_types " .
+      "ORDER BY ct_seq, ct_key");
+    while ($row = sqlFetchArray($res)) {
+      writeCTLine($row);
+    }
+    for ($i = 0; $i < 3; ++$i) {
+      writeCTLine(array());
+    }
+  }
   else {
     $res = sqlStatement("SELECT * FROM list_options WHERE " .
       "list_id = '$list_id' ORDER BY seq,title");
     while ($row = sqlFetchArray($res)) {
       writeOptionLine($row['option_id'], $row['title'], $row['seq'],
-        $row['is_default'], $row['option_value'], $row['mapping']);
+        $row['is_default'], $row['option_value'], $row['mapping'],
+        $row['notes']);
     }
     for ($i = 0; $i < 3; ++$i) {
       writeOptionLine('', '', '', '', 0);
@@ -441,7 +639,8 @@ $(document).ready(function(){
 
     var SaveChanges = function() {
         $("#formaction").val("save");
-        $('#theform').submit();
+        // $('#theform').submit();
+        mysubmit();
     }
 
     // show the DIV to create a new list
@@ -497,3 +696,4 @@ $(document).ready(function(){
 </script>
 
 </html>
+

@@ -1,11 +1,17 @@
 <?php
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+
  // This module shows relative insurance usage by unique patients
  // that are seen within a given time period.  Each patient that had
  // a visit is counted only once, regardless of how many visits.
 
- include_once("../globals.php");
- include_once("../../library/patient.inc");
- include_once("../../library/acl.inc");
+require_once("../globals.php");
+require_once("../../library/patient.inc");
+require_once("../../library/acl.inc");
+require_once("../../library/formatting.inc.php");
 
  // Might want something different here.
  //
@@ -143,11 +149,11 @@ else {
 <table>
 
  <thead>
-  <th> <?php xl('Primary Insurance','e'); ?> </th>
-  <th> <?php xl('Charges','e'); ?> </th>
-  <th> <?php xl('Visits','e'); ?> </th>
-  <th> <?php xl('Patients','e'); ?> </th>
-  <th> <?php xl('Pt %','e'); ?> </th>
+  <th align='left'> <?php xl('Primary Insurance','e'); ?> </th>
+  <th align='right'> <?php xl('Charges','e'); ?> </th>
+  <th align='right'> <?php xl('Visits','e'); ?> </th>
+  <th align='right'> <?php xl('Patients','e'); ?> </th>
+  <th align='right'> <?php xl('Pt %','e'); ?> </th>
  </thead>
  <tbody>
 <?php
@@ -195,7 +201,7 @@ if ($_POST['form_refresh'] || $_POST['form_csvexport']) {
   while (list($key, $val) = each($insarr)) {
     if ($_POST['form_csvexport']) {
         echo '"' . $key                                                . '",';
-        echo '"' . sprintf('%0.2f', $val['charges'])                   . '",';
+        echo '"' . oeFormatMoney($val['charges'])                      . '",';
         echo '"' . $val['visits']                                      . '",';
         echo '"' . $val['patients']                                    . '",';
         echo '"' . sprintf("%.1f", $val['patients'] * 100 / $patcount) . '"' . "\n";
@@ -207,7 +213,7 @@ if ($_POST['form_refresh'] || $_POST['form_csvexport']) {
    <?php echo $key ?>
   </td>
   <td align='right'>
-   <?php echo sprintf('%0.2f', $val['charges']) ?>
+   <?php echo oeFormatMoney($val['charges']) ?>
   </td>
   <td align='right'>
    <?php echo $val['visits'] ?>

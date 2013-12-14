@@ -5,7 +5,7 @@
  * ($controllink and $userlink are links to MySQL defined in the "common.inc.php" library)
  * Note: if no controluser is defined, $controllink contains $userlink
  *
- * @version $Id$
+ * @version $Id: check_user_privileges.lib.php,v 1.1.1.1 2009/05/12 21:26:43 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

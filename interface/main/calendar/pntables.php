@@ -1,5 +1,5 @@
 <?php
-// File: $Id$ $Name$
+// File: $Id: pntables.php,v 1.1.1.3 2005/06/23 05:32:48 drbowen Exp $ $Name:  $
 // ----------------------------------------------------------------------
 // POST-NUKE Content Management System
 // Copyright (C) 2001 by the Post-Nuke Development Team.

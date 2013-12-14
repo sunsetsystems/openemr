@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: pnMod.php,v 1.1.1.3 2005/06/23 05:33:25 drbowen Exp $
 // ----------------------------------------------------------------------
 // POST-NUKE Content Management System
 // Copyright (C) 2001 by the Post-Nuke Development Team.

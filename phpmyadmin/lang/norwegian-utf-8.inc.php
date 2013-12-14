@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: norwegian-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:15 bradymiller Exp $ */
 
 /**
  * Translated by Sven-Erik Andersen <sven DOT erik DOT andersen AT gmail DOT com>

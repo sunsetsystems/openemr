@@ -3,7 +3,7 @@
 /**
  * Simple script to set correct charset for changelog
  *
- * @version $Id$
+ * @version $Id: changelog.php,v 1.1.1.1 2009/05/12 21:26:41 bradymiller Exp $
  */
 
 $changelog = htmlspecialchars(file_get_contents('ChangeLog'));

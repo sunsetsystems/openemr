@@ -32,7 +32,7 @@
  * @uses    strnatcasecmp()
  * @uses    count()
  * @uses    addslashes()
- * @version $Id$
+ * @version $Id: db_info.inc.php,v 1.1.1.1 2009/05/12 21:26:45 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

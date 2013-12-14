@@ -3,7 +3,7 @@
 /**
  * hold the PMA_List base class
  *
- * @version $Id$
+ * @version $Id: List.class.php,v 1.1.1.1 2009/05/12 21:26:45 bradymiller Exp $
  */
 
 /**

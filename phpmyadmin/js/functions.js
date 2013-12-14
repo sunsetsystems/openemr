@@ -2,7 +2,7 @@
 /**
  * general function, usally for data manipulation pages
  *
- * @version $Id$
+ * @version $Id: functions.js,v 1.1.1.1 2009/05/12 21:27:29 bradymiller Exp $
  */
 
 /**

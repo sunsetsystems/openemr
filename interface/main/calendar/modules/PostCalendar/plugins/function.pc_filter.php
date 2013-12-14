@@ -1,6 +1,6 @@
 <?php
 /**
- *  $Id$
+ *  $Id: function.pc_filter.php,v 1.2 2009/08/04 06:31:09 bradymiller Exp $
  *
  *  PostCalendar::PostNuke Events Calendar Module
  *  Copyright (C) 2002  The PostCalendar Team

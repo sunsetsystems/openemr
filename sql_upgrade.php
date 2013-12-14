@@ -182,6 +182,26 @@ if (!empty($_POST['form_submit'])) {
     upgradeFromSqlFile('ippf_upgrade.sql');
   }
 
+  flush();
+  echo "<font color='green'>Updating global configuration defaults...</font><br />\n";
+  require_once("library/globals.inc.php");
+  foreach ($GLOBALS_METADATA as $grpname => $grparr) {
+    foreach ($grparr as $fldid => $fldarr) {
+      list($fldname, $fldtype, $flddef, $flddesc) = $fldarr;
+      if (substr($fldtype, 0, 2) !== 'm_') {
+        $row = sqlQuery("SELECT count(*) AS count FROM globals WHERE gl_name = '$fldid'");
+        if (empty($row['count'])) {
+          sqlStatement("INSERT INTO globals ( gl_name, gl_index, gl_value ) " .
+            "VALUES ( '$fldid', '0', '$flddef' )");
+        }
+      }
+    }
+  }
+
+  echo "<font color='green'>Updating version indicators...</font><br />\n";
+  sqlStatement("UPDATE version SET v_major = '$v_major', v_minor = '$v_minor', " .
+    "v_patch = '$v_patch', v_tag = '$v_tag', v_database = '$v_database'");
+
   echo "<p><font color='green'>Database upgrade finished.</font></p>\n";
   echo "</body></html>\n";
   exit();

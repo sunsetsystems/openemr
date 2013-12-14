@@ -1,6 +1,7 @@
 <?php
 include_once("../globals.php");
 include_once("$srcdir/log.inc");
+require_once("$srcdir/formatting.inc.php");
 ?>
 <html>
 <head>
@@ -154,7 +155,7 @@ for($iter=0;$row=sqlFetchArray($res);$iter++) {
 	$trans_comments = preg_replace($patterns, $replace, $iter["comments"]);
 ?>
  <TR class="oneresult">
-  <TD class="text"><?php echo $iter["date"]?></TD>
+  <TD class="text"><?php echo oeFormatShortDate(substr($iter["date"], 0, 10)) . substr($iter["date"], 10) ?></TD>
   <TD class="text"><?php echo xl($iter["event"])?></TD>
   <TD class="text"><?php echo $iter["user"]?></TD>
   <TD class="text"><?php echo $iter["groupname"]?></TD>

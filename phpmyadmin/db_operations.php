@@ -9,7 +9,7 @@
  *  - adding tables
  *  - viewing PDF schemas
  *
- * @version $Id$
+ * @version $Id: db_operations.php,v 1.1.1.1 2009/05/12 21:26:41 bradymiller Exp $
  */
 
 /**

@@ -1,6 +1,6 @@
 <?php  
 /*
- *  $Id$
+ *  $Id: global.php,v 1.3 2007/08/29 05:53:17 lemonsoftwarero Exp $
  *
  *  PostCalendar::PostNuke Events Calendar Module
  *  Copyright (C) 2002  The PostCalendar Team

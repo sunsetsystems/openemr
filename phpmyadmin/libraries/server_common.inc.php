@@ -7,7 +7,7 @@
  * @uses    PMA_DBI_fetch_result()
  * @uses    PMA_DBI_QUERY_STORE
  * @uses    $userlink
- * @version $Id$
+ * @version $Id: server_common.inc.php,v 1.1.1.1 2009/05/12 21:26:45 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

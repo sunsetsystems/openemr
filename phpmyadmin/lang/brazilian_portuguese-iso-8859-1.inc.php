@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: brazilian_portuguese-iso-8859-1.inc.php,v 1.1.1.1 2009/05/12 21:27:24 bradymiller Exp $ */
 /* translated by: Airon Luis Pereira <airon(dot)pereira(at)gmail(dot)com> */ 
 
 $charset = 'iso-8859-1'; 

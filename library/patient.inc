@@ -1,4 +1,9 @@
 <?php
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+
 include_once("{$GLOBALS['srcdir']}/sql.inc");
 require_once(dirname(__FILE__) . "/classes/WSWrapper.class.php");
 
@@ -795,11 +800,27 @@ function fixDate($date, $default="0000-00-00") {
               if ($dmy[2] < 1000) $dmy[2] += 1900;
               if ($dmy[2] < 1910) $dmy[2] += 100;
             }
-            $fixed_date = sprintf("%04u-%02u-%02u", $dmy[2], $dmy[0], $dmy[1]);
+            // phone_country_code indicates format of ambiguous input dates.
+            if ($GLOBALS['phone_country_code'] == 1)
+              $fixed_date = sprintf("%04u-%02u-%02u", $dmy[2], $dmy[0], $dmy[1]);
+            else
+              $fixed_date = sprintf("%04u-%02u-%02u", $dmy[2], $dmy[1], $dmy[0]);
         }
     }
 
     return $fixed_date;
+}
+
+function pdValueOrNull($key, $value) {
+  if (($key == 'DOB' || $key == 'regdate' || $key == 'contrastart' ||
+    substr($key, 0, 8) == 'userdate') &&
+    (empty($value) || $value == '0000-00-00'))
+  {
+    return "NULL";
+  }
+  else {
+    return "'$value'";
+  }
 }
 
 // Create or update patient data from an array.
@@ -830,7 +851,7 @@ function updatePatientData($pid, $new, $create=false)
     $sql = "INSERT INTO patient_data SET pid = '$pid', date = NOW()";
     foreach ($new as $key => $value) {
       if ($key == 'id') continue;
-      $sql .= ", `$key` = '$value'";
+      $sql .= ", `$key` = " . pdValueOrNull($key, $value);
     }
     $db_id = sqlInsert($sql);
   }
@@ -845,7 +866,7 @@ function updatePatientData($pid, $new, $create=false)
     }
     $sql = "UPDATE patient_data SET date = NOW()";
     foreach ($new as $key => $value) {
-      $sql .= ", `$key` = '$value'";
+      $sql .= ", `$key` = " . pdValueOrNull($key, $value);
     }
     $sql .= " WHERE id = '$db_id'";
     sqlStatement($sql);

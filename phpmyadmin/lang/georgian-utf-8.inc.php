@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: georgian-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:03 bradymiller Exp $ */
 
 /**
  * Translation by Kakha Mchedlidze <kakha at qartuli.com>

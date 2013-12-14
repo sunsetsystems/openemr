@@ -3,7 +3,7 @@
 /**
  * DocSQL import plugin for phpMyAdmin
  *
- * @version $Id$
+ * @version $Id: docsql.php,v 1.1.1.1 2009/05/12 21:26:58 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

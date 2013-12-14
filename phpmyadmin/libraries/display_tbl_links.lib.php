@@ -7,7 +7,7 @@
  * - reversed the right modify links: 1. drop, 2. edit, 3. checkbox
  * - also changes made in js/functions.js
  *
- * @version $Id$
+ * @version $Id: display_tbl_links.lib.php,v 1.1.1.1 2009/05/12 21:26:43 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

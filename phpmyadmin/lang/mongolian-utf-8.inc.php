@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: mongolian-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:26 bradymiller Exp $ */
 
 /**
  * Translated by Bayarsaikhan Enkhtaivan

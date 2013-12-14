@@ -1,5 +1,5 @@
 <?php
-// Copyright (C) 2005-2009 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2005-2010 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -12,6 +12,8 @@ require_once("$srcdir/api.inc");
 require_once("codes.php");
 require_once("../../../custom/code_types.inc.php");
 require_once("../../drugs/drugs.inc.php");
+require_once("$srcdir/formatting.inc.php");
+require_once("$srcdir/options.inc.php");
 
 // Some table cells will not be displayed unless insurance billing is used.
 $usbillstyle = $GLOBALS['ippf_specific'] ? " style='display:none'" : "";
@@ -113,7 +115,8 @@ function echoLine($lino, $codetype, $code, $modifier, $ndc_info='',
   if (empty($units)) $units = 1;
   $units = max(1, intval($units));
   // We put unit price on the screen, not the total line item fee.
-  $price = sprintf('%01.2f', $fee / $units);
+  // $price = sprintf('%01.2f', $fee / $units);
+  $price = $fee / $units;
   $strike1 = ($id && $del) ? "<strike>" : "";
   $strike2 = ($id && $del) ? "</strike>" : "";
   echo " <tr>\n";
@@ -137,7 +140,7 @@ function echoLine($lino, $codetype, $code, $modifier, $ndc_info='',
         "<input type='hidden' name='bill[$lino][mod]' value='$modifier'></td>\n";
     }
     if (fees_are_used()) {
-      echo "  <td class='billcell' align='right'>$price</td>\n";
+      echo "  <td class='billcell' align='right'>" . oeFormatMoney($price) . "</td>\n";
       if ($codetype != 'COPAY') {
         echo "  <td class='billcell' align='center'>$units</td>\n";
       } else {
@@ -261,7 +264,8 @@ function echoProdLine($lino, $drug_id, $del = FALSE, $units = NULL,
   if (empty($units)) $units = 1;
   $units = max(1, intval($units));
   // We put unit price on the screen, not the total line item fee.
-  $price = sprintf('%01.2f', $fee / $units);
+  // $price = sprintf('%01.2f', $fee / $units);
+  $price = $fee / $units;
   $strike1 = ($sale_id && $del) ? "<strike>" : "";
   $strike2 = ($sale_id && $del) ? "</strike>" : "";
   echo " <tr>\n";
@@ -276,7 +280,7 @@ function echoProdLine($lino, $drug_id, $del = FALSE, $units = NULL,
   }
   if ($billed) {
     if (fees_are_used()) {
-      echo "  <td class='billcell' align='right'>$price</td>\n";
+      echo "  <td class='billcell' align='right'>" . oeFormatMoney($price) . "</td>\n";
       echo "  <td class='billcell' align='center'>$units</td>\n";
       echo "  <td class='billcell' align='center'$usbillstyle>&nbsp;</td>\n"; // justify
     }
@@ -318,6 +322,7 @@ function echoProdLine($lino, $drug_id, $del = FALSE, $units = NULL,
 function genProviderSelect($selname, $toptext, $default=0, $disabled=false) {
   $query = "SELECT id, lname, fname FROM users WHERE " .
     "( authorized = 1 OR info LIKE '%provider%' ) AND username != '' " .
+    "AND active = 1 AND ( info IS NULL OR info NOT LIKE '%Inactive%' ) " .
     "ORDER BY lname, fname";
   $res = sqlStatement($query);
   echo "   <select name='$selname'";
@@ -369,6 +374,7 @@ if ($_POST['bn_save']) {
   $main_provid = 0 + $_POST['ProviderID'];
   $main_supid  = 0 + $_POST['SupervisorID'];
   if ($main_supid == $main_provid) $main_supid = 0;
+  $default_warehouse = $_POST['default_warehouse'];
 
   $bill = $_POST['bill'];
   for ($lino = 1; $bill["$lino"]['code_type']; ++$lino) {
@@ -470,7 +476,8 @@ if ($_POST['bn_save']) {
 
     // Otherwise it's a new item...
     else if (! $del) {
-      $sale_id = sellDrug($drug_id, $units, $fee, $pid, $encounter);
+      $sale_id = sellDrug($drug_id, $units, $fee, $pid, $encounter, 0, '', '',
+        $default_warehouse);
       if (!$sale_id) die("Insufficient inventory for product ID \"$drug_id\".");
     }
   } // end for
@@ -681,6 +688,7 @@ endFSCategory();
 $pres = sqlStatement("SELECT option_id, title FROM list_options " .
   "WHERE list_id = 'superbill' ORDER BY seq");
 while ($prow = sqlFetchArray($pres)) {
+  global $code_types;
   ++$i;
   echo ($i <= 1) ? " <tr>\n" : "";
   echo "  <td width='50%' align='center' nowrap>\n";
@@ -690,7 +698,9 @@ while ($prow = sqlFetchArray($pres)) {
     "WHERE superbill = '" . $prow['option_id'] . "' AND active = 1 " .
     "ORDER BY code_text");
   while ($row = sqlFetchArray($res)) {
-    echo "    <option value='" . alphaCodeType($row['code_type']) . '|' .
+    $ctkey = alphaCodeType($row['code_type']);
+    if ($code_types[$ctkey]['nofs']) continue;
+    echo "    <option value='$ctkey|" .
       $row['code'] . ':'. $row['modifier']. "|'>" . $row['code_text'] . "</option>\n";
   }
   echo "   </select>\n";
@@ -1033,6 +1043,19 @@ if ($trow['count'] && $contraception && !$isBilled) {
       echo "   </select>\n";
       echo "&nbsp; &nbsp; &nbsp;\n";
     }
+  }
+}
+
+// If there is a choice of warehouses, allow override of user default.
+if ($prod_lino > 0) { // if any products are in this form
+  $trow = sqlQuery("SELECT count(*) AS count FROM list_options WHERE list_id = 'warehouse'");
+  if ($trow['count'] > 1) {
+    $trow = sqlQuery("SELECT default_warehouse FROM users WHERE username = '" .
+      $_SESSION['authUser'] . "'");
+    echo "   <span class='billcell'><b>" . xl('Warehouse') . ":</b></span>\n";
+    echo generate_select_list('default_warehouse', 'warehouse',
+      $trow['default_warehouse'], '');
+    echo "&nbsp; &nbsp; &nbsp;\n";
   }
 }
 

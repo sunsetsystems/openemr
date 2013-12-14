@@ -3,7 +3,7 @@
 /**
  * display information about indexes in a table
  *
- * @version $Id$
+ * @version $Id: tbl_indexes.php,v 1.1.1.1 2009/05/12 21:26:40 bradymiller Exp $
  */
 
 /**

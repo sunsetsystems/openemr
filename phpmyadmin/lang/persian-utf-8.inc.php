@@ -1,6 +1,6 @@
 <?php
 
-/* $Id$ */
+/* $Id: persian-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:02 bradymiller Exp $ */
 /*
 Persian(Farsi) translation by : Bornis Group
 www.BornisGroup.com

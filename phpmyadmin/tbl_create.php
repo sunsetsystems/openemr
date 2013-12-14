@@ -34,7 +34,7 @@
  * @uses    strlen()
  * @uses    sprintf()
  * @uses    htmlspecialchars()
- * @version $Id$
+ * @version $Id: tbl_create.php,v 1.1.1.1 2009/05/12 21:26:43 bradymiller Exp $
  */
 
 /**

@@ -3,7 +3,7 @@
 /**
  * hold PMA_Theme class
  *
- * @version $Id$
+ * @version $Id: Theme.class.php,v 1.1.1.1 2009/05/12 21:26:44 bradymiller Exp $
  */
 
 /**

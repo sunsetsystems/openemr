@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: serbian_latin-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:19 bradymiller Exp $ */
 
 /**
  * Translated by:

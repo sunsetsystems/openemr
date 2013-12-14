@@ -1,5 +1,5 @@
 <?php
- // Copyright (C) 2005-2009 Rod Roark <rod@sunsetsystems.com>
+ // Copyright (C) 2005-2010 Rod Roark <rod@sunsetsystems.com>
  //
  // This program is free software; you can redistribute it and/or
  // modify it under the terms of the GNU General Public License
@@ -74,13 +74,30 @@ function decorateString($fmt, $str) {
   return $res;
 }
 
+// Delete and undo product sales for a given patient or visit.
+// This is special because it has to replace the inventory.
+//
+function delete_drug_sales($patient_id, $encounter_id=0) {
+  $where = $encounter_id ? "ds.encounter = '$encounter_id'" :
+    "ds.pid = '$patient_id' AND ds.encounter != 0";
+  sqlStatement("UPDATE drug_sales AS ds, drug_inventory AS di " .
+    "SET di.on_hand = di.on_hand + ds.quantity " .
+    "WHERE $where AND di.inventory_id = ds.inventory_id");
+  if ($encounter_id) {
+    row_delete("drug_sales", "encounter = '$encounter_id'");
+  }
+  else {
+    row_delete("drug_sales", "pid = '$patient_id'");
+  }
+}
+
 // Delete a form's data from its form-specific table.
 //
 function form_delete($formdir, $formid) {
   $formdir = ($formdir == 'newpatient') ? 'encounter' : $formdir;
   if (substr($formdir,0,3) == 'LBF')
     row_delete("lbf_data", "form_id = '$formid'");
-  else
+  else 
     row_delete("form_$formdir", "id = '$formid'");
 }
 
@@ -95,12 +112,6 @@ function form_delete($formdir, $formid) {
 td { font-size:10pt; }
 </style>
 
-<script language="javascript">
-function submit_form()
-{
-document.deletefrm.submit();
-}
-</script>
 </head>
 
 <body class="body_top">
@@ -116,7 +127,7 @@ document.deletefrm.submit();
    // row_modify("prescriptions" , "active = 0"  , "patient_id = '$patient'");
    row_delete("prescriptions"  , "patient_id = '$patient'");
    row_delete("claims"         , "patient_id = '$patient'");
-   row_delete("drug_sales"     , "pid = '$patient'");
+   delete_drug_sales($patient);
    row_delete("payments"       , "pid = '$patient'");
    row_delete("ar_activity"    , "pid = '$patient'");
    row_delete("openemr_postcalendar_events", "pc_pid = '$patient'");
@@ -142,7 +153,8 @@ document.deletefrm.submit();
   else if ($encounterid) {
    if (!acl_check('admin', 'super')) die("Not authorized!");
    row_modify("billing", "activity = 0", "encounter = '$encounterid'");
-   row_delete("ar_activity", "pid = '$patient' AND encounter = '$encounterid'");
+   delete_drug_sales(0, $encounterid);
+   row_delete("ar_activity", "encounter = '$encounterid'");
    row_delete("claims", "encounter_id = '$encounterid'");
    row_delete("issue_encounter", "encounter = '$encounterid'");
    $res = sqlStatement("SELECT * FROM forms WHERE encounter = '$encounterid'");
@@ -281,15 +293,17 @@ document.deletefrm.submit();
   //
   echo "<script language='JavaScript'>\n";
   if ($info_msg) echo " alert('$info_msg');\n";
-  echo "parent.imdeleted();\n";
+  echo " window.close();\n";
+  echo " if (opener.imdeleted) opener.imdeleted();\n";
   echo "</script></body></html>\n";
   exit();
  }
 ?>
 
-<form method='post' name="deletefrm" action='deleter.php?patient=<?php echo $patient ?>&encounterid=<?php echo $encounterid ?>&formid=<?php echo $formid ?>&issue=<?php echo $issue ?>&document=<?php echo $document ?>&payment=<?php echo $payment ?>&billing=<?php echo $billing ?>&transaction=<?php echo $transaction ?>' onsubmit="javascript:alert('1');document.deleform.submit();">
+<form method='post' action='deleter.php?patient=<?php echo $patient ?>&encounterid=<?php echo $encounterid ?>&formid=<?php echo $formid ?>&issue=<?php echo $issue ?>&document=<?php echo $document ?>&payment=<?php echo $payment ?>&billing=<?php echo $billing ?>&transaction=<?php echo $transaction ?>'>
 
-<p class="text">&nbsp;<br><?php xl('Do you really want to delete','e'); ?>
+<p>&nbsp;<br><?php xl('
+Do you really want to delete','e'); ?>
 
 <?php
  if ($patient) {
@@ -313,10 +327,10 @@ document.deletefrm.submit();
 
 <center>
 
-<p class="text">&nbsp;<br>
-<a href="#" onclick="submit_form()" class="css_button"><span><?php xl('Yes, Delete and Log','e'); ?></span></a>
-<input type='hidden' name='form_submit' value=<?php xl('Yes, Delete and Log','e','\'','\''); ?>/>
-<a href='#' class="css_button" onclick='parent.$.fn.fancybox.close();' /><span><?php echo xl('No, Cancel');?></span></a>
+<p>&nbsp;<br>
+<input type='submit' name='form_submit' value=<?php xl('Yes, Delete and Log','e','\'','\''); ?> />
+&nbsp;
+<input type='button' value=<?php xl('No, Cancel','e','\'','\''); ?> onclick='window.close()' />
 </p>
 
 </center>

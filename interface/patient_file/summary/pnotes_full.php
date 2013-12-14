@@ -12,6 +12,7 @@ require_once("$srcdir/log.inc");
 require_once("$srcdir/options.inc.php");
 require_once("$srcdir/classes/Document.class.php");
 require_once("$srcdir/gprelations.inc.php");
+require_once("$srcdir/formatting.inc.php");
 
 if ($GLOBALS['concurrent_layout'] && $_GET['set_pid']) {
     require_once("$srcdir/pid.inc");
@@ -285,10 +286,10 @@ if ($result != "") {
 
     $body = $iter['body'];
     if (preg_match('/^\d\d\d\d-\d\d-\d\d \d\d\:\d\d /', $body)) {
-      $body = nl2br($body);
+      $body = nl2br(oeFormatPatientNote($body));
     } else {
-      $body = date('Y-m-d H:i', strtotime($iter['date'])) .
-        ' (' . $iter['user'] . ') ' . nl2br($body);
+      $body = oeFormatSDFT(strtotime($iter['date'])) . date(' H:i', strtotime($iter['date'])) .
+        ' (' . $iter['user'] . ') ' . nl2br(oeFormatPatientNote($body));
     }
 
     if ($iter{"activity"}) {

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id$
+# $Id: sync_lang.sh,v 1.1.1.1 2009/05/12 21:27:05 bradymiller Exp $
 ##
 # Shell script that synchronises all translations in phpMyAdmin
 ##

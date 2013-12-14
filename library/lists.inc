@@ -45,9 +45,9 @@ else { // default version
 //
 
 $ISSUE_CLASSIFICATIONS = array(
-  0   => xl('Unknown or N/A'),
-  1   => xl('Trauma'),
-  2   => xl('Overuse')
+  0   => xl('Not Applicable'),
+  1   => xl('Acute/Traumatic'),
+  2   => xl('Overuse/Gradual')
 );
 
 function getListById ($id, $cols = "*")

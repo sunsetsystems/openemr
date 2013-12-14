@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: italian-iso-8859-1.inc.php,v 1.1.1.1 2009/05/12 21:27:18 bradymiller Exp $ */
 
 /**
  * translated by: Pietro Danesi <danone at users.sourceforge.net>  2002-03-29

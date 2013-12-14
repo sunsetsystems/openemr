@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: albanian-iso-8859-1.inc.php,v 1.1.1.1 2009/05/12 21:27:21 bradymiller Exp $ */
 
 /**
  * Translated by: Laurent Dhima <laurenti at users.sourceforge.net>

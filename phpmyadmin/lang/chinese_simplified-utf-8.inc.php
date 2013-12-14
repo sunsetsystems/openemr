@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: chinese_simplified-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:25 bradymiller Exp $ */
 
 /**
  * Last translation by: Funda Wang <fundawang@en2china.com>

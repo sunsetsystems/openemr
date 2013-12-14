@@ -40,6 +40,7 @@ case "$1" in
       TMPDIR=/tmp/cvs-openemr-tmp
       WEB=/var/www
       OPENEMR=$WEB/cvs-openemr
+      SITEDIR=$OPENEMR/sites/default
       INSTALL_USER=cvsopenemr
       INSTALL_DATABASE=cvsopenemr
       INSTALL_SITE=localhost
@@ -210,7 +211,6 @@ case "$1" in
       setIuser="admin" #initial user login name 
       setIuname="Administrator" #initial user full name 
       setIgroup="Default" #practice group name 
-      setOpenemrWebPath="$INSTALL_WEBPATH" #path on browser to openemr 
       setInst="1" #CONSTANT, don't set 
 
       #go to openemr directory
@@ -223,11 +223,11 @@ case "$1" in
       # Set file and directory permissions 
       chmod 666 $OPENEMR/library/sqlconf.php 
       chmod 666 $OPENEMR/interface/globals.php 
-      chown -R $WEB_GROUP.$WEB_USER $OPENEMR/documents 
-      chown -R $WEB_GROUP.$WEB_USER $OPENEMR/edi 
-      chown -R $WEB_GROUP.$WEB_USER $OPENEMR/era 
+      chown -R $WEB_GROUP.$WEB_USER $SITEDIR/documents 
+      chown -R $WEB_GROUP.$WEB_USER $SITEDIR/edi 
+      chown -R $WEB_GROUP.$WEB_USER $SITEDIR/era 
       chown -R $WEB_GROUP.$WEB_USER $OPENEMR/library/freeb 
-      chown -R $WEB_GROUP.$WEB_USER $OPENEMR/custom/letter_templates 
+      chown -R $WEB_GROUP.$WEB_USER $SITEDIR/letter_templates 
       chown -R $WEB_GROUP.$WEB_USER $OPENEMR/interface/main/calendar/modules/PostCalendar/pntemplates/cache 
       chown -R $WEB_GROUP.$WEB_USER $OPENEMR/interface/main/calendar/modules/PostCalendar/pntemplates/compiled 
       chown -R $WEB_GROUP.$WEB_USER $OPENEMR/gacl/admin/templates_c 
@@ -252,8 +252,6 @@ case "$1" in
     $iuser = '\'''$setIuser''\'';\
     $iuname = '\'''$setIuname''\'';\
     $igroup = '\'''$setIgroup''\'';\
-    $openemrBasePath = '\'''$OPENEMR''\'';\
-    $openemrWebPath = '\'''$setOpenemrWebPath''\'';\
     $collate = '\'''$setColl''\'';\
     $inst = 1;@' <$OPENEMR/TEMPsetup.php >$OPENEMR/TEMP2setup.php
       mv -f $OPENEMR/TEMP2setup.php $OPENEMR/TEMPsetup.php

@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: brazilian_portuguese-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:27 bradymiller Exp $ */
 /* translated by: Airon Luis Pereira <airon(dot)pereira(at)gmail(dot)com> */ 
 
 $charset = 'utf-8'; 

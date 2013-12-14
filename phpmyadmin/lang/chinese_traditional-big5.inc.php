@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: chinese_traditional-big5.inc.php,v 1.1.1.1 2009/05/12 21:27:26 bradymiller Exp $ */
 
 /**
  * Last translation by: Siu Sun <siusun@best-view.net>

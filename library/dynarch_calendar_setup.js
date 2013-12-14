@@ -19,7 +19,7 @@
  * than modifying calendar.js itself).
  */
 
-// $Id$
+// $Id: dynarch_calendar_setup.js,v 1.2 2008/02/04 17:58:39 sunsetsystems Exp $
 
 /**
  *  This function "patches" an input field (or other element) to use a calendar

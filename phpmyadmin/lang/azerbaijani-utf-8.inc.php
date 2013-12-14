@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: azerbaijani-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:19 bradymiller Exp $ */
 
 // tercümedeki eksiklerimi ve ya sehv olduğunu düşündüyünüz yerleri shehriyari@trcomm.net adresine göndere bilersiniz...
 // Şehriyar İmanov 30 Avqust 2003... Shehi

@@ -4,7 +4,7 @@
  * This test script checks all the language files to ensure there is no errors
  * inside and nothing is displayed on screen (eg no extra no blank line).
  *
- * @version $Id$
+ * @version $Id: check_lang.php,v 1.1.1.1 2009/05/12 21:27:30 bradymiller Exp $
  * @package phpMyAdmin-test
  */
 

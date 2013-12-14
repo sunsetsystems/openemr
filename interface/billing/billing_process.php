@@ -1,4 +1,9 @@
 <?php
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+
 include_once("../globals.php");
 include_once("$srcdir/patient.inc");
 include_once("$srcdir/billrep.inc");
@@ -21,6 +26,7 @@ $bat_type     = ''; // will be edi or hcfa
 $bat_sendid   = '';
 $bat_recvid   = '';
 $bat_content  = '';
+$bat_gscount  = 0;
 $bat_stcount  = 0;
 $bat_time     = time();
 $bat_hhmm     = date('Hi' , $bat_time);
@@ -39,7 +45,7 @@ if (isset($_POST['bn_process_hcfa'])) {
 
 function append_claim(&$segs) {
   global $bat_content, $bat_sendid, $bat_recvid, $bat_sender, $bat_stcount;
-  global $bat_yymmdd, $bat_yyyymmdd, $bat_hhmm, $bat_icn;
+  global $bat_gscount, $bat_yymmdd, $bat_yyyymmdd, $bat_hhmm, $bat_icn;
 
   foreach ($segs as $seg) {
     if (!$seg) continue;
@@ -59,8 +65,11 @@ function append_claim(&$segs) {
         "found '" . htmlentities($elems[0]) . "' instead");
     }
     if ($elems[0] == 'GS') {
-      $bat_content .= "GS*HC*" . $elems[2] . "*" . $elems[3] .
-        "*$bat_yyyymmdd*$bat_hhmm*1*X*004010X098A1~";
+      if ($bat_gscount == 0) {
+        ++$bat_gscount;
+        $bat_content .= "GS*HC*" . $elems[2] . "*" . $elems[3] .
+          "*$bat_yyyymmdd*$bat_hhmm*1*X*004010X098A1~";
+      }
       continue;
     }
     if ($elems[0] == 'ST') {
@@ -78,15 +87,16 @@ function append_claim(&$segs) {
 }
 
 function append_claim_close() {
-  global $bat_content, $bat_stcount, $bat_icn;
-  $bat_content .= "GE*$bat_stcount*1~IEA*1*$bat_icn~";
+  global $bat_content, $bat_stcount, $bat_gscount, $bat_icn;
+  if ($bat_gscount) $bat_content .= "GE*$bat_stcount*1~";
+  $bat_content .= "IEA*$bat_gscount*$bat_icn~";
 }
 
 function send_batch() {
   global $bat_content, $bat_filename, $webserver_root;
   // If a writable edi directory exists, log the batch to it.
   // I guarantee you'll be glad we did this.  :-)
-  $fh = @fopen("$webserver_root/edi/$bat_filename", 'a');
+  $fh = @fopen($GLOBALS['OE_SITE_DIR'] . "/edi/$bat_filename", 'a');
   if ($fh) {
     fwrite($fh, $bat_content);
     fclose($fh);
@@ -221,7 +231,7 @@ function process_form($ar) {
   if (isset($ar['bn_process_hcfa'])) {
     fclose($hlog);
     // If a writable edi directory exists (and it should), write the pdf to it.
-    $fh = @fopen("$webserver_root/edi/$bat_filename", 'a');
+    $fh = @fopen($GLOBALS['OE_SITE_DIR'] . "/edi/$bat_filename", 'a');
     if ($fh) {
       fwrite($fh, $pdf->ezOutput());
       fclose($fh);

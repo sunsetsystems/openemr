@@ -45,7 +45,7 @@
  * @uses    array_intersect()
  * @uses    sprintf()
  * @uses    in_array()
- * @version $Id$
+ * @version $Id: db_search.php,v 1.1.1.1 2009/05/12 21:26:42 bradymiller Exp $
  * @author  Thomas Chaumeny <chaume92 at aol.com>
  */
 

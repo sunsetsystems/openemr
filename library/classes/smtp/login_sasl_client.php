@@ -2,7 +2,7 @@
 /*
  * login_sasl_client.php
  *
- * @(#) $Id$
+ * @(#) $Id: login_sasl_client.php,v 1.1 2008/03/18 11:21:48 lemonsoftwarero Exp $
  *
  */
 

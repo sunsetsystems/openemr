@@ -1,6 +1,6 @@
 /* vim: set expandtab sw=4 ts=4 sts=4: */
 /**
- * @version $Id$
+ * @version $Id: move.js,v 1.1.1.1 2009/05/12 21:27:30 bradymiller Exp $
  * @author  Ivan A Kirillov (Ivan.A.Kirillov@gmail.com)
  * @package phpMyAdmin-Designer
  */

@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: latvian-windows-1257.inc.php,v 1.1.1.1 2009/05/12 21:27:22 bradymiller Exp $ */
 
 /**
  * Latvian language file by Sandis Jçrics <sandisj at parks.lv>

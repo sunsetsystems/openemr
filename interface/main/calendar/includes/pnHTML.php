@@ -1,4 +1,4 @@
-<?php // File: $Id$
+<?php // File: $Id: pnHTML.php,v 1.1.1.3 2005/06/23 05:33:24 drbowen Exp $
 // ----------------------------------------------------------------------
 // POST-NUKE Content Management System
 // Copyright (C) 2001 by the Post-Nuke Development Team.
@@ -114,7 +114,7 @@ define('_PNH_PARSEINPUT', 1);
  * @author Patrick Kellum
  * @link http://www.postnuke.com/ The Official PostNuke website
  * @copyright (C) 2001, 2002 by the Post-Nuke Development Team
- * @version $Revision$
+ * @version $Revision: 1.1.1.3 $
  * @todo need to add text sanitizer
  */
 class pnHTML

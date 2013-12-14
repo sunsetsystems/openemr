@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: estonian-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:17 bradymiller Exp $ */
 
 /*
  * Translated by Marko Ellermaa, <marko.ellermaa@nlkp.net>

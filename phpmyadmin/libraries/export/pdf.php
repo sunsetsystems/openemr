@@ -3,7 +3,7 @@
 /**
  * Produce a PDF report (export) from a query
  *
- * @version $Id$
+ * @version $Id: pdf.php,v 1.1.1.1 2009/05/12 21:26:46 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

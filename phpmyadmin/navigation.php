@@ -3,7 +3,7 @@
 /**
  * the navigation frame - displays server, db and table selection tree
  *
- * @version $Id$
+ * @version $Id: navigation.php,v 1.1.1.1 2009/05/12 21:26:42 bradymiller Exp $
  * @uses $GLOBALS['PMA_List_Database']
  * @uses $GLOBALS['server']
  * @uses $GLOBALS['db']

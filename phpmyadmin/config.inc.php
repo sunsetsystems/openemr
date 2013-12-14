@@ -10,16 +10,27 @@
 
 
 /* OpenEMR Access Control */
+// Does not work with the new globals.php that reads settings from the
+// database.  I have no idea why.  -- Rod 2010-03-30
+/*********************************************************************
 require_once("../interface/globals.php");
 require_once("../library/acl.inc");
 if (! acl_check('admin', 'database')) {
   echo "You do not have access to this resource<br>";
   exit;
 }
+*********************************************************************/
 
 /* OpenEMR Database Settings */
+// error_log("config.inc.php is '" . __FILE__ . "'."); // debugging
+if (empty($_SESSION['site_id'])) die("phpMyAdmin has no session site ID!");
+// This code is eval'd by phpmyadmin/libraries/Config.class.php
+// and so __FILE__ is not what you might think.
+$webserver_root = dirname(dirname(dirname(__FILE__)));
+if (stripos(PHP_OS,'WIN') === 0) $webserver_root = str_replace("\\","/",$webserver_root); 
+$GLOBALS['OE_SITE_DIR'] = "$webserver_root/sites/" . $_SESSION['site_id'];
+// error_log("phpMyAdmin site dir is '" . $GLOBALS['OE_SITE_DIR'] . "'."); // debugging
 require_once("../library/sqlconf.php");
-
 
 /* Servers configuration */
 $i = 0;

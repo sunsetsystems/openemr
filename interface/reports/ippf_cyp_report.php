@@ -1,5 +1,5 @@
 <?php
-// Copyright (C) 2009 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2009-2010 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -7,8 +7,9 @@
 // of the License, or (at your option) any later version.
 
 require_once("../globals.php");
-require_once("../../library/patient.inc");
-require_once("../../library/acl.inc");
+require_once("$srcdir/patient.inc");
+require_once("$srcdir/acl.inc");
+require_once("$srcdir/formatting.inc.php");
 
 function formatcyp($amount) {
   if ($amount) return sprintf("%.2f", $amount);
@@ -22,10 +23,10 @@ function display_desc($desc) {
   return $desc;
 }
 
-function thisLineItem($patient_id, $encounter_id, $description, $transdate, $qty, $cypfactor) {
+function thisLineItem($patient_id, $encounter_id, $description, $transdate, $qty, $cypfactor, $irnumber='') {
   global $product, $productcyp, $producttotal, $productqty, $grandtotal, $grandqty;
 
-  $invnumber = "$patient_id.$encounter_id";
+  $invnumber = empty($irnumber) ? "$patient_id.$encounter_id" : $irnumber;
   $rowcyp    = sprintf('%01.2f', $cypfactor);
   $rowresult = sprintf('%01.2f', $rowcyp * $qty);
 
@@ -73,7 +74,7 @@ function thisLineItem($patient_id, $encounter_id, $description, $transdate, $qty
   if ($_POST['form_details']) {
     if ($_POST['form_csvexport']) {
       echo '"' . display_desc($product         ) . '",';
-      echo '"' . display_desc($transdate) . '",';
+      echo '"' . oeFormatShortDate(display_desc($transdate)) . '",';
       echo '"' . display_desc($invnumber) . '",';
       echo '"' . display_desc($qty      ) . '",';
       echo '"' . formatcyp($rowcyp) . '",';
@@ -87,7 +88,7 @@ function thisLineItem($patient_id, $encounter_id, $description, $transdate, $qty
    <?php echo display_desc($productleft); $productleft = "&nbsp;"; ?>
   </td>
   <td class="dehead">
-   <?php echo $transdate; ?>
+   <?php echo oeFormatShortDate($transdate); ?>
   </td>
   <td class="detail">
    <?php echo $invnumber; ?>
@@ -246,7 +247,7 @@ if ($_POST['form_refresh'] || $_POST['form_csvexport']) {
   $grandqty = 0;
 
   $query = "SELECT b.pid, b.encounter, b.code_type, b.code, b.units, " .
-    "b.code_text, c.cyp_factor, fe.date, fe.facility_id " .
+    "b.code_text, c.cyp_factor, fe.date, fe.facility_id, fe.invoice_refno " .
     "FROM billing AS b " .
     "JOIN codes AS c ON c.code_type = '12' AND c.code = b.code AND c.modifier = b.modifier AND c.cyp_factor > 0 " .
     "JOIN form_encounter AS fe ON fe.pid = b.pid AND fe.encounter = b.encounter " .
@@ -262,11 +263,12 @@ if ($_POST['form_refresh'] || $_POST['form_csvexport']) {
   while ($row = sqlFetchArray($res)) {
     thisLineItem($row['pid'], $row['encounter'],
       $row['code'] . ' ' . $row['code_text'],
-      substr($row['date'], 0, 10), $row['units'], $row['cyp_factor']);
+      substr($row['date'], 0, 10), $row['units'], $row['cyp_factor'],
+      $row['invoice_refno']);
   }
   //
   $query = "SELECT s.sale_date, s.quantity, s.pid, s.encounter, " .
-    "d.name, d.cyp_factor, fe.date, fe.facility_id " .
+    "d.name, d.cyp_factor, fe.date, fe.facility_id, fe.invoice_refno " .
     "FROM drug_sales AS s " .
     "JOIN drugs AS d ON d.drug_id = s.drug_id AND d.cyp_factor > 0 " .
     "JOIN form_encounter AS fe ON " .
@@ -282,7 +284,8 @@ if ($_POST['form_refresh'] || $_POST['form_csvexport']) {
   $res = sqlStatement($query);
   while ($row = sqlFetchArray($res)) {
     thisLineItem($row['pid'], $row['encounter'], $row['name'],
-      substr($row['date'], 0, 10), $row['quantity'], $row['cyp_factor']);
+      substr($row['date'], 0, 10), $row['quantity'], $row['cyp_factor'],
+      $row['invoice_refno']);
   }
 
   if ($_POST['form_csvexport']) {

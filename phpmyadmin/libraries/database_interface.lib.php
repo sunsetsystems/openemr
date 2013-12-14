@@ -3,7 +3,7 @@
 /**
  * Common Option Constants For DBI Functions
  *
- * @version $Id$
+ * @version $Id: database_interface.lib.php,v 1.1.1.1 2009/05/12 21:26:45 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

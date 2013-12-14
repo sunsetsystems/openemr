@@ -223,7 +223,7 @@ class C_Document extends Controller {
 		//change full path to current webroot.  this is for documents that may have
 		//been moved from a different filesystem and the full path in the database
 		//is not current.
-                $temp_url = $GLOBALS["fileroot"].'/documents/'.$_SESSION["pid"].'/'.basename($url);
+    $temp_url = $GLOBALS['OE_SITE_DIR'] . '/documents/' . $_SESSION["pid"] . '/' . basename($url);
 		if (file_exists($temp_url)) {
 			$url = $temp_url;
 		}
@@ -246,7 +246,7 @@ class C_Document extends Controller {
 		        else {
 			    //special case when retrieving a document that has been converted to a jpg and not directly referenced in database
 			    $convertedFile = substr(basename($url), 0, strrpos(basename($url), '.')) . '_converted.jpg';			    
-			    $url = $GLOBALS["fileroot"].'/documents/'.$_SESSION["pid"].'/'.$convertedFile;
+          $url = $GLOBALS['OE_SITE_DIR'] . '/documents/' . $_SESSION["pid"] . '/' . $convertedFile;
                             header("Pragma: public");
 			    header("Expires: 0");
 			    header("Cache-Control: must-revalidate, post-check=0, pre-check=0");

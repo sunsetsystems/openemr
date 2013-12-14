@@ -48,9 +48,9 @@ while ($row=SqlFetchArray($res)){
 }
 $string.='|';
 
-echo ("<a href=\"?m=language&language=add\">".xl('Add Language')."</a> or ");
-echo ("<a href=\"?m=constant&constant=add\">".xl('Add Constant')."</a> or ");
-echo (xl('Edit definitions').": $string <br><br>");
+echo ("<a href=\"?m=language&language=add\">" . xl('Add Language') . "</a> " . xl('or') . " ");
+echo ("<a href=\"?m=constant&constant=add\">" . xl('Add Constant') . "</a> " . xl('or') . " ");
+echo (xl('Edit definitions') . ": $string <br><br>");
 
 switch ($_GET['m']):
 	case 'definition':

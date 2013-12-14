@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: sql-ledger.inc,v 1.5 2007/05/24 01:17:22 ballards Exp $ */
 //  ------------------------------------------------------------------------ //
 //                OpenEMR Electronic Medical Records System                  //
 //                    Copyright (c) 2005 oemr.org                            //

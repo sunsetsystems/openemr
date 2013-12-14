@@ -1,4 +1,9 @@
 <?php
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+
 $ignoreAuth=true;
 include_once("../globals.php");
 include_once("$srcdir/md5.js");
@@ -31,8 +36,9 @@ function imsubmitted() {
 
 <center>
 
-<form method="POST" action="../main/main_screen.php?auth=login" target="_top"
- name="login_form" onsubmit="return imsubmitted();">
+<form method="POST"
+ action="../main/main_screen.php?auth=login&site=<?php echo htmlspecialchars($_SESSION['site_id']); ?>"
+ target="_top" name="login_form" onsubmit="return imsubmitted();">
 
 <?php
 // collect groups
@@ -114,7 +120,7 @@ Invalid username or password
 if ($GLOBALS['language_menu_login']) {
 if (count($result3) != 1) { ?>
 <tr>
-<td><span class="text"><?php xl('Language:','e'); ?></span></td>
+<td><span class="text"><?php xl('Language','e'); ?>:</span></td>
 <td>
 <select name=languageChoice size="1">
 <?php

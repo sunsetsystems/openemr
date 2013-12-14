@@ -1,6 +1,6 @@
 <?php
-	// $Id$
-	// $Author$
+	// $Id: class.Handler_HL7v2.php,v 1.1.1.3 2005/06/23 05:25:49 drbowen Exp $
+	// $Author: drbowen $
 
 class Handler_HL7v2 {
 

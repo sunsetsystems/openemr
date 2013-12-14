@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: arabic-windows-1256.inc.php,v 1.1.1.1 2009/05/12 21:27:13 bradymiller Exp $ */
 
 /**
  * Original translation to Arabic by Fisal <fisal77 at hotmail.com>

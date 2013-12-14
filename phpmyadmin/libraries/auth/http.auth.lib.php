@@ -4,7 +4,7 @@
  * Set of functions used to run http authentication.
  * NOTE: Requires PHP loaded as a Apache module.
  *
- * @version $Id$
+ * @version $Id: http.auth.lib.php,v 1.1.1.1 2009/05/12 21:26:45 bradymiller Exp $
  */
 
 

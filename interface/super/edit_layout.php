@@ -1,5 +1,5 @@
 <?php
-// Copyright (C) 2007-2009 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2007-2010 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -48,6 +48,7 @@ $datatypes = array(
   "25" => xl("Checkbox w/text"),
   "26" => xl("List box w/add"),
   "27" => xl("Radio buttons"),
+  "31" => xl("Static Text"),
 );
 
 function nextGroupOrder($order) {
@@ -89,6 +90,7 @@ if ($_POST['formaction'] == "save" && $layout_id) {
                 "datacols = '"      . formTrim($iter['datacols'])  . "', " .
                 "data_type= '$data_type', "                                .
                 "list_id= '"        . formTrim($iter['list_id'])   . "', " .
+                "edit_options = '"  . formTrim($iter['edit_options']) . "', " .
                 "default_value = '" . formTrim($iter['default'])   . "', " .
                 "description = '"   . formTrim($iter['desc'])      . "' " .
                 "WHERE form_id = '$layout_id' AND field_id = '$field_id'");
@@ -102,7 +104,7 @@ else if ($_POST['formaction'] == "addfield" && $layout_id) {
     $max_length = $data_type == 3 ? 3 : 255;
     sqlStatement("INSERT INTO layout_options (" .
       " form_id, field_id, title, group_name, seq, uor, fld_length" .
-      ", titlecols, datacols, data_type, default_value, description" .
+      ", titlecols, datacols, data_type, edit_options, default_value, description" .
       ", max_length, list_id " .
       ") VALUES ( " .
       "'"  . formTrim($_POST['layout_id']      ) . "'" .
@@ -115,6 +117,7 @@ else if ($_POST['formaction'] == "addfield" && $layout_id) {
       ",'" . formTrim($_POST['newtitlecols']   ) . "'" .
       ",'" . formTrim($_POST['newdatacols']    ) . "'" .
       ",'$data_type'"                                  .
+      ",'" . formTrim($_POST['newedit_options']) . "'" .
       ",'" . formTrim($_POST['newdefault']     ) . "'" .
       ",'" . formTrim($_POST['newdesc']        ) . "'" .
       ",'$max_length'"                                 .
@@ -202,7 +205,7 @@ else if ($_POST['formaction'] == "addgroup" && $layout_id) {
     // add a new group to the layout, with the defined field
     sqlStatement("INSERT INTO layout_options (" .
       " form_id, field_id, title, group_name, seq, uor, fld_length" .
-      ", titlecols, datacols, data_type, default_value, description" .
+      ", titlecols, datacols, data_type, edit_options, default_value, description" .
       ", max_length, list_id " .
       ") VALUES ( " .
       "'"  . formTrim($_POST['layout_id']      ) . "'" .
@@ -215,6 +218,7 @@ else if ($_POST['formaction'] == "addgroup" && $layout_id) {
       ",'" . formTrim($_POST['gnewtitlecols']   ) . "'" .
       ",'" . formTrim($_POST['gnewdatacols']    ) . "'" .
       ",'$data_type'"                                   .
+      ",'" . formTrim($_POST['gnewedit_options']) . "'" .
       ",'" . formTrim($_POST['gnewdefault']     ) . "'" .
       ",'" . formTrim($_POST['gnewdesc']        ) . "'" .
       ",'$max_length'"                                  .
@@ -433,7 +437,15 @@ function writeFieldLine($linedata) {
     echo "<input type='text' name='fld[$fld_line_no][datacols]' value='" .
          htmlspecialchars($linedata['datacols'], ENT_QUOTES) . "' size='3' maxlength='10' class='optin' />";
     echo "</td>\n";
+  
+    echo "  <td align='center' class='optcell' title='" .
+      xl('C = Capitalize, D = Dup Check, N = New Patient Form, O = Order Processor, V = Vendor') .
+      "'>";
+    echo "<input type='text' name='fld[$fld_line_no][edit_options]' value='" .
+         htmlspecialchars($linedata['edit_options'], ENT_QUOTES) . "' size='3' maxlength='36' class='optin' />";
+    echo "</td>\n";
  
+    /*****************************************************************
     echo "  <td align='center' class='optcell'>";
     if ($linedata['data_type'] == 2) {
       echo "<input type='text' name='fld[$fld_line_no][default]' value='" .
@@ -442,7 +454,7 @@ function writeFieldLine($linedata) {
       echo "&nbsp;";
     }
     echo "</td>\n";
-  
+
     echo "  <td align='center' class='optcell'>";
     echo "<input type='text' name='fld[$fld_line_no][desc]' value='" .
          htmlspecialchars($linedata['description'], ENT_QUOTES) . "' size='20' maxlength='63' class='optin' />";
@@ -452,7 +464,31 @@ function writeFieldLine($linedata) {
     if ($GLOBALS['translate_layout'] && $_SESSION['language_choice'] > 1) {
      echo "<td align='center' class='translation'>" . htmlspecialchars(xl($linedata['description']), ENT_QUOTES) . "</td>\n";
     }
-    
+    *****************************************************************/
+
+    if ($linedata['data_type'] == 31) {
+      echo "  <td align='center' class='optcell'>";
+      echo "<textarea name='fld[$fld_line_no][desc]' rows='3' cols='35' class='optin'>" .
+           $linedata['description'] . "</textarea>";
+      echo "<input type='hidden' name='fld[$fld_line_no][default]' value='" .
+         htmlspecialchars($linedata['default_value'], ENT_QUOTES) . "' />";
+      echo "</td>\n";
+    }
+    else {
+      echo "  <td align='center' class='optcell'>";
+      echo "<input type='text' name='fld[$fld_line_no][desc]' value='" .
+        htmlspecialchars($linedata['description'], ENT_QUOTES) .
+        "' size='30' maxlength='63' class='optin' />";
+      echo "<input type='hidden' name='fld[$fld_line_no][default]' value='" .
+        htmlspecialchars($linedata['default_value'], ENT_QUOTES) . "' />";
+      echo "</td>\n";
+      // if not english and showing layout labels, then show the translation of Description
+      if ($GLOBALS['translate_layout'] && $_SESSION['language_choice'] > 1) {
+        echo "<td align='center' class='translation'>" .
+        htmlspecialchars(xl($linedata['description']), ENT_QUOTES) . "</td>\n";
+      }
+    }
+
     echo " </tr>\n";
 }
 ?>
@@ -589,7 +625,7 @@ while ($row = sqlFetchArray($res)) {
   <th><?php xl('List','e'); ?></th>
   <th><?php xl('Label Cols','e'); ?></th>
   <th><?php xl('Data Cols','e'); ?></th>
-  <th><?php xl('Default Value','e'); ?></th>
+  <th><?php xl('Options','e'); ?></th>
   <th><?php xl('Description','e'); ?></th>
   <?php // if not english and showing layout label translations, then show translation header for description
   if ($GLOBALS['translate_layout'] && $_SESSION['language_choice'] > 1) {
@@ -650,7 +686,7 @@ while ($row = sqlFetchArray($res)) {
   <th><?php xl('List','e'); ?></th>
   <th><?php xl('Label Cols','e'); ?></th>
   <th><?php xl('Data Cols','e'); ?></th>
-  <th><?php xl('Default Value','e'); ?></th>
+  <th><?php xl('Options','e'); ?></th>
   <th><?php xl('Description','e'); ?></th>
  </tr>
 </thead>
@@ -681,8 +717,9 @@ foreach ($datatypes as $key=>$value) {
 <td><input type="textbox" name="gnewlistid" id="gnewlistid" value="" size="8" maxlength="31" class="listid"> </td>
 <td><input type="textbox" name="gnewtitlecols" id="gnewtitlecols" value="" size="3" maxlength="3"> </td>
 <td><input type="textbox" name="gnewdatacols" id="gnewdatacols" value="" size="3" maxlength="3"> </td>
-<td><input type="textbox" name="gnewdefault" id="gnewdefault" value="" size="20" maxlength="63"> </td>
-<td><input type="textbox" name="gnewdesc" id="gnewdesc" value="" size="20" maxlength="63"> </td>
+<td><input type="textbox" name="gnewedit_options" id="gnewedit_options" value="" size="3" maxlength="36">
+    <input type="hidden"  name="gnewdefault" id="gnewdefault" value="" /> </td>
+<td><input type="textbox" name="gnewdesc" id="gnewdesc" value="" size="30" maxlength="63"> </td>
 </tr>
 </tbody>
 </table>
@@ -707,7 +744,7 @@ foreach ($datatypes as $key=>$value) {
    <th><?php xl('List','e'); ?></th>
    <th><?php xl('Label Cols','e'); ?></th>
    <th><?php xl('Data Cols','e'); ?></th>
-   <th><?php xl('Default Value','e'); ?></th>
+   <th><?php xl('Options','e'); ?></th>
    <th><?php xl('Description','e'); ?></th>
   </tr>
  </thead>
@@ -738,8 +775,9 @@ foreach ($datatypes as $key=>$value) {
    <td><input type="textbox" name="newlistid" id="newlistid" value="" size="8" maxlength="31" class="listid"> </td>
    <td><input type="textbox" name="newtitlecols" id="newtitlecols" value="" size="3" maxlength="3"> </td>
    <td><input type="textbox" name="newdatacols" id="newdatacols" value="" size="3" maxlength="3"> </td>
-   <td><input type="textbox" name="newdefault" id="newdefault" value="" size="20" maxlength="63"> </td>
-   <td><input type="textbox" name="newdesc" id="newdesc" value="" size="20" maxlength="63"> </td>
+   <td><input type="textbox" name="newedit_options" id="newedit_options" value="" size="3" maxlength="36">
+       <input type="hidden"  name="newdefault" id="newdefault" value="" /> </td>
+   <td><input type="textbox" name="newdesc" id="newdesc" value="" size="30" maxlength="63"> </td>
   </tr>
   <tr>
    <td colspan="9">
@@ -1082,6 +1120,7 @@ function ResetNewFieldValues () {
     $("#newlistid").val("");
     $("#newtitlecols").val("");
     $("#newdatacols").val("");
+    $("#newedit_options").val("");
     $("#newdefault").val("");
     $("#newdesc").val("");
 }

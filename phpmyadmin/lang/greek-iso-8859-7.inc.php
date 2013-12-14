@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: greek-iso-8859-7.inc.php,v 1.1.1.1 2009/05/12 21:27:27 bradymiller Exp $ */
 
 /* Translated by Kyriakos Xagoraris <theremon at users.sourceforge.net> */
 

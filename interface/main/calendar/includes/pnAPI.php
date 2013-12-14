@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: pnAPI.php,v 1.3 2009/11/17 06:53:33 bradymiller Exp $
 // ----------------------------------------------------------------------
 // PostNuke Content Management System
 // Copyright (C) 2001 by the Post-Nuke Development Team.

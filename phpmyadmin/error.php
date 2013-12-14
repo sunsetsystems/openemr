@@ -3,7 +3,7 @@
 /**
  * phpMyAdmin fatal error display page
  *
- * @version $Id$
+ * @version $Id: error.php,v 1.1.1.1 2009/05/12 21:26:39 bradymiller Exp $
  */
 
 /* Input sanitizing */

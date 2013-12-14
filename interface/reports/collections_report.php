@@ -1,5 +1,5 @@
 <?php
-// Copyright (C) 2006-2009 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2006-2010 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -11,6 +11,7 @@ require_once("../../library/patient.inc");
 require_once("../../library/sql-ledger.inc");
 require_once("../../library/invoice_summary.inc.php");
 require_once("../../library/sl_eob.inc.php");
+require_once("../../library/formatting.inc.php");
 
 $INTEGRATED_AR = $GLOBALS['oer_config']['ws_accounting']['enabled'] === 2;
 
@@ -100,8 +101,7 @@ for ($c = 0; $c < $form_age_cols; ++$c) $grand_total_agedbal[$c] = 0;
 if (!$INTEGRATED_AR) SLConnect();
 
 function bucks($amount) {
-  if ($amount)
-   printf("%.2f", $amount);
+  if ($amount) echo oeFormatMoney($amount);
 }
 
 function endPatient($ptrow) {
@@ -150,18 +150,23 @@ function endPatient($ptrow) {
   else {
     if ($ptrow['count'] > 1) {
       echo " <tr bgcolor='$bgcolor'>\n";
+      /***************************************************************
       echo "  <td class='detail' colspan='$initial_colspan'>";
       echo "&nbsp;</td>\n";
       echo "  <td class='detotal' colspan='$final_colspan'>&nbsp;Total Patient Balance:</td>\n";
+      ***************************************************************/
+      echo "  <td class='detotal' colspan='" . ($initial_colspan + $final_colspan) .
+        "'>&nbsp;" . xl('Total Patient Balance') . ":</td>\n";
+      /**************************************************************/
       if ($form_age_cols) {
         for ($c = 0; $c < $form_age_cols; ++$c) {
           echo "  <td class='detotal' align='right'>&nbsp;" .
-            sprintf("%.2f", $ptrow['agedbal'][$c]) . "&nbsp;</td>\n";
+            oeFormatMoney($ptrow['agedbal'][$c]) . "&nbsp;</td>\n";
         }
       }
       else {
         echo "  <td class='detotal' align='right'>&nbsp;" .
-          sprintf("%.2f", $pt_balance) . "&nbsp;</td>\n";
+          oeFormatMoney($pt_balance) . "&nbsp;</td>\n";
       }
       if ($form_cb_idays) echo "  <td class='detail'>&nbsp;</td>\n";
       echo "  <td class='detail' colspan='2'>&nbsp;</td>\n";
@@ -193,20 +198,20 @@ function endInsurance($insrow) {
     echo " <tr bgcolor='$bgcolor'>\n";
     echo "  <td class='detail'>" . $insrow['insname'] . "</td>\n";
     echo "  <td class='detotal' align='right'>&nbsp;" .
-      sprintf("%.2f", $insrow['charges']) . "&nbsp;</td>\n";
+      oeFormatMoney($insrow['charges']) . "&nbsp;</td>\n";
     echo "  <td class='detotal' align='right'>&nbsp;" .
-      sprintf("%.2f", $insrow['adjustments']) . "&nbsp;</td>\n";
+      oeFormatMoney($insrow['adjustments']) . "&nbsp;</td>\n";
     echo "  <td class='detotal' align='right'>&nbsp;" .
-      sprintf("%.2f", $insrow['paid']) . "&nbsp;</td>\n";
+      oeFormatMoney($insrow['paid']) . "&nbsp;</td>\n";
     if ($form_age_cols) {
       for ($c = 0; $c < $form_age_cols; ++$c) {
         echo "  <td class='detotal' align='right'>&nbsp;" .
-          sprintf("%.2f", $insrow['agedbal'][$c]) . "&nbsp;</td>\n";
+          oeFormatMoney($insrow['agedbal'][$c]) . "&nbsp;</td>\n";
       }
     }
     else {
       echo "  <td class='detotal' align='right'>&nbsp;" .
-        sprintf("%.2f", $ins_balance) . "&nbsp;</td>\n";
+        oeFormatMoney($ins_balance) . "&nbsp;</td>\n";
     }
     echo " </tr>\n";
   }
@@ -410,7 +415,7 @@ if ($_POST['form_search'] || $_POST['form_export'] || $_POST['form_csvexport']) 
     }
 
     $query = "SELECT f.id, f.date, f.pid, f.encounter, f.last_level_billed, " .
-      "f.last_level_closed, f.last_stmt_date, f.stmt_count, " .
+      "f.last_level_closed, f.last_stmt_date, f.stmt_count, f.invoice_refno, " .
       "p.fname, p.mname, p.lname, p.street, p.city, p.state, " .
       "p.postal_code, p.phone_home, p.ss, p.genericname2, p.genericval2, " .
       "p.pubpid, p.DOB, CONCAT(u.lname, ', ', u.fname) AS referrer, " .
@@ -501,6 +506,7 @@ if ($_POST['form_search'] || $_POST['form_export'] || $_POST['form_csvexport']) 
       $row['pubpid']    = $erow['pubpid'];
       $row['billnote']  = ($erow['genericname2'] == 'Billing') ? $erow['genericval2'] : '';
       $row['referrer']  = $erow['referrer'];
+      $row['irnumber']  = $erow['invoice_refno'];
 
       // Also get the primary insurance company name whenever there is one.
       $row['ins1'] = '';
@@ -951,7 +957,7 @@ if ($_POST['form_search'] || $_POST['form_export'] || $_POST['form_csvexport']) 
           echo "  <td class='detail'>&nbsp;" . $row['ss'] . "</td>\n";
         }
         if ($form_cb_dob) {
-          echo "  <td class='detail'>&nbsp;" . $row['DOB'] . "</td>\n";
+          echo "  <td class='detail'>&nbsp;" . oeFormatShortDate($row['DOB']) . "</td>\n";
         }
         if ($form_cb_pubpid) {
           echo "  <td class='detail'>&nbsp;" . $row['pubpid'] . "</td>\n";
@@ -978,14 +984,14 @@ if ($_POST['form_search'] || $_POST['form_export'] || $_POST['form_csvexport']) 
 ?>
   <td class="detail">
    &nbsp;<a href="../billing/sl_eob_invoice.php?id=<?php echo $row['id'] ?>"
-    target="_blank"><?php echo $row['invnumber'] ?></a>
+    target="_blank"><?php echo empty($row['irnumber']) ? $row['invnumber'] : $row['irnumber']; ?></a>
   </td>
   <td class="detail">
-   &nbsp;<?php echo $row['dos']; ?>
+   &nbsp;<?php echo oeFormatShortDate($row['dos']); ?>
   </td>
 <?php if ($form_cb_adate) { ?>
   <td class='detail'>
-   &nbsp;<?php echo $row['ladate']; ?>
+   &nbsp;<?php echo oeFormatShortDate($row['ladate']); ?>
   </td>
 <?php } ?>
   <td class="detail" align="right">
@@ -1051,15 +1057,15 @@ if ($_POST['form_search'] || $_POST['form_export'] || $_POST['form_csvexport']) 
       // echo '"' . $insname                             . '",';
       echo '"' . $row['ins1']                         . '",';
       echo '"' . $ptname                              . '",';
-      echo '"' . $row['invnumber']                    . '",';
-      echo '"' . $row['dos']                          . '",';
+      echo '"' . (empty($row['irnumber']) ? $row['invnumber'] : $row['irnumber']) . '",';
+      echo '"' . oeFormatShortDate($row['dos'])       . '",';
       echo '"' . $row['referrer']                     . '",';
-      echo '"' . sprintf('%.2f', $row['charges'])     . '",';
-      echo '"' . sprintf('%.2f', $row['adjustments']) . '",';
-      echo '"' . sprintf('%.2f', $row['paid'])        . '",';
-      echo '"' . sprintf('%.2f', $balance)            . '",';
+      echo '"' . oeFormatMoney($row['charges'])       . '",';
+      echo '"' . oeFormatMoney($row['adjustments'])   . '",';
+      echo '"' . oeFormatMoney($row['paid'])          . '",';
+      echo '"' . oeFormatMoney($balance)              . '",';
       echo '"' . $row['inactive_days']                . '",';
-      echo '"' . $row['ladate']                       . '"' . "\n";
+      echo '"' . oeFormatShortDate($row['ladate'])    . '"' . "\n";
     } // end $form_csvexport
 
   } // end loop
@@ -1071,8 +1077,8 @@ if ($_POST['form_search'] || $_POST['form_export'] || $_POST['form_csvexport']) 
 
   if ($_POST['form_export']) {
     echo "</textarea>\n";
-    $alertmsg .= "$export_patient_count patients representing $" .
-      sprintf("%.2f", $export_dollars) . " have been exported ";
+    $alertmsg .= "$export_patient_count patients with total of " .
+      oeFormatMoney($export_dollars) . " have been exported ";
     if ($_POST['form_without']) {
       $alertmsg .= "but NOT flagged as in collections.";
     } else {
@@ -1095,20 +1101,20 @@ if ($_POST['form_search'] || $_POST['form_export'] || $_POST['form_csvexport']) 
         "'>&nbsp;" . xl('Report Totals') . ":</td>\n";
     }
     echo "  <td class='dehead' align='right'>&nbsp;" .
-      sprintf("%.2f", $grand_total_charges) . "&nbsp;</td>\n";
+      oeFormatMoney($grand_total_charges) . "&nbsp;</td>\n";
     echo "  <td class='dehead' align='right'>&nbsp;" .
-      sprintf("%.2f", $grand_total_adjustments) . "&nbsp;</td>\n";
+      oeFormatMoney($grand_total_adjustments) . "&nbsp;</td>\n";
     echo "  <td class='dehead' align='right'>&nbsp;" .
-      sprintf("%.2f", $grand_total_paid) . "&nbsp;</td>\n";
+      oeFormatMoney($grand_total_paid) . "&nbsp;</td>\n";
     if ($form_age_cols) {
       for ($c = 0; $c < $form_age_cols; ++$c) {
         echo "  <td class='dehead' align='right'>" .
-          sprintf("%.2f", $grand_total_agedbal[$c]) . "&nbsp;</td>\n";
+          oeFormatMoney($grand_total_agedbal[$c]) . "&nbsp;</td>\n";
       }
     }
     else {
       echo "  <td class='dehead' align='right'>" .
-        sprintf("%.2f", $grand_total_charges +
+        oeFormatMoney($grand_total_charges +
         $grand_total_adjustments - $grand_total_paid) . "&nbsp;</td>\n";
     }
     if ($form_cb_idays) echo "  <td class='detail'>&nbsp;</td>\n";

@@ -3,7 +3,7 @@
 /**
  * Contributed by Maxime Delorme and merged by lem9
  *
- * @version $Id$
+ * @version $Id: pdf_schema.php,v 1.1.1.1 2009/05/12 21:26:40 bradymiller Exp $
  */
 
 /**

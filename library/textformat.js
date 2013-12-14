@@ -8,10 +8,12 @@
 // Onkeyup handler for dates.  Converts dates that are keyed in to a
 // consistent format, and helps to reduce typing errors.
 //
-function datekeyup(e, defcc) {
+function datekeyup(e, defcc, withtime) {
+ if (typeof(withtime) == 'undefined') withtime = false;
+
  while(true) {
   var delim = '';
-  var arr = new Array(0, 0, 0);
+  var arr = new Array(0, 0, 0, 0, 0, 0);
   var ix = 0;
   var v = e.value;
 
@@ -20,7 +22,11 @@ function datekeyup(e, defcc) {
    var c = v.charAt(i);
    if (c >= '0' && c <= '9') {
     ++arr[ix];
-   } else if (c == '-' || c == '/') {
+   } else if (ix < 2 && (c == '-' || c == '/')) {
+    arr[++ix] = 0;
+   } else if (withtime && ix == 2 && c == ' ') {
+    arr[++ix] = 0;
+   } else if (withtime && (ix == 3 || ix == 4) && c == ':') {
     arr[++ix] = 0;
    } else {
     e.value = v.substring(0, i);
@@ -30,7 +36,11 @@ function datekeyup(e, defcc) {
 
   // We have finished scanning the string.  If there is a problem,
   // drop the last character and repeat the loop.
-  if ((ix > 2) ||
+  if ((ix > 5) ||
+      (!withtime && ix > 2)   ||
+      (ix > 4 && arr[4] == 0) ||
+      (ix > 3 && arr[3] == 0) ||
+      (ix > 2 && arr[2] == 0) ||
       (ix > 1 && arr[1] == 0) ||
       (ix > 0 && arr[0] == 0) ||
       (arr[0] > 8) ||
@@ -43,15 +53,16 @@ function datekeyup(e, defcc) {
   }
  }
 
+ // The remainder does reformatting if there is enough data for that.
  if (arr[2] == 4 && defcc == '1') { // mm/dd/yyyy
-  e.value  = v.substring(arr[0] + arr[1] + 2) + '-'; // year
+  e.value  = v.substring(arr[0] + arr[1] + 2, arr[0] + arr[1] + 6) + '-'; // year
   if (arr[0] == 1) e.value += '0';
   e.value += v.substring(0, arr[0]) + '-'; // month
   if (arr[1] == 1) e.value += '0';
   e.value += v.substring(arr[0] + 1, arr[0] + 1 + arr[1]); // day
  }
  else if (arr[2] == 4) { // dd-mm-yyyy
-  e.value  = v.substring(arr[0] + arr[1] + 2) + '-'; // year
+  e.value  = v.substring(arr[0] + arr[1] + 2, arr[0] + arr[1] + 6) + '-'; // year
   if (arr[1] == 1) e.value += '0';
   e.value += v.substring(arr[0] + 1, arr[0] + 1 + arr[1]) + '-'; // month
   if (arr[0] == 1) e.value += '0';
@@ -61,33 +72,41 @@ function datekeyup(e, defcc) {
   e.value  = v.substring(0, arr[0]) + '-'; // year
   if (arr[1] == 1) e.value += '0';
   e.value += v.substring(arr[0] + 1, arr[0] + 1 + arr[1]) + '-'; // month
-  e.value += v.substring(arr[0] + arr[1] + 2); // day (may be 1 digit)
+  e.value += v.substring(arr[0] + arr[1] + 2, arr[0] + arr[1] + 2 + arr[2]); // day (may be 1 digit)
  }
  else if (arr[0] == 8 && defcc == '1') { // yyyymmdd
   e.value  = v.substring(0, 4) + '-'; // year
   e.value += v.substring(4, 6) + '-'; // month
-  e.value += v.substring(6); // day
+  e.value += v.substring(6, 8); // day
  }
  else if (arr[0] == 8) { // ddmmyyyy
-  e.value  = v.substring(4) + '-'; // year
+  e.value  = v.substring(4, 8) + '-'; // year
   e.value += v.substring(2, 4) + '-'; // month
   e.value += v.substring(0, 2); // day
+ }
+ else {
+  return;
+ }
+ if (withtime) {
+  e.value += v.substring(arr[0] + arr[1] + arr[2] + 2);
  }
 }
 
 // Onblur handler to avoid incomplete entry of dates.
 //
-function dateblur(e, defcc) {
+function dateblur(e, defcc, withtime) {
+ if (typeof(withtime) == 'undefined') withtime = false;
+
  var v = e.value;
  if (v.length == 0) return;
 
- var arr = new Array(0, 0, 0);
+ var arr = new Array(0, 0, 0, 0, 0);
  var ix = 0;
  for (var i = 0; i < v.length; ++i) {
   var c = v.charAt(i);
   if (c >= '0' && c <= '9') {
    ++arr[ix];
-  } else if (c == '-' || c == '/') {
+  } else if (c == '-' || c == '/' || c == ' ' || c == ':') {
    arr[++ix] = 0;
   } else {
    alert('Invalid character in date!');
@@ -95,7 +114,20 @@ function dateblur(e, defcc) {
   }
  }
 
- if (ix != 2 || arr[0] != 4 || arr[1] != 2 || arr[2] < 1) {
+ // A birth date may be just age in years, in which case we convert it.
+ if (ix == 0 && arr[0] > 0 && arr[0] <= 3 && e.name.indexOf('DOB') >= 0) {
+  var d = new Date();
+  d = new Date(d.getTime() - parseInt(v) * 365.25 * 24 * 60 * 60 * 1000);
+  var s = '' + d.getFullYear() + '-';
+  if (d.getMonth() < 9) s += '0';
+  s += (d.getMonth() + 1) + '-';
+  if (d.getDate() < 10) s += '0';
+  s += d.getDate();
+  e.value = s;
+  return;
+ }
+
+ if ((!withtime && ix != 2) || (withtime && ix < 2) || arr[0] != 4 || arr[1] != 2 || arr[2] < 1) {
   if (confirm('Date entry is incomplete! Try again?'))
    e.focus();
   else
@@ -196,3 +228,48 @@ function phonekeyup(e, defcc) {
 
  return;
 }
+
+// onKeyUp handler for mask-formatted fields.
+// This feature is experimental.
+function maskkeyup(elem, mask) {
+ if (!mask || mask.length == 0) return;
+ var i = 0; // elem and mask index
+ var v = elem.value;
+ for (; i < mask.length && i < v.length; ++i) {
+  var ec = v.charAt(i);
+  var mc = mask.charAt(i);
+  if (mc == '#' && (ec < '0' || ec > '9')) {
+   break;
+  }
+ }
+ v = v.substring(0, i);
+ while (i < mask.length) {
+  var mc = mask.charAt(i++);
+  if (mc == '*' || mc == '#') break;
+  v += mc;
+ }
+ elem.value = v;
+}
+
+// onBlur handler for mask-formatted fields.
+// This feature is experimental.
+function maskblur(elem, mask) {
+ var v = elem.value;
+ var i = mask.length;
+ if (i > 0 && v.length > 0 && v.length != i) {
+  for (; i > 0 && mask.charAt(i-1) == '#'; --i);
+  // i is now index to first # in # string at end of mask
+  if (i > v.length) {
+   if (confirm('Field entry is incomplete! Try again?'))
+    elem.focus();
+   else
+    elem.value = '';
+   return;
+  }
+  while (v.length < mask.length) {
+   v = v.substring(0, i) + '0' + v.substring(i, v.length);
+  }
+  elem.value = v;
+ }
+}
+

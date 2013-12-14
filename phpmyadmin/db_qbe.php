@@ -3,7 +3,7 @@
 /**
  * query by example the whole database
  *
- * @version $Id$
+ * @version $Id: db_qbe.php,v 1.1.1.1 2009/05/12 21:26:41 bradymiller Exp $
  */
 
 /**

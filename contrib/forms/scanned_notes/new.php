@@ -11,7 +11,7 @@
 // This nonsense will go away if we ever move to subversion.
 //////////////////////////////////////////////////////////////////////
 
-// Copyright (C) 2006 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2006, 2010 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@ if (! $encounter) { // comes from globals.php
 }
 
 $formid = $_GET['id'];
-$imagedir = "$webserver_root/documents/$pid/encounters";
+$imagedir = $GLOBALS['OE_SITE_DIR'] . "/documents/$pid/encounters";
 
 // If Save was clicked, save the info.
 //
@@ -70,8 +70,9 @@ if ($_POST['bn_save']) {
   }
   if (is_file($imagepath)) unlink($imagepath);
   $tmp_name = $_FILES['form_image']['tmp_name'];
-  // $cmd = "convert '$tmp_name' '$imagepath'"; // default density is 72 dpi
-  $cmd = "convert -density 96 '$tmp_name' -append '$imagepath'";
+  // default density is 72 dpi, we change to 96.  And -append was removed
+  // to create a separate image file for each page.
+  $cmd = "convert -density 96 '$tmp_name' '$imagepath'";
   $tmp0 = exec($cmd, $tmp1, $tmp2);
   if ($tmp2) die("\"$cmd\" returned $tmp2: $tmp0");
  }
@@ -83,7 +84,8 @@ if ($_POST['bn_save']) {
 }
 
 $imagepath = "$imagedir/${encounter}_$formid.jpg";
-$imageurl = "$web_root/documents/$pid/encounters/${encounter}_$formid.jpg";
+$imageurl = "$web_root/sites/" . $_SESSION['site_id'] .
+      "/documents/$pid/encounters/${encounter}_$formid.jpg";
 
 if ($formid) {
  $row = sqlQuery("SELECT * FROM form_scanned_notes WHERE " .

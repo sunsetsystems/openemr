@@ -163,9 +163,9 @@ a:hover {
  * Here we have taken variables from globals.php and turned them into CSS classes 
  * these should be used in place of the GLOBAL variables -- JRM March 2008
  *=============================================================*/
-.body_top { background-color: #94d6e7; margin: 8px }    /* $top_bg_line */
+.body_top { background-color: #94d6e7; }    /* $top_bg_line */
 .bgcolor2 { background-color: #94d6e7; }    /* $GLOBALS['style']['BGCOLOR2'] */
-.body_bottom { background: url('../pic/aquabg.gif') repeat; margin: 8px }  /* $bottom_bg_line */
+.body_bottom { background: url('../pic/aquabg.gif') repeat; }  /* $bottom_bg_line */
 .body_title { background-color: #aaffff; }  /* $title_bg_line */
 .body_nav { background-color: #94d6e7; }    /* $nav_bg_line */
 .body_filler { background-color: #f7f0d5; } /* $login_filler_line */
@@ -243,8 +243,8 @@ font-style: italic;
 font-weight: bold;
 }
 #documents_list {
-    width: 28%;
-    height: 100%;
+    width: 25%;
+    height: 90%; 
     overflow: auto; 
     border: 2px inset;
     float: left;
@@ -252,7 +252,7 @@ font-weight: bold;
 #documents_actions {
     padding-top: 10px;
     width: 70%;
-    height: 100%;
+    height: 90%; 
     float: right;
     overflow: auto;
 }
@@ -293,7 +293,7 @@ font-weight: bold;
     font-size: 0.8em;
     vertical-align: top;
     text-align: left;
-    padding-right: 6px;/*30px - ie 6 fix*/
+    padding-right: 30px;
 }
 
 /* Patient History */
@@ -301,21 +301,21 @@ font-weight: bold;
 #HIS .groupname {
     font-weight: bold;
     color: #080;
-    font-size: 9pt;
-    padding-right: 1px;
+    font-size: 0.8em;
+    padding-right: 5px;
     vertical-align: top;
     height: 2em;
 }
 #HIS .label {
     font-weight: bold;
-    font-size: 9pt;
+    font-size: 0.8em;
     vertical-align: top;
 }
 #HIS .data {
-    font-size: 9pt;
+    font-size: 0.8em;
     vertical-align: top;
     text-align: left;
-    padding-right: 10px;
+    padding-right: 30px;
 }
 
 
@@ -340,7 +340,7 @@ font-weight: bold;
 }
 
 #pnotes .noterow td {
-    border-bottom:1px dashed black;
+    border-top:1px solid black;
     vertical-align: top;
     padding: 5px;
     margin: 5px;
@@ -599,63 +599,9 @@ font-weight: bold;
     background-color:#ffffff;
 }
 
-
-/*
- * CSS BUTTONS
-*/
-.css_button_small {
-    background: transparent url( '../../images/bg_button_a_small.gif' ) no-repeat scroll top right;
-    color: #444;
-    display: block;
-    float: left;
-    font: bold 9px arial, sans-serif;
-    height: 19px;
-    margin-right: 3px;
-    padding-right: 10px; /* sliding doors padding */
-    text-decoration: none;
-}
-
-.css_button_small span {
-    background: transparent url( '../../images/bg_button_span_small.gif' ) no-repeat;
-    display: block;
-    line-height: 20px;
-    padding: 0px 0px 0px 10px;
-}
-
-.css_button {
-    background: transparent url( '../../images/bg_button_a.gif' ) no-repeat scroll top right;
-    color: #444;
-    display: block;
-    float: left;
-    font: bold 10px arial, sans-serif;
-    height: 24px;
-    margin-right: 3px;
-    padding-right: 10px; /* sliding doors padding */
-    text-decoration: none;
-}
-
-.css_button span {
-    background: transparent url( '../../images/bg_button_span.gif' ) no-repeat;
-    display: block;
-    line-height: 14px;
-    padding: 5px 0 5px 10px;
-}
-.sellistclass {
-float:left;
-}
-
-.disabled_button {
-	color: grey;
-
-}
-
-a.disabled_button:hover {
-  color: grey;
-}
-
 /*
  * TABS
-*/
+ */
 
 ul.tabNav { margin: 0; padding: 0; }
 ul.tabNav { float: left; list-style: none; width: 100%; }
@@ -695,3 +641,4 @@ div.tab table td.data {
 .section-header {
 	margin-bottom:5px; width:685px; border-bottom: 1px solid;
 }
+

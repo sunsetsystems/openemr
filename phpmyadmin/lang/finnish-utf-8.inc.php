@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: finnish-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:04 bradymiller Exp $ */
 
 /*
  * Translated by Jouni Kähkönen, <address withdrawn>

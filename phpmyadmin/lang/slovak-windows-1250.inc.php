@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: slovak-windows-1250.inc.php,v 1.1.1.1 2009/05/12 21:27:07 bradymiller Exp $ */
 
 /* By: lubos klokner <erkac@vault-tec.sk> */
 /* and Ivan Kuriscak <shylauda69@yahoo.com>

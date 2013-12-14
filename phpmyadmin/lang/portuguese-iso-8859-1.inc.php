@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: portuguese-iso-8859-1.inc.php,v 1.1.1.1 2009/05/12 21:27:17 bradymiller Exp $ */
 
 /**
  * Portuguese language file by

@@ -1,5 +1,5 @@
 <?php
-// Copyright (C) 2006-2009 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2006-2010 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -10,13 +10,13 @@
 // SQL-Ledger so as to include all types of invoice items.
 
 require_once("../globals.php");
-require_once("../../library/patient.inc");
-require_once("../../library/sql-ledger.inc");
-require_once("../../library/acl.inc");
+require_once("$srcdir/patient.inc");
+require_once("$srcdir/sql-ledger.inc");
+require_once("$srcdir/acl.inc");
+require_once("$srcdir/formatting.inc.php");
 
 function bucks($amount) {
-  if ($amount)
-    printf("%.2f", $amount);
+  if ($amount) echo oeFormatMoney($amount);
 }
 
 function display_desc($desc) {
@@ -26,11 +26,11 @@ function display_desc($desc) {
   return $desc;
 }
 
-function thisLineItem($patient_id, $encounter_id, $rowcat, $description, $transdate, $qty, $amount) {
+function thisLineItem($patient_id, $encounter_id, $rowcat, $description, $transdate, $qty, $amount, $irnumber='') {
   global $product, $category, $producttotal, $productqty, $cattotal, $catqty, $grandtotal, $grandqty;
   global $productleft, $catleft;
 
-  $invnumber = "$patient_id.$encounter_id";
+  $invnumber = $irnumber ? $irnumber : "$patient_id.$encounter_id";
   $rowamount = sprintf('%01.2f', $amount);
 
   if (empty($rowcat)) $rowcat = 'None';
@@ -106,7 +106,7 @@ function thisLineItem($patient_id, $encounter_id, $rowcat, $description, $transd
     if ($_POST['form_csvexport']) {
       echo '"' . display_desc($category ) . '",';
       echo '"' . display_desc($product  ) . '",';
-      echo '"' . display_desc($transdate) . '",';
+      echo '"' . oeFormatShortDate(display_desc($transdate)) . '",';
       echo '"' . display_desc($invnumber) . '",';
       echo '"' . display_desc($qty      ) . '",';
       echo '"'; bucks($rowamount); echo '"' . "\n";
@@ -122,10 +122,11 @@ function thisLineItem($patient_id, $encounter_id, $rowcat, $description, $transd
    <?php echo display_desc($productleft); $productleft = "&nbsp;"; ?>
   </td>
   <td class="dehead">
-   <?php echo $transdate; ?>
+   <?php echo oeFormatShortDate($transdate); ?>
   </td>
   <td class="detail">
-   <?php echo $invnumber; ?>
+   <a href='../patient_file/pos_checkout.php?ptid=<?php echo $patient_id; ?>&enc=<?php echo $encounter_id; ?>'>
+   <?php echo $invnumber; ?></a>
   </td>
   <td class="dehead" align="right">
    <?php echo $qty; ?>
@@ -284,7 +285,7 @@ function thisLineItem($patient_id, $encounter_id, $rowcat, $description, $transd
 
     if ($INTEGRATED_AR) {
       $query = "SELECT b.fee, b.pid, b.encounter, b.code_type, b.code, b.units, " .
-        "b.code_text, fe.date, fe.facility_id, lo.title " .
+        "b.code_text, fe.date, fe.facility_id, fe.invoice_refno, lo.title " .
         "FROM billing AS b " .
         "JOIN form_encounter AS fe ON fe.pid = b.pid AND fe.encounter = b.encounter " .
         "LEFT JOIN codes AS c ON c.code = b.code AND c.modifier = b.modifier " .
@@ -301,11 +302,11 @@ function thisLineItem($patient_id, $encounter_id, $rowcat, $description, $transd
       while ($row = sqlFetchArray($res)) {
         thisLineItem($row['pid'], $row['encounter'],
           $row['title'], $row['code'] . ' ' . $row['code_text'],
-          substr($row['date'], 0, 10), $row['units'], $row['fee']);
+          substr($row['date'], 0, 10), $row['units'], $row['fee'], $row['invoice_refno']);
       }
       //
       $query = "SELECT s.sale_date, s.fee, s.quantity, s.pid, s.encounter, " .
-        "d.name, fe.date, fe.facility_id " .
+        "d.name, fe.date, fe.facility_id, fe.invoice_refno " .
         "FROM drug_sales AS s " .
         "JOIN drugs AS d ON d.drug_id = s.drug_id " .
         "JOIN form_encounter AS fe ON " .
@@ -321,7 +322,7 @@ function thisLineItem($patient_id, $encounter_id, $rowcat, $description, $transd
       $res = sqlStatement($query);
       while ($row = sqlFetchArray($res)) {
         thisLineItem($row['pid'], $row['encounter'], xl('Products'), $row['name'],
-          substr($row['date'], 0, 10), $row['quantity'], $row['fee']);
+          substr($row['date'], 0, 10), $row['quantity'], $row['fee'], $row['invoice_refno']);
       }
     }
     else {

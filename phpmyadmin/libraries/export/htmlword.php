@@ -3,7 +3,7 @@
 /**
  * Set of functions used to build CSV dumps of tables
  *
- * @version $Id$
+ * @version $Id: htmlword.php,v 1.1.1.1 2009/05/12 21:26:46 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

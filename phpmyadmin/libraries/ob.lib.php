@@ -9,7 +9,7 @@
  * Check for all the needed functions for output buffering
  * Make some wrappers for the top and bottoms of our files.
  *
- * @version $Id$
+ * @version $Id: ob.lib.php,v 1.1.1.1 2009/05/12 21:26:45 bradymiller Exp $
  */
 
 /**

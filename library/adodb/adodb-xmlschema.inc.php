@@ -35,9 +35,9 @@ OSSIBILITY OF SUCH DAMAGE.
  * build a database on any ADOdb-supported platform using a simple
  * XML schema.
  *
- * Last Editor: $Author$
+ * Last Editor: $Author: sunsetsystems $
  * @author Richard Tango-Lowy & Dan Cech
- * @version $Revision$
+ * @version $Revision: 1.2 $
  *
  * @package axmls
  * @tutorial getting_started.pkg
@@ -1004,7 +1004,7 @@ class dbQuerySet extends dbObject {
 * @tutorial getting_started.pkg
 *
 * @author Richard Tango-Lowy & Dan Cech
-* @version $Revision$
+* @version $Revision: 1.2 $
 *
 * @package axmls
 */

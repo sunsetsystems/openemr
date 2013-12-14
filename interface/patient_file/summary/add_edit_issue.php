@@ -1,5 +1,5 @@
 <?php
-// Copyright (C) 2005-2009 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2005-2010 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -78,6 +78,17 @@ function rbcell($name, $value, $desc, $colname) {
  return "<td width='25%' nowrap>" . rbinput($name, $value, $desc, $colname) . "</td>\n";
 }
 
+// Given an issue type as a string, compute its index.
+function issueTypeIndex($tstr) {
+  global $ISSUE_TYPES;
+  $i = 0;
+  foreach ($ISSUE_TYPES as $key => $value) {
+    if ($key == $tstr) break;
+    ++$i;
+  }
+  return $i;
+}
+
 // If we are saving, then save and close the window.
 //
 if ($_POST['form_save']) {
@@ -91,6 +102,15 @@ if ($_POST['form_save']) {
   $form_begin = fixDate($_POST['form_begin'], '');
   $form_end   = fixDate($_POST['form_end'], '');
 
+  if ($text_type == 'football_injury') {
+    $form_injury_part = $_POST['form_injury_part'];
+    $form_injury_type = $_POST['form_injury_type'];
+  }
+  else {
+    $form_injury_part = $_POST['form_medical_system'];
+    $form_injury_type = $_POST['form_medical_type'];
+  }
+
   if ($issue) {
 
    $query = "UPDATE lists SET " .
@@ -103,11 +123,13 @@ if ($_POST['form_save']) {
     "diagnosis = '"   . $_POST['form_diagnosis']    . "', " .
     "occurrence = '"  . $_POST['form_occur']        . "', " .
     "classification = '" . $_POST['form_classification'] . "', " .
+    "reinjury_id = '" . $_POST['form_reinjury_id']  . "', " .
     "referredby = '"  . $_POST['form_referredby']   . "', " .
-    "extrainfo = '"   . $_POST['form_missed']       . "', " .
+    "injury_grade = '" . $_POST['form_injury_grade'] . "', " .
+    "injury_part = '" . $form_injury_part           . "', " .
+    "injury_type = '" . $form_injury_type           . "', " .
     "outcome = '"     . $_POST['form_outcome']      . "', " .
-//  "destination = "  . rbvalue('form_destination') . " "   . // radio button version
-    "destination = '" . $_POST['form_destination']   . "' "  .
+    "destination = '" . $_POST['form_destination']  . "' "  .
     "WHERE id = '$issue'";
     sqlStatement($query);
     if ($text_type == "medication" && enddate != '') {
@@ -121,8 +143,9 @@ if ($_POST['form_save']) {
 
    $issue = sqlInsert("INSERT INTO lists ( " .
     "date, pid, type, title, activity, comments, begdate, enddate, returndate, " .
-    "diagnosis, occurrence, classification, referredby, extrainfo, user, groupname, " .
-    "outcome, destination " .
+    // "diagnosis, occurrence, classification, referredby, extrainfo, user, groupname, " .
+    "diagnosis, occurrence, classification, referredby, user, groupname, " .
+    "outcome, destination, reinjury_id, injury_grade, injury_part, injury_type " .
     ") VALUES ( " .
     "NOW(), " .
     "'$thispid', " .
@@ -137,12 +160,14 @@ if ($_POST['form_save']) {
     "'" . $_POST['form_occur']       . "', " .
     "'" . $_POST['form_classification'] . "', " .
     "'" . $_POST['form_referredby']  . "', " .
-    "'" . $_POST['form_missed']      . "', " .
     "'" . $$_SESSION['authUser']     . "', " .
     "'" . $$_SESSION['authProvider'] . "', " .
-    "'" . $_POST['form_outcome']     . "', "  .
-// rbvalue('form_destination')       . " "   . // radio button version
-    "'" . $_POST['form_destination'] . "' "  .
+    "'" . $_POST['form_outcome']     . "', " .
+    "'" . $_POST['form_destination'] . "', " .
+    "'" . $_POST['form_reinjury_id'] . "', " .
+    "'" . $_POST['form_injury_grade'] . "', " .
+    "'" . $form_injury_part          . "', " .
+    "'" . $form_injury_type          . "' "  .
    ")");
 
   }
@@ -251,8 +276,8 @@ div.section {
  // statements that will build an array of arrays of Option objects.
  //
  $clickoptions = array();
- if (is_file("../../../custom/clickoptions.txt"))
-  $clickoptions = file("../../../custom/clickoptions.txt");
+ if (is_file($GLOBALS['OE_SITE_DIR'] . "/clickoptions.txt"))
+  $clickoptions = file($GLOBALS['OE_SITE_DIR'] . "/clickoptions.txt");
  $i = 0;
  foreach ($ISSUE_TYPES as $key => $value) {
   echo " aitypes[$i] = " . $value[3] . ";\n";
@@ -289,16 +314,31 @@ div.section {
   var comdisp = (aitypes[index] == 1) ? 'none' : '';
   var revdisp = (aitypes[index] == 1) ? '' : 'none';
   var injdisp = (aitypes[index] == 2) ? '' : 'none';
+  var nordisp = (aitypes[index] == 0) ? '' : 'none';
   document.getElementById('row_enddate'       ).style.display = comdisp;
   document.getElementById('row_active'        ).style.display = revdisp;
   document.getElementById('row_diagnosis'     ).style.display = comdisp;
   document.getElementById('row_occurrence'    ).style.display = comdisp;
   document.getElementById('row_classification').style.display = injdisp;
-  document.getElementById('row_referredby'    ).style.display = (f.form_referredby.value) ? '' : comdisp;
+  document.getElementById('row_reinjury_id'   ).style.display = injdisp;
   document.getElementById('row_comments'      ).style.display = (f.form_comments.value  ) ? '' : revdisp;
 <?php if ($GLOBALS['athletic_team']) { ?>
-  document.getElementById('row_returndate').style.display = comdisp;
-  document.getElementById('row_missed'    ).style.display = comdisp;
+  document.getElementById('row_returndate' ).style.display = comdisp;
+  document.getElementById('row_injury_grade'  ).style.display = injdisp;
+  document.getElementById('row_injury_part'   ).style.display = injdisp;
+  document.getElementById('row_injury_type'   ).style.display = injdisp;
+  document.getElementById('row_medical_system').style.display = nordisp;
+  document.getElementById('row_medical_type'  ).style.display = nordisp;
+  // Change label text of 'title' row depending on issue type:
+  document.getElementById('title_diagnosis').innerHTML = '<b>' +
+   (index == <?php echo issueTypeIndex('allergy'); ?> ?
+   '<?php echo xl('Allergy') ?>' :
+   (index == <?php echo issueTypeIndex('general'); ?> ?
+   '<?php echo xl('Title') ?>' :
+   '<?php echo xl('Text Diagnosis') ?>')) +
+   ':</b>';
+<?php } else { ?>
+  document.getElementById('row_referredby'    ).style.display = (f.form_referredby.value) ? '' : comdisp;
 <?php } ?>
 <?php
   if ($ISSUE_TYPES['football_injury']) {
@@ -429,16 +469,74 @@ function divclick(cb, divid) {
  </tr>
 
  <tr>
-  <td valign='top' nowrap><b><?php xl('Title','e'); ?>:</b></td>
+  <td valign='top' id='title_diagnosis' nowrap><b><?php echo $GLOBALS['athletic_team'] ? xl('Text Diagnosis') : xl('Title'); ?>:</b></td>
   <td>
    <input type='text' size='40' name='form_title' value='<?php echo $irow['title'] ?>' style='width:100%' />
   </td>
  </tr>
 
+ <tr id='row_diagnosis'>
+  <td valign='top' nowrap><b><?php xl('Diagnosis Code','e'); ?>:</b></td>
+  <td>
+   <input type='text' size='50' name='form_diagnosis'
+    value='<?php echo $irow['diagnosis'] ?>' onclick='sel_diagnosis()'
+    title='<?php xl('Click to select or change diagnoses','e'); ?>'
+    style='width:100%' readonly />
+  </td>
+ </tr>
+
+ <!-- For Athletic Teams -->
+
+ <tr<?php if (! $GLOBALS['athletic_team']) echo " style='display:none;'"; ?> id='row_injury_grade'>
+  <td valign='top' nowrap><b><?php xl('Grade of Injury','e'); ?>:</b></td>
+  <td>
+<?php
+echo generate_select_list('form_injury_grade', 'injury_grade', $irow['injury_grade'], '');
+?>
+  </td>
+ </tr>
+
+ <tr<?php if (! $GLOBALS['athletic_team']) echo " style='display:none;'"; ?> id='row_injury_part'>
+  <td valign='top' nowrap><b><?php xl('Injured Body Part','e'); ?>:</b></td>
+  <td>
+<?php
+echo generate_select_list('form_injury_part', 'injury_part', $irow['injury_part'], '');
+?>
+  </td>
+ </tr>
+
+ <tr<?php if (! $GLOBALS['athletic_team']) echo " style='display:none;'"; ?> id='row_injury_type'>
+  <td valign='top' nowrap><b><?php xl('Injury Type','e'); ?>:</b></td>
+  <td>
+<?php
+echo generate_select_list('form_injury_type', 'injury_type', $irow['injury_type'], '');
+?>
+  </td>
+ </tr>
+
+ <tr<?php if (! $GLOBALS['athletic_team']) echo " style='display:none;'"; ?> id='row_medical_system'>
+  <td valign='top' nowrap><b><?php xl('Medical System','e'); ?>:</b></td>
+  <td>
+<?php
+echo generate_select_list('form_medical_system', 'medical_system', $irow['injury_part'], '');
+?>
+  </td>
+ </tr>
+
+ <tr<?php if (! $GLOBALS['athletic_team']) echo " style='display:none;'"; ?> id='row_medical_type'>
+  <td valign='top' nowrap><b><?php xl('Medical Type','e'); ?>:</b></td>
+  <td>
+<?php
+echo generate_select_list('form_medical_type', 'medical_type', $irow['injury_type'], '');
+?>
+  </td>
+ </tr>
+
+ <!-- End For Athletic Teams -->
+
  <tr>
   <td valign='top' nowrap><b><?php xl('Begin Date','e'); ?>:</b></td>
   <td>
-
    <input type='text' size='10' name='form_begin' id='form_begin'
     value='<?php echo $irow['begdate'] ?>'
     onkeyup='datekeyup(this,mypcc)' onblur='dateblur(this,mypcc)'
@@ -486,31 +584,6 @@ function divclick(cb, divid) {
   </td>
  </tr>
 
- <tr id='row_diagnosis'>
-  <td valign='top' nowrap><b><?php xl('Diagnosis','e'); ?>:</b></td>
-  <td>
-
-<?php /************************************************************ ?>
-   <select name='form_diagnosis' title='<?php xl('Diagnosis must be coded into a linked encounter','e'); ?>'>
-    <option value=""><?php xl('Unknown or N/A','e'); ?></option>
-<?php
- while ($brow = sqlFetchArray($bres)) {
-  echo "   <option value='" . $brow['code'] . "'";
-  if ($brow['code'] == $irow['diagnosis']) echo " selected";
-  echo ">" . $brow['code'] . " " . substr($brow['code_text'], 0, 40) . "</option>\n";
- }
-?>
-   </select>
-<?php ************************************************************/ ?>
-
-   <input type='text' size='50' name='form_diagnosis'
-    value='<?php echo $irow['diagnosis'] ?>' onclick='sel_diagnosis()'
-    title='<?php xl('Click to select or change diagnoses','e'); ?>'
-    style='width:100%' readonly />
-
-  </td>
- </tr>
-
  <tr id='row_occurrence'>
   <td valign='top' nowrap><b><?php xl('Occurrence','e'); ?>:</b></td>
   <td>
@@ -536,14 +609,49 @@ function divclick(cb, divid) {
   </td>
  </tr>
 
- <tr<?php if (! $GLOBALS['athletic_team']) echo " style='display:none;'"; ?> id='row_missed'>
-  <td valign='top' nowrap><b><?php xl('Missed','e'); ?>:</b></td>
+ <tr<?php if (! $GLOBALS['athletic_team']) echo " style='display:none;'"; ?> id='row_reinjury_id'>
+  <td valign='top' nowrap><b><?php xl('Re-Injury?','e'); ?>:</b></td>
   <td>
-   <input type='text' size='3' name='form_missed' value='<?php echo $irow['extrainfo'] ?>'
-    title='<?php xl('Number of games or events missed, if any','e'); ?>' />
-   &nbsp;<?php xl('games/events','e'); ?>
+   <select name='form_reinjury_id'>
+    <option value='0'><?php echo xl('No'); ?></option>
+<?php
+  $pres = sqlStatement(
+   "SELECT id, begdate, title " .
+   "FROM lists WHERE " .
+   "pid = '$thispid' AND " .
+   "type = 'football_injury' AND " .
+   "activity = 1 " .
+   "ORDER BY begdate DESC"
+  );
+  while ($prow = sqlFetchArray($pres)) {
+    echo "   <option value='" . $prow['id'] . "'";
+    if ($prow['id'] == $irow['reinjury_id']) echo " selected";
+    echo ">" . $prow['begdate'] . " " . $prow['title'] . "\n";
+  }
+?>
+   </select>
   </td>
  </tr>
+
+ <!--
+ <tr<?php if (! $GLOBALS['athletic_team']) echo " style='display:none;'"; ?> id='row_extrainfo'>
+  <td valign='top' nowrap><b><?php xl('Side of Injury','e'); ?>:</b></td>
+  <td>
+   <select name='form_extrainfo'>
+<?php
+/****
+foreach ($arr_side as $key => $value)
+{
+  echo "   <option value='$key'";
+  if ($key == $irow['extrainfo']) echo " selected";
+  echo ">$value\n";
+ }
+****/
+?>
+   </select>
+  </td>
+ </tr>
+ -->
 
  <tr<?php if ($GLOBALS['athletic_team']) echo " style='display:none;'"; ?> id='row_referredby'>
   <td valign='top' nowrap><b><?php xl('Referred by','e'); ?>:</b></td>

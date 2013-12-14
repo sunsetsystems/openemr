@@ -16,7 +16,7 @@
 --                                                  
 -- Please don't forget to set up the tablenames in config.inc.php                                 
 -- 
--- $Id$
+-- $Id: create_tables_mysql_4_1_2+.sql,v 1.1.1.1 2009/05/12 21:27:30 bradymiller Exp $
 
 -- --------------------------------------------------------
 

@@ -19,6 +19,7 @@
 # PATH VARIABLES
 WEB=/var/www/html
 OPENEMR=$WEB/openemr
+SITEDIR=$OPENEMR/sites/default
 LOG=$WEB/log/logSetup.txt
 CVS=/home/openemr/cvs
 TMPDIR=/tmp/openemr-tmp
@@ -76,13 +77,12 @@ echo "Creating OpenEMR CVS packages" >> $LOG
 mkdir -p $TMPDIR
 cp -rf $CVS/openemr $TMPDIR/
 rm -rf `find $TMPDIR -name CVS`
-chmod a+w $TMPDIR/openemr/library/sqlconf.php
-chmod a+w $TMPDIR/openemr/interface/globals.php
-chmod -R a+w $TMPDIR/openemr/documents
-chmod -R a+w $TMPDIR/openemr/edi
-chmod -R a+w $TMPDIR/openemr/era
+chmod a+w $TMPDIR/openemr/sites/default/sqlconf.php
+chmod -R a+w $TMPDIR/openemr/sites/default/documents
+chmod -R a+w $TMPDIR/openemr/sites/default/edi
+chmod -R a+w $TMPDIR/openemr/sites/default/era
 chmod -R a+w $TMPDIR/openemr/library/freeb
-chmod -R a+w $TMPDIR/openemr/custom/letter_templates
+chmod -R a+w $TMPDIR/openemr/sites/default/letter_templates
 chmod -R a+w $TMPDIR/openemr/interface/main/calendar/modules/PostCalendar/pntemplates/cache
 chmod -R a+w $TMPDIR/openemr/interface/main/calendar/modules/PostCalendar/pntemplates/compiled
 chmod -R a+w $TMPDIR/openemr/gacl/admin/templates_c
@@ -113,12 +113,11 @@ echo "Configuring OpenEMR" >> $LOG
 chmod 666 $OPENEMR/library/sqlconf.php
 chmod 666 $OPENEMR/gacl/gacl.ini.php
 chmod 666 $OPENEMR/gacl/gacl.class.php
-chmod 666 $OPENEMR/interface/globals.php
-chown -R apache:apache $OPENEMR/documents
-chown -R apache:apache $OPENEMR/edi
-chown -R apache:apache $OPENEMR/era
+chown -R apache:apache $SITEDIR/documents
+chown -R apache:apache $SITEDIR/edi
+chown -R apache:apache $SITEDIR/era
 chown -R apache:apache $OPENEMR/library/freeb
-chown -R apache:apache $OPENEMR/custom/letter_templates
+chown -R apache:apache $SITEDIR/letter_templates
 chown -R apache:apache $OPENEMR/interface/main/calendar/modules/PostCalendar/pntemplates/cache
 chown -R apache:apache $OPENEMR/interface/main/calendar/modules/PostCalendar/pntemplates/compiled
 chown -R apache:apache $OPENEMR/gacl/admin/templates_c
@@ -143,8 +142,6 @@ sed -e 's@\/\/END POST VARIABLES@\
     $iuser = '\'''$setIuser''\'';\
     $iuname = '\'''$setIuname''\'';\
     $igroup = '\'''$setIgroup''\'';\
-    $openemrBasePath = '\'''$OPENEMR''\'';\
-    $openemrWebPath = '\'''$setOpenemrWebPath''\'';\
     $collate = '\'''$setColl''\'';\
     $inst = 1;@' <$OPENEMR/TEMPsetup.php >$OPENEMR/TEMP2setup.php
 mv -f $OPENEMR/TEMP2setup.php $OPENEMR/TEMPsetup.php
@@ -173,8 +170,7 @@ mv -f $OPENEMR/TEMP2setup.php $OPENEMR/TEMPsetup.php
 php -f $OPENEMR/TEMPsetup.php >> $LOG
 rm -f $OPENEMR/TEMPsetup.php
 #reinstitute file permissions
-chmod 644 $OPENEMR/library/sqlconf.php
-chmod 644 $OPENEMR/interface/globals.php
+chmod 644 $SITEDIR/sqlconf.php
 #replace original acl.inc and gacl/setup.php script
 mv $OPENEMR/library/TEMP2acl.inc $OPENEMR/library/acl.inc
 mv $OPENEMR/gacl/TEMP2setup.php $OPENEMR/gacl/setup.php

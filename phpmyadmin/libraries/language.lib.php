@@ -3,7 +3,7 @@
 /**
  * phpMyAdmin Language Loading File
  *
- * @version $Id$
+ * @version $Id: language.lib.php,v 1.1.1.1 2009/05/12 21:26:43 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

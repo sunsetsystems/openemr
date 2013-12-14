@@ -3,7 +3,7 @@
 /**
  * Core script for import, this is just the glue around all other stuff
  *
- * @version $Id$
+ * @version $Id: import.php,v 1.1.1.1 2009/05/12 21:26:42 bradymiller Exp $
  */
 
 /**

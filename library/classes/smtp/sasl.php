@@ -2,7 +2,7 @@
 /*
  * sasl.php
  *
- * @(#) $Id$
+ * @(#) $Id: sasl.php,v 1.1 2008/03/18 11:21:48 lemonsoftwarero Exp $
  *
  */
 
@@ -27,7 +27,7 @@ class sasl_interact_class
 
 	<package>net.manuellemos.sasl</package>
 
-	<version>@(#) $Id$</version>
+	<version>@(#) $Id: sasl.php,v 1.1 2008/03/18 11:21:48 lemonsoftwarero Exp $</version>
 	<copyright>Copyright © (C) Manuel Lemos 2004</copyright>
 	<title>Simple Authentication and Security Layer client</title>
 	<author>Manuel Lemos</author>

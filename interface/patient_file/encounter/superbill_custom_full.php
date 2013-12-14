@@ -4,10 +4,11 @@
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
 
-include_once("../../globals.php");
-include_once("../../../custom/code_types.inc.php");
-include_once("$srcdir/sql.inc");
-include_once("$srcdir/options.inc.php");
+require_once("../../globals.php");
+require_once("../../../custom/code_types.inc.php");
+require_once("$srcdir/sql.inc");
+require_once("$srcdir/options.inc.php");
+require_once("$srcdir/formatting.inc.php");
 
 // Translation for form fields.
 function ffescape($field) {
@@ -19,8 +20,8 @@ function ffescape($field) {
 //
 function bucks($amount) {
   if ($amount) {
-    $amount = sprintf("%.2f", $amount);
-    if ($amount != 0.00) return $amount;
+    $amount = oeFormatMoney($amount);
+    return $amount;
   }
   return '';
 }
@@ -149,6 +150,7 @@ if ($fend > $count) $fend = $count;
 <?php html_header_show(); ?>
 <link rel="stylesheet" href="<?php echo $css_header;?>" type="text/css">
 <script type="text/javascript" src="../../../library/dialog.js"></script>
+<script type="text/javascript" src="../../../library/textformat.js"></script>
 
 <script language="JavaScript">
 
@@ -246,6 +248,18 @@ function submitDelete(id) {
  f.submit();
 }
 
+function getCTMask() {
+ var ctid = document.forms[0].code_type.value;
+<?php
+foreach ($code_types as $key => $value) {
+  $ctid   = $value['id'];
+  $ctmask = addslashes($value['mask']);
+  echo " if (ctid == '$ctid') return '$ctmask';\n";
+}
+?>
+ return '';
+}
+
 </script>
 
 </head>
@@ -282,7 +296,10 @@ function submitDelete(id) {
    </select>
    &nbsp;&nbsp;
    <?php xl('Code','e'); ?>:
-   <input type='text' size='6' name='code' value='<?php echo $code ?>'>
+   <input type='text' size='6' name='code' value='<?php echo $code ?>'
+    onkeyup='maskkeyup(this,getCTMask())'
+    onblur='maskblur(this,getCTMask())'
+   />
 <?php if (modifiers_are_used()) { ?>
    &nbsp;&nbsp;<?php xl('Modifier','e'); ?>:
    <input type='text' size='3' name='modifier' value='<?php echo $modifier ?>'>

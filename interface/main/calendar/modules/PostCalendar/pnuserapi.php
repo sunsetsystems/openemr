@@ -1,7 +1,7 @@
 <?php
 @define('__POSTCALENDAR__','PostCalendar');
 /**
- *  $Id$
+ *  $Id: pnuserapi.php,v 1.22 2009/08/04 16:35:51 cfapress Exp $
  *
  *  PostCalendar::PostNuke Events Calendar Module
  *  Copyright (C) 2002  The PostCalendar Team

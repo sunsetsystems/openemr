@@ -3,7 +3,7 @@
 /**
  * URL/hidden inputs generating.
  *
- * @version $Id$
+ * @version $Id: url_generating.lib.php,v 1.1.1.1 2009/05/12 21:26:45 bradymiller Exp $
  */
 
 /**

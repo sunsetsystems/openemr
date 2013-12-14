@@ -16,7 +16,7 @@
  *
  * All directives are explained in Documentation.html
  *
- * @version $Id$
+ * @version $Id: config.default.php,v 1.1.1.1 2009/05/12 21:26:43 bradymiller Exp $
  */
 
 /**

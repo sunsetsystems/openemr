@@ -32,7 +32,7 @@
 // |         Harald Radi <harald.radi@nme.at>                              |
 // +-----------------------------------------------------------------------+
 //
-// $Id$
+// $Id: CategoryTreeMenu.js,v 1.2 2009/06/28 10:47:52 bradymiller Exp $
 
 /**
 * Function to create copies of objects which are

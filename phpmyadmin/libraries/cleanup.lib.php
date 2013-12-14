@@ -3,7 +3,7 @@
 /**
  * Functions for cleanup of user input.
  *
- * @version $Id$
+ * @version $Id: cleanup.lib.php,v 1.1.1.1 2009/05/12 21:26:43 bradymiller Exp $
  */
 
 /**

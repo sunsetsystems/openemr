@@ -1,5 +1,5 @@
 <?php
-  // Copyright (C) 2006-2009 Rod Roark <rod@sunsetsystems.com>
+  // Copyright (C) 2006-2010 Rod Roark <rod@sunsetsystems.com>
   //
   // This program is free software; you can redistribute it and/or
   // modify it under the terms of the GNU General Public License
@@ -11,10 +11,11 @@
   // but I wanted to make the code available to the project because
   // many other practices have this same need. - rod@sunsetsystems.com
 
-  include_once("../globals.php");
-  include_once("../../library/patient.inc");
-  include_once("../../library/sql-ledger.inc");
-  include_once("../../library/acl.inc");
+  require_once("../globals.php");
+  require_once("$srcdir/patient.inc");
+  require_once("$srcdir/sql-ledger.inc");
+  require_once("$srcdir/acl.inc");
+  require_once("$srcdir/formatting.inc.php");
 
   // This determines if a particular procedure code corresponds to receipts
   // for the "Clinic" column as opposed to receipts for the practitioner.  Each
@@ -33,8 +34,7 @@
   }
 
   function bucks($amount) {
-    if ($amount)
-      printf("%.2f", $amount);
+    if ($amount) echo oeFormatMoney($amount);
   }
 
   if (! acl_check('acct', 'rep')) die(xl("Unauthorized access."));
@@ -221,7 +221,7 @@
         }
         *************************************************************/
         $query = "SELECT b.fee, b.pid, b.encounter, b.code_type, b.code, b.modifier, " .
-          "fe.date, fe.id AS trans_id, fe.provider_id AS docid " .
+          "fe.date, fe.id AS trans_id, fe.provider_id AS docid, fe.invoice_refno " .
           "FROM billing AS b " .
           "JOIN form_encounter AS fe ON fe.pid = b.pid AND fe.encounter = b.encounter " .
           "WHERE b.code_type = 'COPAY' AND b.activity = 1 AND " .
@@ -267,6 +267,7 @@
           $arows[$key]['project_id'] = 0;
           $arows[$key]['memo'] = '';
           $arows[$key]['invnumber'] = "$patient_id.$encounter_id";
+          $arows[$key]['irnumber'] = $row['invoice_refno'];
         } // end while
       } // end copays (not $form_cptcode)
 
@@ -291,7 +292,7 @@
       if ($form_doctor) $query .= " AND u.id = '$form_doctor'";
       ***************************************************************/
       $query = "SELECT a.pid, a.encounter, a.post_time, a.code, a.modifier, a.pay_amount, " .
-        "fe.date, fe.id AS trans_id, fe.provider_id AS docid, s.deposit_date, s.payer_id, " .
+        "fe.date, fe.id AS trans_id, fe.provider_id AS docid, fe.invoice_refno, s.deposit_date, s.payer_id, " .
         "b.provider_id " .
         "FROM ar_activity AS a " .
         "JOIN form_encounter AS fe ON fe.pid = a.pid AND fe.encounter = a.encounter " .
@@ -356,6 +357,7 @@
         $arows[$key]['project_id'] = empty($row['payer_id']) ? 0 : $row['payer_id'];
         $arows[$key]['memo'] = $row['code'];
         $arows[$key]['invnumber'] = "$patient_id.$encounter_id";
+        $arows[$key]['irnumber'] = $row['invoice_refno'];
       } // end while
     } // end $INTEGRATED_AR
 
@@ -537,11 +539,11 @@
    <?php echo $docnameleft; $docnameleft = "&nbsp;" ?>
   </td>
   <td class="detail">
-   <?php echo $row['transdate'] ?>
+   <?php echo oeFormatShortDate($row['transdate']) ?>
   </td>
 <?php if ($form_procedures) { ?>
   <td class="detail">
-   <?php echo $row['invnumber'] ?>
+   <?php echo empty($row['irnumber']) ? $row['invnumber'] : $row['irnumber']; ?>
   </td>
 <?php } ?>
 <?php

@@ -1,8 +1,8 @@
 <?php
- // $Id$
- // $Author$
+ // $Id: RXList.class.php,v 1.4 2008/05/09 20:10:28 cfapress Exp $
+ // $Author: cfapress $
  //
- // $Log$
+ // $Log: RXList.class.php,v $
  // Revision 1.4  2008/05/09 20:10:28  cfapress
  // Changes to handle to HTML returned by rxlist.com
  //

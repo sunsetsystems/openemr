@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: russian-koi8-r.inc.php,v 1.1.1.1 2009/05/12 21:27:21 bradymiller Exp $ */
 
 /**
  * Translated by Gosha Sakovich <gt2 at users.sourceforge.net>

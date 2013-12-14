@@ -35,6 +35,10 @@
 //     ADD Section "placeholder" (Placeholder):
 //       ADD  filler    Placeholder (Maintains empty ACLs)
 
+$ignoreAuth = true; // no login required
+
+require_once('interface/globals.php');
+
 //Ensure that phpGACL has been installed
 include_once('library/acl.inc');
 if (isset ($phpgacl_location)) {
@@ -44,7 +48,6 @@ if (isset ($phpgacl_location)) {
 else {
 	die("You must first set up library/acl.inc to use phpGACL!");
 }
-
 
 //Collect the ACL ID numbers.
 echo "<B>Checking to ensure all the proper ACL(access control list) are present:</B></BR>";

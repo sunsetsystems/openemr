@@ -12,7 +12,7 @@
  *
  * The SQL Parser code relies heavily on these functions.
  *
- * @version $Id$
+ * @version $Id: string_type_native.lib.php,v 1.1.1.1 2009/05/12 21:26:45 bradymiller Exp $
  */
 
 /**

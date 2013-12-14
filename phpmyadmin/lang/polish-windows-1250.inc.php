@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: polish-windows-1250.inc.php,v 1.1.1.1 2009/05/12 21:27:19 bradymiller Exp $ */
 
 $charset = 'windows-1250';
 $text_dir = 'ltr';

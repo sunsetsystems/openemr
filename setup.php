@@ -1,4 +1,78 @@
 <?php
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+
+// Dummy xl function so things needing it will work.
+function xl($s) {
+  return $s;
+}
+
+// Directory copy logic borrowed from a user comment at
+// http://www.php.net/manual/en/function.copy.php
+function recurse_copy($src, $dst) {
+  $dir = opendir($src);
+  @mkdir($dst);
+  while(false !== ($file = readdir($dir))) {
+    if ($file != '.' && $file != '..') {
+      if (is_dir($src . '/' . $file)) {
+        recurse_copy($src . '/' . $file, $dst . '/' . $file);
+      }
+      else {
+        copy($src . '/' . $file, $dst . '/' . $file);
+      }
+    }
+  }
+  closedir($dir);
+}
+
+function write_sqlconf($conffile, $server, $port, $login, $pass, $dbname, $config='1') {
+  @touch($conffile); // php bug
+  $fd = @fopen($conffile, 'w');
+  $string = "<?php
+//  OpenEMR
+//  MySQL Config
+//  Referenced from sql.inc
+
+";
+
+  $it_died = 0;   //fmg: variable keeps running track of any errors
+
+  fwrite($fd, $string                         ) or $it_died++;
+  fwrite($fd, "\$host\t= '$server';\n"        ) or $it_died++;
+  fwrite($fd, "\$port\t= '$port';\n"          ) or $it_died++;
+  fwrite($fd, "\$login\t= '$login';\n"        ) or $it_died++;
+  fwrite($fd, "\$pass\t= '$pass';\n"          ) or $it_died++;
+  fwrite($fd, "\$dbase\t= '$dbname';\n\n"     ) or $it_died++;
+  fwrite($fd, "//Added ability to disable\n"  ) or $it_died++;
+  fwrite($fd, "//utf8 encoding - bm 05-2009\n") or $it_died++;
+  fwrite($fd, "\$disable_utf8_flag = false;\n") or $it_died++;
+
+  $string = '
+$sqlconf = array();
+$sqlconf["host"]= $host;
+$sqlconf["port"] = $port;
+$sqlconf["login"] = $login;
+$sqlconf["pass"] = $pass;
+$sqlconf["dbase"] = $dbase;
+//////////////////////////
+//////////////////////////
+//////////////////////////
+//////DO NOT TOUCH THIS///
+$config = ' . $config . '; /////////////
+//////////////////////////
+//////////////////////////
+//////////////////////////
+?>
+';
+
+  fwrite($fd, $string) or $it_died++;
+
+  fclose($fd);
+  return $it_died;
+}
+
 //required for normal operation because of recent changes in PHP:
 extract($_GET);
 extract($_POST);
@@ -8,6 +82,46 @@ ini_set("session.bug_compat_warn","off");
 $url = ""; 
 $upgrade = 0;
 $state = $_POST["state"];
+
+// Make this true for IPPF.
+$ippf_specific = true;
+
+// If this script was invoked with no site ID, then ask for one.
+if (empty($_REQUEST['site'])) {
+  echo "<html>\n";
+  echo "<head>\n";
+  echo "<title>OpenEMR Setup Tool</title>\n";
+  echo "<link rel='stylesheet' href='interface/themes/style_blue.css'>\n";
+  echo "</head>\n";
+  echo "<body>\n";
+  echo "<p><b>Optional Site ID Selection</b></p>\n";
+  echo "<p>Most OpenEMR installations support only one site.  If that is " .
+    "true for you then ignore the rest of this text and just click Continue.</p>\n";
+  echo "<p>Otherwise please enter a unique Site ID here.</p>\n";
+  echo "<p>A Site ID is a short identifier with no spaces or special " .
+    "characters other than periods or dashes. It is case-sensitive and we " .
+    "suggest sticking to lower case letters for ease of use.</p>\n";
+  echo "<p>If each site will have its own host/domain name, then use that " .
+    "name as the Site ID (e.g. www.example.com).</p>\n";
+  echo "<p>The site ID is used to identify which site you will log in to. " .
+    "If it is a hostname then it is taken from the hostname in the URL. " .
+    "Otherwise you must append \"?site=<i>siteid</i>\" to the URL used for " .
+    "logging in.</p>\n";
+  echo "<p>It is OK for one of the sites to have \"default\" as its ID. This " .
+    "is the ID that will be used if it cannot otherwise be determined.</p>\n";
+  echo "<form method='post'><input type='hidden' name='state' value='0'>" .
+    "Site ID: <input type='text' name='site' value='default'>&nbsp;" .
+    "<input type='submit' value='Continue'><br></form><br>\n";
+  echo "</body></html>\n";
+  exit();
+}
+
+// Support "?site=siteid" in the URL.
+$site_id = empty($_REQUEST['site']) ? 'default' : trim($_REQUEST['site']);
+
+// Die if site ID is empty or has invalid characters.
+if (empty($site_id) || preg_match('/[^A-Za-z0-9\\-.]/', $site_id))
+  die("Site ID '$site_id' contains invalid characters.");
 
 //If having problems with file and directory permission
 // checking, then can be manually disabled here.
@@ -19,17 +133,19 @@ $checkPermissions = "TRUE";
 // allow straightforward use of this script by 3rd party
 // installers)
 $manualPath = "";
+
+$GLOBALS['OE_SITE_DIR'] = $manualpath . "sites/$site_id";
 $dumpfile = $manualPath."sql/database.sql";
 $translations_dumpfile_utf8 = $manualPath."contrib/util/language_translations/currentLanguage_utf8.sql";
 $translations_dumpfile_latin1 = $manualPath."contrib/util/language_translations/currentLanguage_latin1.sql";
 $icd9 = $manualPath."sql/icd9.sql";
-$conffile = $manualPath."library/sqlconf.php";
+$conffile = "$OE_SITE_DIR/sqlconf.php";
 $conffile2 = $manualPath."interface/globals.php";
-$docsDirectory = $manualPath."documents";
-$billingDirectory = $manualPath."edi";
-$billingDirectory2 = $manualPath."era";
+$docsDirectory = "$OE_SITE_DIR/documents";
+$billingDirectory = "$OE_SITE_DIR/edi";
+$billingDirectory2 = "$OE_SITE_DIR/era";
 $billingLogDirectory = $manualPath."library/freeb";
-$lettersDirectory = $manualPath."custom/letter_templates";
+$lettersDirectory = "$OE_SITE_DIR/letter_templates";
 $gaclWritableDirectory = $manualPath."gacl/admin/templates_c";
 $requiredDirectory1 = $manualPath."interface/main/calendar/modules/PostCalendar/pntemplates/compiled";
 $requiredDirectory2 = $manualPath."interface/main/calendar/modules/PostCalendar/pntemplates/cache";
@@ -38,7 +154,7 @@ $gaclSetupScript2 = $manualPath."acl_setup.php";
 
 //These are files and dir checked before install for
 // correct permissions.
-$writableFileList = array($conffile, $conffile2);
+$writableFileList = array($conffile);
 $writableDirList = array($docsDirectory, $billingDirectory, $billingDirectory2, $billingLogDirectory, $lettersDirectory, $gaclWritableDirectory, $requiredDirectory1, $requiredDirectory2);
 
 //These are the dumpfiles that are loaded into database 
@@ -46,7 +162,14 @@ $writableDirList = array($docsDirectory, $billingDirectory, $billingDirectory2, 
 $dumpfiles = array($dumpfile);
 $dumpfilesTitles = array("Main");
 
+// Create site directory if it is missing.
+if (empty($state) && !file_exists($OE_SITE_DIR)) {
+  recurse_copy($manualpath . "sites/default", $OE_SITE_DIR);
+  write_sqlconf($conffile, 'localhost', '3306', 'openemr', 'openemr', 'openemr', '0');
+}
+
 include_once($conffile);
+
 ?>
 <HTML>
 <HEAD>
@@ -77,7 +200,7 @@ include_once($conffile);
 <ul>
  <li>Access controls (php-GACL) are installed for fine-grained security, and can be administered in
      OpenEMR's admin->acl menu.</li>
- <li>Reading openemr/includes/config.php and openemr/interface/globals.php is a good idea. These files
+ <li>Reading <?php echo $OE_SITE_DIR; ?>/config.php and openemr/interface/globals.php is a good idea. These files
      contain many options to choose from including themes.</li>
  <li>There's much information and many extra tools bundled within the OpenEMR installation directory. 
      Please refer to openemr/Documentation. Many forms and other useful scripts can be found at openemr/contrib.</li>
@@ -98,7 +221,7 @@ You should change this password!
 If you edited the PHP or Apache configuration files during this installation process, then we recommend you restart your Apache server before following below OpenEMR link.
 </p>
 <p>
- <a href='./'>Click here to start using OpenEMR. </a>
+ <a href='./?site=<?php echo $site_id; ?>'>Click here to start using OpenEMR. </a>
 </p>
 
 <?php
@@ -120,13 +243,11 @@ If you edited the PHP or Apache configuration files during this installation pro
   $iuser = $_POST["iuser"];
 	$iuname = $_POST["iuname"];
 	$igroup = $_POST["igroup"];
-	$openemrBasePath = $_POST["openemrBasePath"];
-	$openemrWebPath = $_POST["openemrWebPath"];
 	//END POST VARIABLES
 
 
 if (($config == 1) && ($state < 4)) {
-	echo "OpenEMR has already been installed.  If you wish to force re-installation, then edit $conffile(change the 'config' variable to 0), and re-run this script.<br>\n";
+	echo "OpenEMR has already been installed.  If you wish to force re-installation, then edit $conffile (change the 'config' variable to 0), and re-run this script.<br>\n";
 }
 else {
 switch ($state) {
@@ -138,6 +259,7 @@ echo "Now I need to know whether you want me to create the database on my own or
 <br><br>\n
 <FORM METHOD='POST'>\n
 <INPUT TYPE='HIDDEN' NAME='state' VALUE='2'>\n
+<INPUT TYPE='HIDDEN' NAME='site' VALUE='$site_id'>\n
 <INPUT TYPE='RADIO' NAME='inst' VALUE='1' checked>Have setup create the database<br>\n
 <INPUT TYPE='RADIO' NAME='inst' VALUE='2'>I have already created the database<br>\n
 <br>\n
@@ -150,6 +272,7 @@ echo "Now you need to supply the MySQL server information and path information. 
 <br><br>\n
 <FORM METHOD='POST'>
 <INPUT TYPE='HIDDEN' NAME='state' VALUE='3'>
+<INPUT TYPE='HIDDEN' NAME='site' VALUE='$site_id'>\n
 <INPUT TYPE='HIDDEN' NAME='inst' VALUE='$inst'>
 <TABLE>\n
 <TR VALIGN='TOP'><TD COLSPAN=2><font color='red'>MYSQL SERVER:</font></TD></TR>
@@ -196,11 +319,6 @@ echo "<TR VALIGN='TOP'><TD><span class='text'>Initial User:</span></TD><TD><INPU
 <TR VALIGN='TOP'><TD><span class='text'>Initial Group:</span></TD><TD><INPUT SIZE='30' TYPE='TEXT' NAME='igroup' VALUE='Default'></TD><TD><span class='text'>(This is the group that will be created for your users.  This should be the name of your practice.)</span></TD></TR>
 ";
 echo "<TR VALIGN='TOP'><TD>&nbsp;</TD></TR>";
-echo "<TR VALIGN='TOP'><TD COLSPAN=2><font color='red'>OPENEMR PATHS:</font></TD></TR>";
-echo "<TR VALIGN='TOP'><TD COLSPAN=3></TD></TR>
-<TR VALIGN='TOP'><TD><span class='text'>Absolute Path:</span></TD><TD><INPUT SIZE='30' TYPE='TEXT' NAME='openemrBasePath' VALUE='".realpath('./')."'></TD><TD><span class='text'>(This is the full absolute directory path to openemr. The value here is automatically created, and should not need to be modified. Do not worry about direction of slashes; they will be automatically corrected.)</span></TD></TR>
-<TR VALIGN='TOP'><TD><span class='text'>Relative HTML Path:</span></TD><TD><INPUT SIZE='30' TYPE='TEXT' NAME='openemrWebPath' VALUE='/openemr'></TD><TD><span class='text'>(Set this to the relative html path, ie. what you would type into the web browser after the server address to get to OpenEMR. For example, if you type 'http://127.0.0.1/clinic/openemr/ to load OpenEMR, set this to '/clinic/openemr' without the trailing slash. Do not worry about direction of slashes; they will be automatically corrected.)</span></TD></TR>
-";
 echo "</TABLE>
 <br>
 <INPUT TYPE='SUBMIT' VALUE='Continue'><br></FORM><br>";
@@ -305,47 +423,62 @@ if ($upgrade != 1) {
     //select the correct translation dumpfile
     if ($collate) {
         array_push($dumpfiles,$translations_dumpfile_utf8);
-	array_push($dumpfilesTitles,"Language Translation (utf8)");
+        array_push($dumpfilesTitles,"Language Translation (utf8)");
     }
     else {
         array_push($dumpfiles,$translations_dumpfile_latin1);
         array_push($dumpfilesTitles,"Language Translation (latin1)");
     }
-    
+
+    // Deal with IPPF-specific SQL.
+    if ($ippf_specific) {
+      array_push($dumpfiles, $manualPath . "sql/ippf_layout.sql");
+      array_push($dumpfilesTitles, "IPPF Layout");
+    }
+
+    // Load ICD-9 codes if present.
+    if (file_exists("sql/icd9.sql")) {
+      array_push($dumpfiles, $manualPath . "sql/icd9.sql");
+      array_push($dumpfilesTitles, "ICD-9");
+    }
+
     $dumpfileCounter = 0;
     foreach ($dumpfiles as $var) {
-        echo "Creating ".$dumpfilesTitles[$dumpfileCounter]." tables...\n";
-	mysql_query("USE $dbname",$dbh);
-	flush();
-	$fd = fopen($var, 'r');
-	if ($fd == FALSE) {
-		echo "ERROR.  Could not open dumpfile '$dumpfile'.\n";
-		flush();
-		break;
-	}
-	$query = "";
-	$line = "";
-	while (!feof ($fd)){
-		$line = fgets($fd,1024);
-		$line = rtrim($line);
-		if (substr($line,0,2) == "--") // Kill comments
-			continue;
-		if (substr($line,0,1) == "#") // Kill comments
-			continue;
-		if ($line == "")
-			continue;
-		$query = $query.$line;		// Check for full query
-		$chr = substr($query,strlen($query)-1,1);
-		if ($chr == ";") { // valid query, execute
-			$query = rtrim($query,";");
-			mysql_query("$query",$dbh);
-			$query = "";
-		}
-	}
-	echo "OK<br>\n";
-	fclose($fd);
-	flush();
-	$dumpfileCounter++;
+      echo "Creating ".$dumpfilesTitles[$dumpfileCounter]." tables...\n";
+      mysql_query("USE $dbname",$dbh);
+      flush();
+      $fd = fopen($var, 'r');
+      if ($fd == FALSE) {
+        echo "ERROR.  Could not open dumpfile '$dumpfile'.\n";
+        flush();
+        break;
+      }
+      $query = "";
+      $line = "";
+      while (!feof ($fd)){
+        $line = fgets($fd,1024);
+        $line = rtrim($line);
+        if (substr($line,0,2) == "--") // Kill comments
+          continue;
+        if (substr($line,0,1) == "#") // Kill comments
+          continue;
+        if ($line == "")
+          continue;
+        $query = $query.$line;		// Check for full query
+        $chr = substr($query,strlen($query)-1,1);
+        if ($chr == ";") { // valid query, execute
+          $query = rtrim($query,";");
+          if (!mysql_query($query, $dbh)) {
+            echo "<p>ERROR. Query failed: \"$query\"\n";
+            echo "<br />" . mysql_error() . " (#" . mysql_errno() . ")</p>\n";
+          }
+          $query = "";
+        }
+      }
+      echo "OK<br>\n";
+      fclose($fd);
+      flush();
+      $dumpfileCounter++;
     }
 	echo "Adding Initial User...\n";
 	flush();
@@ -364,36 +497,18 @@ if ($upgrade != 1) {
 	}
 	echo "OK<br>\n";
 	flush();
-/*	echo "Inserting ICD-9-CM Codes into Database...\n";
-	flush();
-        $fd = fopen($icd9, 'r');
-        if ($fd == FALSE) {
-                echo "ERROR.  Could not open dumpfile.\n";
-					 echo "<p>".mysql_error()." (#".mysql_errno().")\n";
-                flush();
-                break;
-        }
-        $query = "";
-        $line = "";
-        while (!feof ($fd)){
-                $line = fgets($fd,1024);
-                $line = rtrim($line);
-                if (substr($line,0,2) == "--") // Kill comments
-                        continue;
-		if (substr($line,0,1) == "#") // Kill comments
-			continue;
-                if ($line == "")
-                        continue;
-                $query = $query.$line;          // Check for full query
-                $chr = substr($query,strlen($query)-1,1);
-                if ($chr == ";") { // valid query, execute
-                        $query = rtrim($query,";");
-                        mysql_query("$query",$dbh);
-                        $query = "";
-                }
-        }
-	echo "OK\n";
-	fclose($fd);*/
+
+  // Set our version numbers into the version table.
+  echo "Setting version indicators...\n";
+  include "version.php";
+  if (mysql_query("UPDATE version SET v_major = '$v_major', v_minor = '$v_minor', " .
+    "v_patch = '$v_patch', v_tag = '$v_tag', v_database = '$v_database'") == FALSE) {
+    echo "ERROR.\n";
+    echo "<p>" . mysql_error() . " (#" . mysql_errno() . ")\n";
+  }
+  else {
+    echo "OK<br>\n";
+  }
 	flush();
 }	
 
@@ -407,38 +522,8 @@ $string = "<?php
 
 ";
 
-$it_died = 0;   //fmg: variable keeps running track of any errors
-
-fwrite($fd,$string) or $it_died++;
-fwrite($fd,"\$host\t= '$server';\n") or $it_died++;
-fwrite($fd,"\$port\t= '$port';\n") or $it_died++;
-fwrite($fd,"\$login\t= '$login';\n") or $it_died++;
-fwrite($fd,"\$pass\t= '$pass';\n") or $it_died++;
-fwrite($fd,"\$dbase\t= '$dbname';\n\n") or $it_died++;
-fwrite($fd,"//Added ability to disable\n") or $it_died++;
-fwrite($fd,"//utf8 encoding - bm 05-2009\n") or $it_died++;
-fwrite($fd,"\$disable_utf8_flag = false;\n") or $it_died++;
-
-$string = '
-$sqlconf = array();
-$sqlconf["host"]= $host;
-$sqlconf["port"] = $port;
-$sqlconf["login"] = $login;
-$sqlconf["pass"] = $pass;
-$sqlconf["dbase"] = $dbase;
-//////////////////////////
-//////////////////////////
-//////////////////////////
-//////DO NOT TOUCH THIS///
-$config = 1; /////////////
-//////////////////////////
-//////////////////////////
-//////////////////////////
-?>
-';
-?><?php // done just for coloring
-
-fwrite($fd,$string) or $it_died++;
+$it_died = //fmg: variable keeps running track of any errors
+  write_sqlconf($conffile, $server, $port, $login, $pass, $dbname);
 
 //it's rather irresponsible to not report errors when writing this file.
 if ($it_died != 0) {
@@ -446,56 +531,32 @@ if ($it_died != 0) {
         flush();
         break;
 }
-fclose($fd);
 
 echo "Successfully wrote SQL configuration.<BR><br>";
 
-echo "Writing OpenEMR webserver paths to config file...<br>";
-//edit interface/globals.php
-//first, ensure slashes are in correct direction (windows specific fix)
-$openemrBasePath = str_replace('\\\\', '/', $openemrBasePath);
-$openemrBasePath = str_replace('\\', '/', $openemrBasePath);
-$openemrWebPath = str_replace('\\\\', '/', $openemrWebPath);
-$openemrWebPath = str_replace('\\', '/', $openemrWebPath);
-//second, edit file (web paths and set UTF8 if pertinent)
-$data = file($conffile2) or die("Could not read ".$conffile2." file.");
-$finalData = "";
-$isCount = 0;
-foreach ($data as $line) {
-	$isHit = 0;
-        if ((strpos($line,"\$webserver_root = \"")) === false) {
-	}
-	else {
-	        $isHit = 1;
-	        $isCount += 1;
-	        $finalData .= "\$webserver_root = \"$openemrBasePath\";\n";
-	}
-        if ((strpos($line,"\$web_root = \"")) === false) {
-	}
-	else {
-	        $isHit = 1;
-	        $isCount += 1;
-	        $finalData .= "\$web_root = \"$openemrWebPath\";\n";
-	}
-        if (!$isHit) {
-	        $finalData .= $line;
-	}
+echo "Writing global configuration defaults...<br>";
+require_once("library/globals.inc.php");
+foreach ($GLOBALS_METADATA as $grpname => $grparr) {
+  foreach ($grparr as $fldid => $fldarr) {
+    list($fldname, $fldtype, $flddef, $flddesc) = $fldarr;
+    if (substr($fldtype, 0, 2) !== 'm_') {
+      $res = mysql_query("SELECT count(*) AS count FROM globals WHERE gl_name = '$fldid'");
+      $row = @mysql_fetch_array($res, MYSQL_ASSOC);
+      if (empty($row['count'])) {
+        mysql_query("INSERT INTO globals ( gl_name, gl_index, gl_value ) " .
+          "VALUES ( '$fldid', '0', '$flddef' )");
+      }
+    }
+  }
 }
-$fd = @fopen($conffile2, 'w') or die("Could not open ".$conffile2." file.");
-fwrite($fd, $finalData);
-fclose($fd);
-if ($isCount == 2) {
-	echo "Successfully wrote OpenEMR webserver paths to config file<br><br>";
-}
-else {
-	echo "<FONT COLOR='red'>ERROR</FONT> writing openemr webserver root paths to config file ($conffile2). ($isCount)<br><br>\n";
-}
-	
+echo "Successfully wrote global configuration defaults.<br><br>";
+
 echo "\n<br>Next step will install and configure access controls (php-GACL).<br>\n";
 	
 echo "
 <FORM METHOD='POST'>\n
 <INPUT TYPE='HIDDEN' NAME='state' VALUE='4'>
+<INPUT TYPE='HIDDEN' NAME='site' VALUE='$site_id'>\n
 <INPUT TYPE='HIDDEN' NAME='iuser' VALUE='$iuser'>
 <INPUT TYPE='HIDDEN' NAME='iuname' VALUE='$iuname'>
 <br>\n
@@ -523,6 +584,7 @@ echo "Next step will configure PHP.";
 
 echo "<br><FORM METHOD='POST'>\n
 <INPUT TYPE='HIDDEN' NAME='state' VALUE='5'>\n
+<INPUT TYPE='HIDDEN' NAME='site' VALUE='$site_id'>\n
 <INPUT TYPE='HIDDEN' NAME='iuser' VALUE='$iuser'>\n	
 <br>\n
 <INPUT TYPE='SUBMIT' VALUE='Continue'><br></FORM><br>\n";
@@ -554,6 +616,7 @@ echo "Next step will configure Apache web server.";
 						 
 echo "<br><FORM METHOD='POST'>\n
 <INPUT TYPE='HIDDEN' NAME='state' VALUE='6'>\n
+<INPUT TYPE='HIDDEN' NAME='site' VALUE='$site_id'>\n
 <INPUT TYPE='HIDDEN' NAME='iuser' VALUE='$iuser'>\n
 <br>\n
 <INPUT TYPE='SUBMIT' VALUE='Continue'><br></FORM><br>\n";
@@ -585,6 +648,7 @@ echo "Click 'continue' for further instructions.";
 	
 echo "<br><FORM METHOD='POST'>\n
 <INPUT TYPE='HIDDEN' NAME='state' VALUE='7'>\n
+<INPUT TYPE='HIDDEN' NAME='site' VALUE='$site_id'>\n
 <INPUT TYPE='HIDDEN' NAME='iuser' VALUE='$iuser'>\n
 <br>\n
 <INPUT TYPE='SUBMIT' VALUE='Continue'><br></FORM><br>\n";
@@ -618,7 +682,8 @@ if ($checkPermissions == "TRUE") {
 		echo "<p><FONT COLOR='red'>You can't proceed until all above files are ready (world-writable).</FONT><br>\n";	
 		echo "In linux, recommend changing file permissions with the 'chmod 666 filename' command.<br>\n";
 		echo "Fix above file permissions and then click the 'Check Again' button to re-check files.<br>\n";
-		echo "<FORM METHOD='POST'><INPUT TYPE='SUBMIT' VALUE='Check Again'></p></FORM><br>\n";
+		echo "<FORM METHOD='POST'><INPUT TYPE='SUBMIT' VALUE='Check Again'></p>" .
+      "<INPUT TYPE='HIDDEN' NAME='site' VALUE='$site_id'></FORM><br>\n";
 		break;
 	}
 
@@ -635,10 +700,11 @@ if ($checkPermissions == "TRUE") {
 		}
 	}
 	if ($errorWritable) {
-		echo "<p><FONT COLOR='red'>You can't proceed until all directories are ready.</FONT><br>\n";
-		echo "In linux, recommend changing owners of these directories to the web server. For example, in many linux OS's the web server user is 'apache', 'nobody', or 'www-data'. So if 'apache' were the web server user name, could use the command 'chown -R apache:apache directory_name' command.<br>\n";
-	        echo "Fix above directory permissions and then click the 'Check Again' button to re-check directories.<br>\n";
-	       	echo "<FORM METHOD='POST'><INPUT TYPE='SUBMIT' VALUE='Check Again'></p></FORM><br>\n";
+    echo "<p><FONT COLOR='red'>You can't proceed until all directories are ready.</FONT><br>\n";
+    echo "In linux, recommend changing owners of these directories to the web server. For example, in many linux OS's the web server user is 'apache', 'nobody', or 'www-data'. So if 'apache' were the web server user name, could use the command 'chown -R apache:apache directory_name' command.<br>\n";
+    echo "Fix above directory permissions and then click the 'Check Again' button to re-check directories.<br>\n";
+    echo "<FORM METHOD='POST'><INPUT TYPE='SUBMIT' VALUE='Check Again'></p>" .
+      "<INPUT TYPE='HIDDEN' NAME='site' VALUE='$site_id'></FORM><br>\n";
 		break;
 	}
 
@@ -648,8 +714,9 @@ else {
 	echo "<br>Click to continue installation.<br>\n";
 }
 
-echo "<FORM METHOD='POST'><INPUT TYPE='HIDDEN' NAME='state' VALUE='1'><INPUT TYPE='SUBMIT' VALUE='Continue'><br></FORM><br>";
-
+echo "<FORM METHOD='POST'><INPUT TYPE='HIDDEN' NAME='state' VALUE='1'>" .
+  "<INPUT TYPE='HIDDEN' NAME='site' VALUE='$site_id'>" .
+  "<INPUT TYPE='SUBMIT' VALUE='Continue'><br></FORM><br>";
 
 }
 }

@@ -12,7 +12,7 @@
  * did not receive this file, see http://www.fsf.org/copyleft/lgpl.html.
  *
  * @author  Mike Cochrane <mike@graftonhall.co.nz>
- * @version $Id$
+ * @version $Id: blowfish.php,v 1.1.1.1 2009/05/12 21:26:43 bradymiller Exp $
  * @since   Horde 2.2
  * @package horde.cipher
  */

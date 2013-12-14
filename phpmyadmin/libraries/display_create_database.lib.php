@@ -3,7 +3,7 @@
 /**
  * Displays form for creating database (if user has privileges for that)
  *
- * @version $Id$
+ * @version $Id: display_create_database.lib.php,v 1.1.1.1 2009/05/12 21:26:43 bradymiller Exp $
  */
 if (! defined('PHPMYADMIN')) {
     exit;

@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: thai-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:00 bradymiller Exp $ */
 
 // first created 2002/04/29 Arthit Suriyawongkul & Warit Wanasathian
 // last modified 2004/08/22 Arthit Suriyawongkul

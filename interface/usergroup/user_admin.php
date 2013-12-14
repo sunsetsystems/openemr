@@ -10,6 +10,7 @@ require_once("$srcdir/md5.js");
 require_once("$srcdir/sql.inc");
 require_once("$srcdir/calendar.inc");
 require_once("$srcdir/formdata.inc.php");
+require_once("$srcdir/options.inc.php");
 require_once(dirname(__FILE__) . "/../../library/classes/WSProvider.class.php");
 
 if (!$_GET["id"] || !acl_check('admin', 'users'))
@@ -92,6 +93,18 @@ if ($_GET["mode"] == "update") {
 	  }
   }
   //END (CHEMED) Calendar UI preference
+
+  if (isset($_GET['default_warehouse'])) {
+    sqlStatement("UPDATE users SET default_warehouse = '" .
+      formData('default_warehouse','G') .
+      "' WHERE id = '" . formData('id','G') . "'");
+  }
+
+  if (isset($_GET['irnpool'])) {
+    sqlStatement("UPDATE users SET irnpool = '" .
+      formData('irnpool','G') .
+      "' WHERE id = '" . formData('id','G') . "'");
+  }
 
   if ($_GET["newauthPass"] && $_GET["newauthPass"] != "d41d8cd98f00b204e9800998ecf8427e") { // account for empty
     $tqvar = formData('newauthPass','G');
@@ -269,7 +282,7 @@ foreach($result as $iter2) {
 <td><input type="text" name="taxonomy" size="20" value="<?php echo $iter["taxonomy"]?>"></td>
 <td><span class="text"><?php xl('Calendar UI','e'); ?>: </span></td><td><select name="cal_ui">
 <?php
- foreach (array(3 => xl('Outlook'), 1 => xl('Original'), 2 => xl('Fancy')) as $key => $value)
+ foreach (array(1 => xl('Original'), 2 => xl('Fancy'), 3 => xl('Outlook')) as $key => $value)
  {
   echo " <option value='$key'";
   if ($key == $iter['cal_ui']) echo " selected";
@@ -279,6 +292,25 @@ foreach($result as $iter2) {
 </select></td>
 </tr>
 <!-- END (CHEMED) Calendar UI preference -->
+
+<?php if ($GLOBALS['inhouse_pharmacy']) { ?>
+<tr>
+ <td class="text"><?php xl('Default Warehouse','e'); ?>: </td>
+ <td class='text'>
+<?php
+echo generate_select_list('default_warehouse', 'warehouse',
+  $iter['default_warehouse'], '');
+?>
+ </td>
+ <td class="text"><?php xl('Invoice Refno Pool','e'); ?>: </td>
+ <td class='text'>
+<?php
+echo generate_select_list('irnpool', 'irnpool', $iter['irnpool'],
+  xl('Invoice reference number pool, if used'));
+?>
+ </td>
+</tr>
+<?php } ?>
 
 <?php
  // Collect the access control group of user

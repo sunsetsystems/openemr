@@ -36,7 +36,7 @@ if ($_GET['edit'] != ''){
   $lang_filter = isset($_GET['filter']) ? $_GET['filter'] : '';
   $lang_filter .= '%';
 
-	$sql = "SELECT lc.cons_id, lc.constant_name, ld.def_id, ld.definition " .
+	$sql = "SELECT lc.cons_id, lc.constant_name, ld.def_id, ld.definition, ld.lang_id " .
     "FROM lang_definitions AS ld " .
     "RIGHT JOIN ( lang_constants AS lc, lang_languages AS ll ) ON " .
     "( lc.cons_id = ld.cons_id AND ll.lang_id = ld.lang_id ) " .
@@ -71,6 +71,11 @@ if ($_GET['edit'] != ''){
 	// english plus the other
 	} else { 
 		while ($row=SqlFetchArray($res)){
+      if (!empty($row['lang_id']) && $row['lang_id'] != '1') {
+        // This should not happen, if it does that must mean that this
+        // constant has more than one definition for the same language!
+        continue;
+      }
 			echo ('<tr><td>'.$row['constant_name'].'</td>');
 			if ($row['definition']=='' OR $row['definition']=='NULL') { 
 				$def="NULL" ;

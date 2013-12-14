@@ -3,7 +3,7 @@
 /**
  * holds the PMA_List_Database class
  *
- * @version $Id$
+ * @version $Id: List_Database.class.php,v 1.1.1.1 2009/05/12 21:26:44 bradymiller Exp $
  */
 
 /**

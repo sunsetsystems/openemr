@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: japanese-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:05 bradymiller Exp $ */
 
 /**
  * Translated by Yukihiro Kawada <kawada at den.fujifilm.co.jp>

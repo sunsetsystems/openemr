@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */ /* danish - Dansk v 2.20 (based on english rev. 10226) 2007/04/03 01:23:45 - oversætter AlleyKat kan kontaktes på < phpmyadmin (at) phpbb2.dk > */
+/* $Id: danish-iso-8859-1.inc.php,v 1.1.1.1 2009/05/12 21:27:24 bradymiller Exp $ */ /* danish - Dansk v 2.20 (based on english rev. 10226) 2007/04/03 01:23:45 - oversætter AlleyKat kan kontaktes på < phpmyadmin (at) phpbb2.dk > */
 
 $charset = 'iso-8859-1';
 $text_dir = 'ltr';

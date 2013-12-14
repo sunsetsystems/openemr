@@ -1,6 +1,6 @@
 <?php 
 /*
- *  $Id$
+ *  $Id: user.php,v 1.2 2007/07/10 15:40:20 lemonsoftwarero Exp $
  *
  *  PostCalendar::PostNuke Events Calendar Module
  *  Copyright (C) 2002  The PostCalendar Team

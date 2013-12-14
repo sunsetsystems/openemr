@@ -1,6 +1,6 @@
 <?php
-	// $Id$
-	// $Author$
+	// $Id: class.Parser_HL7v2.php,v 1.1.1.3 2005/06/23 05:25:41 drbowen Exp $
+	// $Author: drbowen $
 	// HL7 Parser
 
 class Parser_HL7v2 {

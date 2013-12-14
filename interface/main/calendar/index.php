@@ -1,5 +1,5 @@
 <?php
-// File: $Id$ $Name$
+// File: $Id: index.php,v 1.9 2009/08/08 06:14:46 bradymiller Exp $ $Name:  $
 // ----------------------------------------------------------------------
 // POST-NUKE Content Management System
 // Copyright (C) 2001 by the Post-Nuke Development Team.

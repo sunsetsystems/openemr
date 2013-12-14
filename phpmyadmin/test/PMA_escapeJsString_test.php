@@ -5,7 +5,7 @@
  *
  * @author Michal Čihař <michal@cihar.com>
  * @package phpMyAdmin-test
- * @version $Id$
+ * @version $Id: PMA_escapeJsString_test.php,v 1.1.1.1 2009/05/12 21:27:30 bradymiller Exp $
  */
 
 /**

@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: dutch-iso-8859-15.inc.php,v 1.1.1.1 2009/05/12 21:27:08 bradymiller Exp $ */
 
 /*
  * Updated by "CaliMonk" <calimonk at gmx.net> on 2005/01/04.

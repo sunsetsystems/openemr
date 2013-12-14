@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id$
+# $Id: lang-cleanup.sh,v 1.1.1.1 2009/05/12 21:27:30 bradymiller Exp $
 # vim: expandtab sw=4 ts=4 sts=4:
 #
 # Script for removing language selection from phpMyAdmin

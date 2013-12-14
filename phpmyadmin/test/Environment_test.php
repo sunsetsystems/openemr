@@ -3,7 +3,7 @@
 /**
  * tests for environment like OS, PHP, modules, ...
  *
- * @version $Id$
+ * @version $Id: Environment_test.php,v 1.1.1.1 2009/05/12 21:27:29 bradymiller Exp $
  * @package phpMyAdmin-test
  */
 

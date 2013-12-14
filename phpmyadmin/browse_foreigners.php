@@ -3,7 +3,7 @@
 /**
  * display selection for relational field values
  *
- * @version $Id$
+ * @version $Id: browse_foreigners.php,v 1.1.1.1 2009/05/12 21:26:42 bradymiller Exp $
  */
 
 /**

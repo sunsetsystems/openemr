@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: korean-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:26:59 bradymiller Exp $ */
 
 /* Translated by WooSuhan <kjh@unews.NOSPAM.co.kr> */
 

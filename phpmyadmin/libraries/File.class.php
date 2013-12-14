@@ -3,7 +3,7 @@
 /**
  * file upload functions
  *
- * @version $Id$
+ * @version $Id: File.class.php,v 1.1.1.1 2009/05/12 21:26:43 bradymiller Exp $
  */
 
 /**

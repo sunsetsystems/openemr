@@ -10,7 +10,7 @@
  * @author     Michal Čihař <michal@cihar.com>
  * @copyright  2006 Michal Čihař <michal@cihar.com>
  * @license    http://www.gnu.org/licenses/gpl.html GNU GPL 2.0
- * @version    $Id$
+ * @version    $Id: setup.php,v 1.1.1.1 2009/05/12 21:27:30 bradymiller Exp $
  */
 
 // Grab phpMyAdmin version and PMA_dl function
@@ -26,7 +26,7 @@ $PMA_Config_Setup = new PMA_Config();
 
 // Script information
 $script_info = 'phpMyAdmin ' . $PMA_Config_Setup->get('PMA_VERSION') . ' setup script by Michal Čihař <michal@cihar.com>';
-$script_version = '$Id$';
+$script_version = '$Id: setup.php,v 1.1.1.1 2009/05/12 21:27:30 bradymiller Exp $';
 
 // Grab action
 if (isset($_POST['action'])) {

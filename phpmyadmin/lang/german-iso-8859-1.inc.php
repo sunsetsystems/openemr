@@ -8,7 +8,7 @@
  * Bei Verbesserungsvorschlägen diese Datei betreffend wenden Sie sich bitte an
  *     https://sourceforge.net/tracker/?group_id=23067&atid=387645
  *
- * $Id$
+ * $Id: german-iso-8859-1.inc.php,v 1.1.1.1 2009/05/12 21:27:23 bradymiller Exp $
  */
 
 $charset = 'iso-8859-1';

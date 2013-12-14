@@ -12,7 +12,7 @@
 --                                                  
 -- Please don't forget to set up the tablenames in config.inc.php                                 
 -- 
--- $Id$
+-- $Id: create_tables.sql,v 1.1.1.1 2009/05/12 21:27:30 bradymiller Exp $
 
 -- --------------------------------------------------------
 

@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: hindi-utf-8.inc.php,v 1.1.1.1 2009/05/12 21:27:21 bradymiller Exp $ */
 
 // Hindi translation
 // 1st release   :   by Girish Nair <girishn@nagpur.dot.net.in(outdated)> : 08-Aug-2002

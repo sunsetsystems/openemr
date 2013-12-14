@@ -2,7 +2,7 @@
 /**
  * function used in server privilege pages
  *
- * @version $Id$
+ * @version $Id: server_privileges.js,v 1.1.1.1 2009/05/12 21:27:29 bradymiller Exp $
  */
 
 /**

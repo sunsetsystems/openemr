@@ -5,7 +5,7 @@
  *
  * @uses    libraries/common.inc.php        global fnctions
  * @package phpMyAdmin-test
- * @version $Id$
+ * @version $Id: theme.php,v 1.1.1.1 2009/05/12 21:27:30 bradymiller Exp $
  */
 
 chdir('..');

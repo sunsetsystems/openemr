@@ -22,7 +22,7 @@
  * - db connection
  * - authentication work
  *
- * @version $Id$
+ * @version $Id: common.inc.php,v 1.4 2009/05/13 04:15:08 bradymiller Exp $
  */
 
 /**

@@ -1,5 +1,5 @@
 <?php
-// Copyright (C) 2007-2009 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2007-2010 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -12,6 +12,7 @@ require_once("../globals.php");
 require_once("$srcdir/forms.inc");
 require_once("$srcdir/billing.inc");
 require_once("$srcdir/patient.inc");
+require_once("$srcdir/formatting.inc.php");
 
 $alertmsg = ''; // not used yet but maybe later
 
@@ -23,10 +24,6 @@ $ORDERHASH = array(
   'pubpid'  => 'lower(p.pubpid), fe.date',
   'time'    => 'fe.date, lower(u.lname), lower(u.fname)',
 );
-
-function bucks($amount) {
-  if ($amount) printf("%.2f", $amount);
-}
 
 function show_doc_total($lastdocname, $doc_encounters) {
   if ($lastdocname) {
@@ -42,6 +39,7 @@ $form_to_date = fixDate($_POST['form_to_date'], date('Y-m-d'));
 $form_provider  = $_POST['form_provider'];
 $form_facility  = $_POST['form_facility'];
 $form_details   = $_POST['form_details'] ? true : false;
+$form_new_patients = $_POST['form_new_patients'] ? true : false;
 
 $form_orderby = $ORDERHASH[$_REQUEST['form_orderby']] ?
   $_REQUEST['form_orderby'] : 'doctor';
@@ -56,7 +54,7 @@ $query = "SELECT " .
   "u.lname AS ulname, u.fname AS ufname, u.mname AS umname " .
   "FROM ( form_encounter AS fe, forms AS f ) " .
   "LEFT OUTER JOIN patient_data AS p ON p.pid = fe.pid " .
-  "LEFT OUTER JOIN users AS u ON u.username = f.user " .
+  "LEFT OUTER JOIN users AS u ON u.id = fe.provider_id " .
   "WHERE f.encounter = fe.encounter AND f.formdir = 'newpatient' ";
 if ($form_to_date) {
   $query .= "AND fe.date >= '$form_from_date 00:00:00' AND fe.date <= '$form_to_date 23:59:59' ";
@@ -64,10 +62,13 @@ if ($form_to_date) {
   $query .= "AND fe.date >= '$form_from_date 00:00:00' AND fe.date <= '$form_from_date 23:59:59' ";
 }
 if ($form_provider) {
-  $query .= "AND f.user = '$form_provider' ";
+  $query .= "AND fe.provider_id = '$form_provider' ";
 }
 if ($form_facility) {
   $query .= "AND fe.facility_id = '$form_facility' ";
+}
+if ($form_new_patients) {
+  $query .= "AND fe.date = (SELECT MIN(fe2.date) FROM form_encounter AS fe2 WHERE fe2.pid = fe.pid) ";
 }
 $query .= "ORDER BY $orderby";
 
@@ -201,13 +202,13 @@ $res = sqlStatement($query);
 <?php
  // Build a drop-down list of providers.
  //
- $query = "SELECT username, lname, fname FROM users WHERE " .
+ $query = "SELECT id, lname, fname FROM users WHERE " .
   "authorized = 1 ORDER BY lname, fname";
  $ures = sqlStatement($query);
  echo "   <select name='form_provider'>\n";
  echo "    <option value=''>-- " . xl('All') . " --\n";
  while ($urow = sqlFetchArray($ures)) {
-  $provid = $urow['username'];
+  $provid = $urow['id'];
   echo "    <option value='$provid'";
   if ($provid == $_POST['form_provider']) echo " selected";
   echo ">" . $urow['lname'] . ", " . $urow['fname'] . "\n";
@@ -227,6 +228,10 @@ $res = sqlStatement($query);
    <img src='../pic/show_calendar.gif' align='absbottom' width='24' height='22'
     id='img_to_date' border='0' alt='[?]' style='cursor:pointer'
     title='<?php xl('Click here to choose a date','e'); ?>'>
+
+   &nbsp;
+   <input type='checkbox' name='form_new_patients' title='First-time visits only'<?php  if ($form_new_patients) echo ' checked'; ?>>
+   <?php  xl('New','e'); ?>
 
    &nbsp;
    <input type='checkbox' name='form_details'<?php  if ($form_details) echo ' checked'; ?>>
@@ -292,7 +297,14 @@ if ($res) {
   $doc_encounters = 0;
   while ($row = sqlFetchArray($res)) {
     $patient_id = $row['pid'];
-    $docname  = $row['ulname'] . ', ' . $row['ufname'] . ' ' . $row['umname'];
+
+    $docname = '';
+    if (!empty($row['ulname']) || !empty($row['ufname'])) {
+      $docname = $row['ulname'];
+      if (!empty($row['ufname']) || !empty($row['umname']))
+        $docname .= ', ' . $row['ufname'] . ' ' . $row['umname'];
+    }
+
     $errmsg  = "";
     if ($form_details) {
       // Fetch all other forms for this encounter.
@@ -313,9 +325,9 @@ if ($res) {
         "code_type, code, code_text, billed"))
       {
         foreach ($billres as $billrow) {
-          $title = addslashes($billrow['code_text']);
-          $coded .= $billrow['code'] . ', ';
+          // $title = addslashes($billrow['code_text']);
           if ($billrow['code_type'] != 'COPAY' && $billrow['code_type'] != 'TAX') {
+            $coded .= $billrow['code'] . ', ';
             if ($billrow['billed']) ++$billed_count; else ++$unbilled_count;
           }
         }
@@ -340,7 +352,7 @@ if ($res) {
    <?php echo ($docname == $lastdocname) ? "" : $docname ?>&nbsp;
   </td>
   <td>
-   <?php echo substr($row['date'], 0, 10) ?>&nbsp;
+   <?php echo oeFormatShortDate(substr($row['date'], 0, 10)) ?>&nbsp;
   </td>
   <td>
    <?php echo $row['lname'] . ', ' . $row['fname'] . ' ' . $row['mname']; ?>&nbsp;
