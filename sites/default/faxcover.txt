@@ -4,15 +4,11 @@
 
 
 From: {SENDER_NAME}
-      Your Company Name                             Phone: 222-333-4444
-      Your Company Address                          Fax:   555-666-7777
-      Your City, State Zip
+      Middle Tennessee Family Care                  Phone: 615-773-2712
+      P O Box 306033                                Fax:   615-773-2707
+      Nashville, TN 37230-6033
 
 To:   {RECIPIENT_NAME}
 Fax:  {RECIPIENT_FAX}
 ^font{Helvetica-Bold@12}
 {MESSAGE}
-
-Best regards,
-
-{SENDER_NAME}

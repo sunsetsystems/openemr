@@ -6,7 +6,7 @@ $GLOBALS['oer_config']['freeb']['default_format'] 	= "pdf";
 $GLOBALS['oer_config']['freeb']['username'] 		= "freeb";
 $GLOBALS['oer_config']['freeb']['password'] 		= "12345";
 $GLOBALS['oer_config']['freeb']['print_command'] 	= "/usr/bin/lpr";
-$GLOBALS['oer_config']['freeb']['printer_name'] 	= "HP_LaserJet4L";
+$GLOBALS['oer_config']['freeb']['printer_name'] 	= "HPLaserjet6P";
 // This does not seem useful for PDF HCFAs, see freeb/targetbin/ascii2pdf instead:
 $GLOBALS['oer_config']['freeb']['printer_extras'] 	= "-o PageSize=Letter -o portrait";
 // Set this to make an additional copy of HCFA PDFs in the specified directory,
@@ -35,16 +35,16 @@ $GLOBALS['oer_config']['prescriptions']['logo_pic'] = "Rx.png";
 // can print with the correct provider's signature if you have multiple
 // providers.  Also signature images are used only for faxed prescriptions,
 // not printed prescriptions.
-$GLOBALS['oer_config']['prescriptions']['sig_pic'] = "sig.png";
+$GLOBALS['oer_config']['prescriptions']['sig_pic'] = "signature_{userid}.png";
 //Option to used signature graphic or not
-$GLOBALS['oer_config']['prescriptions']['use_signature'] = false;
+$GLOBALS['oer_config']['prescriptions']['use_signature'] = true;
 
 // To print the prescription medication area on a grey background:
 $GLOBALS['oer_config']['prescriptions']['shading'] = false;
 
 // only works with hylafax sendfax client, and sendfax must be in PATH
 // assign 'sendfax' to turn fax sending on
-$GLOBALS['oer_config']['prescriptions']['sendfax'] = '';
+$GLOBALS['oer_config']['prescriptions']['sendfax'] = 'sendfax -A';
 
 // asign a value here if there is any prefix needed to get dialing tone
 // you can also append a comma to add a one second delay

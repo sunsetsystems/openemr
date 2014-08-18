@@ -1,6 +1,6 @@
 <?php
 
-// Copyright (C) 2005 Rod Roark <rod@sunsetsystems.com>
+// Copyright (C) 2005-2014 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -27,6 +27,12 @@ $STMT_TEMP_FILE_PDF = $GLOBALS['temporary_files_dir'] . "/openemr_statements.pdf
 //
 // $STMT_PRINT_CMD = "lpr -P RicohMP3500 -o cpi=10 -o lpi=6 -o page-left=72 -o page-top=72";
 $STMT_PRINT_CMD = $GLOBALS['stmt_printer_1'];
+
+function quoted($data, $comma=true) {
+  $s = '"' . addslashes($data) . '"';
+  if ($comma) $s .= ',';
+  return $s;
+}
 
 // This function builds a printable statement or collection letter from
 // an associative array having the following keys:
@@ -62,6 +68,64 @@ $STMT_PRINT_CMD = $GLOBALS['stmt_printer_1'];
 //
 function create_statement($stmt) {
  if (! $stmt['pid']) return ""; // get out if no data
+
+  // Logic to print statements as a CSV file to send to a statement printing service.
+  //
+  if (true) {
+    $out = "";
+    $todays_time = strtotime(date('Y-m-d'));
+    foreach ($stmt['lines'] as $line) {
+      $description = $line['desc'];
+      $tmp = substr($description, 0, 14);
+      if ($tmp == 'Procedure 9920' || $tmp == 'Procedure 9921') {
+        $description = 'Office Visit';
+      }
+      // Output a line for each key in the 'detail' array.
+      // Also zero amounts should be blank, not '0.00'.
+      $dos = $line['dos'];
+      ksort($line['detail']);
+      foreach ($line['detail'] as $dkey => $ddata) {
+        $ddate = substr($dkey, 0, 10);
+        if (preg_match('/^(\d\d\d\d)(\d\d)(\d\d)\s*$/', $ddate, $matches)) {
+          $ddate = $matches[1] . '-' . $matches[2] . '-' . $matches[3];
+        }
+        $amount = '';
+        if ($ddata['pmt']) {
+          $amount = sprintf("%.2f", 0 - $ddata['pmt']);
+          $desc = "Paid $ddate: " . $ddata['src'];
+        }
+        else if ($ddata['rsn']) {
+          if ($ddata['chg']) {
+            $amount = sprintf("%.2f", $ddata['chg']);
+            $desc = "Adj  $ddate: " . $ddata['rsn'];
+          } else {
+            $desc = "Note $ddate: " . $ddata['rsn'];
+          }
+        }
+        else if ($ddata['chg'] < 0) {
+          $amount = sprintf("%.2f", $ddata['chg']);
+          $desc = "Patient Payment";
+        }
+        else {
+          $amount = sprintf("%.2f", $ddata['chg']);
+          $desc = $description;
+        }
+        $out .= quoted($stmt['pid']);       // patient chart number
+        $out .= quoted($stmt['patient']);   // patient name
+        $out .= quoted($stmt['to'][0]);     // patient address line 1
+        $out .= quoted($stmt['to'][1]);     // patient address line 2
+        $out .= quoted($stmt['to'][2]);     // patient address line 3
+        $out .= quoted($stmt['to'][3]);     // patient address line 4
+        $out .= quoted($stmt['today']);     // statement date
+        $out .= quoted($stmt['amount']);    // amount due
+        $out .= quoted($dos);               // date of service
+        $out .= quoted($desc);              // description of charge or credit
+        $out .= quoted($amount, false);     // amount of charge or credit
+        $out .= "\n";
+      }
+    }
+    return $out;
+  }
 
  // This is the text for the top part of the page, up to but not
  // including the detail lines.  Some examples of variable fields are:
