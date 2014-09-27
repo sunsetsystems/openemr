@@ -54,7 +54,7 @@ function get_pharmacies() {
     "ORDER BY name, area_code, prefix, number");
 }
 
-function optionalAge($frow, $date, &$asof) {
+function optionalAge($frow, $date, &$asof, $description='') {
   $asof = '';
   if (empty($date)) return '';
   $date = substr($date, 0, 10);
@@ -73,7 +73,12 @@ function optionalAge($frow, $date, &$asof) {
       array($GLOBALS['pid'], $GLOBALS['encounter']));
     if (!empty($tmp['date'])) $asof = substr($tmp['date'], 0, 10);
   }
-  $prefix = ($format ? xl('Gest age') : xl('Age')) . ' ';
+  if ($description === '') {
+    $prefix = ($format ? xl('Gest age') : xl('Age')) . ' ';
+  }
+  else {
+    $prefix = $description . ' ';
+  }
   return $prefix . oeFormatAge($date, $asof, $format);
 }
 
@@ -366,7 +371,7 @@ function generate_form_field($frow, $currvalue) {
   else if ($data_type == 4) {
     $age_asof_date = ''; // optionalAge() sets this
     $age_format = strpos($frow['edit_options'], 'A') === FALSE ? 3 : 0;
-    $agestr = optionalAge($frow, $currvalue, $age_asof_date);
+    $agestr = optionalAge($frow, $currvalue, $age_asof_date, $description);
     if ($agestr) {
       echo "<table cellpadding='0' cellspacing='0'><tr><td class='text'>";
     }
@@ -383,7 +388,7 @@ function generate_form_field($frow, $currvalue) {
         "ifFormat:'%Y-%m-%d', ";
       if ($agestr) {
         $date_init .= "onUpdate: function() {" .
-          "if (typeof(updateAgeString) == 'function') updateAgeString('$field_id','$age_asof_date', $age_format);" .
+          "if (typeof(updateAgeString) == 'function') updateAgeString('$field_id','$age_asof_date', $age_format, '$description');" .
         "}, ";
       }
       $date_init .= "button:'img_$field_id'})\n";
@@ -1218,8 +1223,8 @@ function generate_print_field($frow, $currvalue) {
 
   // date
   else if ($data_type == 4) {
-    $asof = ''; //not used here, but set to prevent a php warning when call optionalAge
-    $agestr = optionalAge($frow, $currvalue,$asof);
+    $age_asof_date = '';
+    $agestr = optionalAge($frow, $currvalue, $age_asof_date, $description);
     /******************************************************************
     if ($agestr) {
       echo "<table cellpadding='0' cellspacing='0'><tr><td class='text'>";
@@ -1764,7 +1769,9 @@ function generate_display_field($frow, $currvalue) {
   else if ($data_type == 4) {
     $asof = ''; //not used here, but set to prevent a php warning when call optionalAge
     $s = '';
-    $agestr = optionalAge($frow, $currvalue, $asof);
+    $description = (isset($frow['description']) ? htmlspecialchars(xl_layout_label($frow['description']), ENT_QUOTES) : '');
+    $age_asof_date = '';
+    $agestr = optionalAge($frow, $currvalue, $age_asof_date, $description);
     /******************************************************************
     if ($agestr) {
       $s .= "<table cellpadding='0' cellspacing='0'><tr><td class='text'>";
@@ -2134,9 +2141,10 @@ function generate_plaintext_field($frow, $currvalue) {
   // date
   else if ($data_type == 4) {
     $s = oeFormatShortDate($currvalue);
+    $description = (isset($frow['description']) ? htmlspecialchars(xl_layout_label($frow['description']), ENT_QUOTES) : '');
+    $age_asof_date = '';
     // Optional display of age or gestational age.
-    $asof=''; //not used here, but set to prevent a php warning when call optionalAge
-    $tmp = optionalAge($frow, $currvalue,$asof);
+    $tmp = optionalAge($frow, $currvalue, $age_asof_date, $description);
     if ($tmp) $s .= ' ' . $tmp;
   }
 
