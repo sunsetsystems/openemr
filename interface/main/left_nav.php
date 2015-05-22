@@ -1268,7 +1268,7 @@ if ($GLOBALS['athletic_team']) {
     }
   ?>
 
-  <li class="open"><a class="expanded" id="patimg" ><span><?php xl('Patient/Client','e') ?></span></a>
+  <li class="open"><a class="collapsed" id="patimg" ><span><?php xl('Patient/Client','e') ?></span></a>
     <ul>
       <?php genMiscLink('RTop','fin','0',xl('Patients'),'main/finder/dynamic_finder.php'); ?>
       <?php genTreeLink('RTop','new',($GLOBALS['full_new_patient_form'] ? xl('New/Search') : xl('New'))); ?>
