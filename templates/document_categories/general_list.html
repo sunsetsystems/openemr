@@ -36,15 +36,16 @@ var deleteLabel="{xl t="Delete"}";
 		<input type="submit" name="Add Category" value="{xl t='Add Category'}">
 		<input type="hidden" name="parent_is" value="{$parent_is}">
 		<input type="hidden" name="process" value="{$PROCESS}" />
+
+    <!-- For ACO Selection -->
+    <br />&nbsp;<br />
+    {xl t="Category ACO Requirement"}<br />
+    {html_options name="section_aco_value" options=$aco_array selected=$aco_selected}<br />
+    <input type="submit" name="set_aco" value="{xl t='Set ACO'}" />
+
 		</form>
-                <div id="categoryACL"></div>
 		</td>
 		{/if}
 	</tr>
 
 </table>
-
-<script type="text/javascript">
-    var category_id={$parent_is};
-</script>
-<script src="interface/document_category_acl/document_category_acl.js" type="text/javascript"></script>

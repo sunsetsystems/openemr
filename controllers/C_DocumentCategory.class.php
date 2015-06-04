@@ -52,14 +52,44 @@ class C_DocumentCategory extends Controller {
 		$this->assign("parent_name",$this->tree->get_node_name($parent_is));
 		$this->assign("parent_is",$parent_is);
 		$this->assign("add_node",true);
+
+    // Set selection list array for Add ACO button.
+    // See templates/document_categories/general_list.html.
+    $aco_array = array('' => xl('None'));
+    $res = sqlStatement("SELECT section_value, value, name FROM gacl_aco " .
+      "ORDER BY section_value, order_value ASC");
+    while ($row = sqlFetchArray($res)) {
+      $aco_array[$row['section_value'] . ':' . $row['value']] = xl($row['name']);
+    }
+    $row = sqlQuery("SELECT acl_section_value, acl_value FROM categories WHERE id = ?",
+      array($parent_is));
+		$this->assign("aco_array", $aco_array);
+    if (empty($row)) {
+      $this->assign("aco_selected", '');
+    }
+    else {
+      $this->assign("aco_selected", $row['acl_section_value'] . ':' . $row['acl_value']);
+    }
+
 		return $this->list_action();	
 	}
 	
 	function add_node_action_process() {
 		if ($_POST['process'] != "true")
 			return;
-		$name = $_POST['name'];
 		$parent_is = $_POST['parent_is'];
+
+    // Set ACO selection from the form.
+    if (!empty($_POST['set_aco'])) {
+      list($section_value, $value) = explode(':', $_POST['section_aco_value']);
+      sqlStatement("UPDATE categories SET acl_section_value = ?, acl_value = ? WHERE id = ? ",
+        array($section_value, $value, $parent_is));
+      $this->assign("message", xl('ACO has been set for this category.'));
+      $this->_state = false;
+      return $this->list_action();
+    }
+
+		$name = $_POST['name'];
 		$parent_name = $this->tree->get_node_name($parent_is);
 		$this->tree->add_node($parent_is,$name);
 	        $trans_message = xl('Sub-category','','',' ') . "'" . xl_document_category($name) . "'" . xl('successfully added to category,','',' ',' ') . "'" . $parent_name . "'";
