@@ -1240,6 +1240,29 @@ $classpati='';
       //END (CHEMED) IF ?>
       </td>
       </select>
+      <td nowrap>&nbsp;
+   
+        </td>
+      <?php
+      
+       $result3 = getInsuranceData($pid, "primary", "copay, provider, DATE_FORMAT(`date`,'%Y-%m-%d') as effdate");
+           $insco_name = "";
+           if ($result3['provider']) {   // Use provider in case there is an ins record w/ unassigned insco
+                $insco_name = getInsuranceProvider($result3['provider']);
+           }
+           
+           if ($result3['provider']) {   // Use provider in case there is an ins record w/ unassigned insco
+              echo "<td nowrap><span class='bold'>" .
+                 xlt('Primary Insurance') . ': ' . "</td><td nowrap>" . text($insco_name) .
+                 "</span></td>";
+               if ($result3['copay'] > 0) {
+                  echo "<td nowrap><span class='bold'>" .
+                  xlt('Copay') . ': ' .  "</td><td nowrap>" . text($result3['copay']) .
+                  "</span></td>";
+               }
+           }
+       ?>
+      
     </tr>
 	<tr>
 		<td nowrap>
@@ -1250,6 +1273,22 @@ $classpati='';
 			billing_facility('billing_facility',$row['pc_billing_location']);
 			?>
 		</td>
+	    <td nowrap>&nbsp;
+   
+        </td>
+		<?php
+		/*********/
+		  if ($result3['provider']) {
+               echo "<td nowrap><span class='bold'>" .
+               xlt('Ins. Effective Date') . ': ' .  "</td><td nowrap>" . text(oeFormatShortDate($result3['effdate'])) .
+               "</span></td>";
+           }
+      
+      /*********/
+      
+        ?>
+        
+     
 	</tr>
  <?php
  if($_GET['prov']!=true){

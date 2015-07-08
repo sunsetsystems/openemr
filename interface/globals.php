@@ -292,6 +292,7 @@ if ($GLOBALS['concurrent_layout']) {
 }
 $login_filler_line = ' bgcolor="#f7f0d5" ';
 $logocode = "<img src='$web_root/sites/" . $_SESSION['site_id'] . "/images/middle_tn_family_care.jpg' width='600' align='center'>";
+$labformimg = "<img src='$web_root/sites/" . $_SESSION['site_id'] . "/images/middle_tn_family_care.jpg' width=100 align=center>";
 $linepic = "$rootdir/pic/repeat_vline9.gif";
 $table_bg = ' bgcolor="#cccccc" ';
 $GLOBALS['style']['BGCOLOR1'] = "#cccccc";

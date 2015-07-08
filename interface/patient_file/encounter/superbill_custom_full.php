@@ -44,6 +44,7 @@ if (isset($mode)) {
   $code       = $_POST['code'];
   $code_type  = $_POST['code_type'];
   $code_text  = $_POST['code_text'];
+  $code_text_short  = $_POST['code_text_short'];
   $modifier   = $_POST['modifier'];
   $superbill  = $_POST['form_superbill'];
   $related_code = $_POST['related_code'];
@@ -77,6 +78,7 @@ if (isset($mode)) {
         "code = '"         . ffescape($code)         . "', " .
         "code_type = '"    . ffescape($code_type)    . "', " .
         "code_text = '"    . ffescape($code_text)    . "', " .
+        "code_text_short = '"    . ffescape($code_text_short)    . "', " .
         "modifier = '"     . ffescape($modifier)     . "', " .
         "superbill = '"    . ffescape($superbill)    . "', " .
         "related_code = '" . ffescape($related_code) . "', " .
@@ -103,7 +105,7 @@ if (isset($mode)) {
               "?, '', ?, ?)", array($code_id,$key,$value) );
           }
         }
-        $code = $code_type = $code_text = $modifier = $superbill = "";
+        $code = $code_type = $code_text = $code_text_short = $modifier = $superbill = "";
         $code_id = 0;
         $related_code = '';
         $cyp_factor = 0;
@@ -119,6 +121,7 @@ if (isset($mode)) {
     while ($row = sqlFetchArray($results)) {
       $code         = $row['code'];
       $code_text    = $row['code_text'];
+      $code_text_short    = $row['code_text_short'];
       $code_type    = $row['code_type'];
       $modifier     = $row['modifier'];
       // $units        = $row['units'];
@@ -141,6 +144,7 @@ if (isset($mode)) {
     while ($row = sqlFetchArray($results)) {
       $code         = $row['code'];
       $code_text    = $row['code_text'];
+      $code_text_short    = $row['code_text_short'];
       $code_type    = $code_types[$code_type_name_external]['id'];
       $modifier     = $row['modifier'];
       // $units        = $row['units'];
@@ -424,7 +428,19 @@ foreach ($code_types as $key => $value) {
 
   </td>
  </tr>
+<tr>
+  <td><?php echo xlt('Short Description'); ?>:</td>
+  <td></td>
+  <td>
 
+   <?php if ($mode == "modify") { ?>
+     <input type='text' size='50' name="code_text_short" readonly="readonly" value='<?php echo attr($code_text_short) ?>'>
+   <?php } else { ?>
+     <input type='text' size='50' name="code_text_short" value='<?php echo attr($code_text_short) ?>'>
+   <?php } ?>
+
+  </td>
+ </tr>
  <tr>
   <td><?php echo xlt('Category'); ?>:</td>
   <td></td>

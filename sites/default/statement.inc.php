@@ -26,7 +26,8 @@ $STMT_TEMP_FILE_PDF = $GLOBALS['temporary_files_dir'] . "/openemr_statements.pdf
 // 10 CPI, 6 LPI, 65 columns, 54 lines per page.
 //
 // $STMT_PRINT_CMD = "lpr -P RicohMP3500 -o cpi=10 -o lpi=6 -o page-left=72 -o page-top=72";
-$STMT_PRINT_CMD = $GLOBALS['stmt_printer_1'];
+//$STMT_PRINT_CMD = $GLOBALS['stmt_printer_1']; //cannot find stmt_printer_1
+$STMT_PRINT_CMD = $GLOBALS['print_command'];
 
 // This function builds a printable statement or collection letter from
 // an associative array having the following keys:

@@ -115,39 +115,41 @@ SSN: <? echo $ss ?>&nbsp;&nbsp;&nbsp;&nbsp;DOB: <? echo $dob ?> &nbsp;&nbsp;&nbs
  <td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Low Control</font></td><td>__________________</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Clarity</font></td><td>________________________</td>
 </tr>
 <tr>
- <td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;High Control</font></td><td>__________________</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Urobilinogen</font></td><td>________________________</td>
+ <td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;High Control</font></td><td>__________________</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Glucose</font></td><td>________________________</td>
 </tr>
 <tr>
- <td>&nbsp;</td><td>&nbsp;</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Glucose</font></td><td>________________________</td>
+ <td>&nbsp;</td><td>&nbsp;</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Bilirubin</font></td><td>________________________</td>
 </tr>
  <td><font size="2" face="Times-Roman"><b>Strep</b></font></td><td>&nbsp;</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Ketone</font></td><td>________________________</td>
 </tr>
- <td><font size="2" face="Times-Roman">Patient Result</font></td><td>_________________________</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Bilirubin</font></td><td>________________________</td>
+ <td><font size="2" face="Times-Roman">Patient Result</font></td><td>_________________________</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Specific Gravity</font></td><td>________________________</td>
 </tr>
 <tr>
- <td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Reagent Color Change</font></td><td>_______</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Protein</font></td><td>________________________</td>
+ <td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Reagent Color Change</font></td><td>_______</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Blood</font></td><td>________________________</td>
 </tr>
 <tr>
- <td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Red Control Line</font></td><td>_______</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Nitrate</font></td><td>________________________</td>
+ <td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Red Control Line</font></td><td>_______</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;pH</font></td><td>________________________</td>
 </tr>
 <tr>
- <td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Clear Background</font></td><td>_______</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Leucocytes</font></td><td>________________________</td>
+ <td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Clear Background</font></td><td>_______</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Protein</font></td><td>________________________</td>
 </tr>
 <tr>
- <td>&nbsp;</td><td>&nbsp;</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Blood</font></td><td>________________________</td>
+ <td>&nbsp;</td><td>&nbsp;</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Urobilinogen</font></td><td>________________________</td>
 </tr>
 <tr>
- <td><font size="2" face="Times-Roman"><b>Urine Pregnancy</b></font></td><td>&nbsp;</td><td colspan=2><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;pH
-________________________</font></td>
+ <td><font size="2" face="Times-Roman"><b>Urine Pregnancy</b></font></td><td>&nbsp;</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Nitrate</font></td><td>________________________</td>
 </tr>
 <tr>
- <td><font size="2" face="Times-Roman">Patient Result</font></td><td>_________________________</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Specific Gravity</font></td><td>____________</td>
+ <td><font size="2" face="Times-Roman">Patient Result</font></td><td>_________________________</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Leucocytes</font></td><td>________________________</td>
 </tr>
 <tr>
-<td><font size="2" face="Times-Roman">Valid Internal Control</font></td><td>_____________</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Rapid Flu</font></td><td>________________________</td>
+<td><font size="2" face="Times-Roman">Valid Internal Control</font></td><td>_____________</td><td><font size="2" face="Times-Roman">&nbsp;</font></td><td>&nbsp;</td>
 </tr>
 <tr>
-  <td>&nbsp;</td><td>&nbsp;</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;Control</font></td><td>________________________</td>
+  <td>&nbsp;</td><td>&nbsp;</td><td><font size="2" face="Times-Roman"><b>Rapid Flu</b></font></td><td>&nbsp;</td>
+</tr>
+<tr>
+  <td>&nbsp;</td><td>&nbsp;</td><td><font size="2" face="Times-Roman">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Control</font></td><td>________________________</td>
 </tr>
 <tr>
   <td><font size="2" face="Times-Roman"><b>Mono</b></font></td><td>&nbsp;</td><td><font size="2" face="Times-Roman"><b>KOH</b></font></td><td>_________________________</td>

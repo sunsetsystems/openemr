@@ -91,35 +91,35 @@ if (count($result) == 1 ) {
 <p><font size="2" face="Times-Roman"><b>RADIOLOGY REPORT</b></font></p>
 <br>
 
-<p><font size="2" face="Times-Roman">Exam Date<span>      </span>____________________<span>        </span>Provider<span>          </span>_______________________</font></p>
+<p><font size="2" face="Times-Roman">Exam Date<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>____________________<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>Provider<span>          </span>_______________________</font></p>
 <font size="2" face="Times-Roman">
 <? echo $fname . " " . $mid . " " . $lname ?><br>
 Ph: <? echo $phone_h ?><br>
 SSN: <? echo $ss ?>&nbsp;&nbsp;&nbsp;&nbsp;DOB: <? echo $dob ?><br>
 </font>
 
-<p><font size="2" face="Times-Roman">X-Ray No.:<span>     </span>____________________________________________________________</font></p>
+<p><font size="2" face="Times-Roman">X-Ray No.:<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>____________________________________________________________</font></p>
 
-<p><font size="2" face="Times-Roman">Examination:<span>   </span>____________________________________________________________</font></p>
+<p><font size="2" face="Times-Roman">Examination:<span>&nbsp;&nbsp;&nbsp;</span>____________________________________________________________</font></p>
 
-<p><font size="2" face="Times-Roman">Clinical Information:<span>   </span>______________________________________________________</font></p>
+<p><font size="2" face="Times-Roman">Clinical Information:<span>&nbsp;&nbsp;&nbsp;</span>______________________________________________________</font></p>
 
-<p><font size="2" face="Times-Roman">________________________________________________________________________</font></p>
+<p><font size="2" face="Times-Roman">_______________________________________________________________________</font></p>
 
-<p><font size="2" face="Times-Roman">Impression (Treating Provider)<span>                       </span>__________<span>    </span>Normal</font></p>
+<p><font size="2" face="Times-Roman">Impression (Treating Provider)<br><br><span></span>__________<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>Normal</font></p>
 
-<p><font size="2" face="Times-Roman">__________<span>    </span>No Significant Change</font></p>
+<p><font size="2" face="Times-Roman">__________<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>No Significant Change</font></p>
 
-<p><font size="2" face="Times-Roman">__________<span>    </span>Abnormal<span>        </span>____________<span>            </span></font></p>
+<p><font size="2" face="Times-Roman">__________<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>Abnormal<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>________________________<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></font></p>
 
-<p><font size="2" face="Times-Roman"><span>                        </span>________________________</font></p>
+<p><font size="2" face="Times-Roman"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>________________________</font></p>
 
-<p><font size="2" face="Times-Roman">Request for Radiology Interpretation<span>             </span>_____<span>  </span>Yes<span>      </span>_____<span>  </span>No</font></p>
+<p><font size="2" face="Times-Roman">Request for Radiology Interpretation<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>_____<span>&nbsp;&nbsp;</span>Yes<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>_____<span>&nbsp;&nbsp;</span>No</font></p>
 
 <p><font size="2" face="Times-Roman"><b>RADIOLOGY CONSENT FORM</b></font></p>
 
-<p><font size="2" face="Times-Roman"><i>I, «<span>NameFirstLast</span><span>» ,</span> have been asked about my last normal menstrual
-period.<span>  </span>I have assured Middle Tennessee Family Care
+<p><font size="2" face="Times-Roman"><i>I, <span><b><u><? echo $fname . " " . $mid . " " . $lname ?></u></b></span> <span>,</span> have been asked about my last normal menstrual
+period.<span>  </span>I have assured Middle Tennessee Family Care
 that I am not pregnant at this time and consent to having a radiograph as
 ordered by my provider.</i></font></p>
 
