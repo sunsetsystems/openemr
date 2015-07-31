@@ -8,9 +8,9 @@ $disable_utf8_flag = false;
 
 $host  = 'localhost';
 $port  = '3306';
-$login = 'openemr2';
-$pass  = 'openemr2';
-$dbase = 'openemr2';
+$login = 'openemr3';
+$pass  = 'openemr3';
+$dbase = 'openemr3';
 
 $sqlconf = array();
 global $sqlconf;
