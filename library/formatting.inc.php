@@ -19,7 +19,7 @@ function oeFormatMoney($amount, $symbol=false) {
 
 function oeFormatShortDate($date='today', $showYear = true) {
   if ($date === 'today') $date = date('Y-m-d');
-  if (strlen($date) == 10) {
+  if (strlen($date) >= 10) {
     // assume input is yyyy-mm-dd
     if ($GLOBALS['date_display_format'] == 1)      // mm/dd/yyyy, note year is added below
       $newDate = substr($date, 5, 2) . '/' . substr($date, 8, 2);
