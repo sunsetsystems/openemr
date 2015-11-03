@@ -420,8 +420,10 @@ function trimlen(s) {
 // Validation logic for form submission.
 function validate(f) {
 <?php generate_layout_validation($formname); ?>
- // Validation for Fee Sheet stuff:
- if (window.jsLineItemValidation && !jsLineItemValidation(f)) return false;
+ // Validation for Fee Sheet stuff. Skipping this because CV decided (2015-11-03)
+ // that these warning messages are not appropriate for layout based visit forms.
+ //
+ // if (window.jsLineItemValidation && !jsLineItemValidation(f)) return false;
  somethingChanged = false; // turn off "are you sure you want to leave"
  top.restoreSession();
  return true;
