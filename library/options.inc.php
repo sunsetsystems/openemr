@@ -259,6 +259,24 @@ function generate_select_list($tag_name, $list_id, $currvalue, $title, $empty_na
 
 }
 
+// Parsing for data type 31, static text.
+function parse_static_text($frow) {
+  $tmp = nl2br($frow['description']);
+  $s = '';
+  if ($frow['source'] == 'D' || $frow['source'] == 'H') {
+    // Source is demographics or history. This case supports value substitution.
+    while (preg_match('/^(.*?)\{(\w+)\}(.*)$/', $tmp, $matches)) {
+      $s .= $matches[1];
+      $tmprow = $frow;
+      $tmprow['field_id'] = $matches[2];
+      $s .= lbf_current_value($tmprow, 0, 0);
+      $tmp = $matches[3];
+    }
+  }
+  $s .= $tmp;
+  return $s;
+}
+
 // $frow is a row from the layout_options table.
 // $currvalue is the current value, if any, of the associated item.
 //
@@ -1080,7 +1098,8 @@ function generate_form_field($frow, $currvalue) {
 
   // static text.  read-only, of course.
   else if ($data_type == 31) {
-    echo nl2br($frow['description']);
+    // echo nl2br($frow['description']);
+    echo parse_static_text($frow);
   }
 
   //$data_type == 33
@@ -1679,7 +1698,8 @@ function generate_print_field($frow, $currvalue) {
 
   // static text.  read-only, of course.
   else if ($data_type == 31) {
-    echo nl2br($frow['description']);
+    // echo nl2br($frow['description']);
+    echo parse_static_text($frow);
   }
 
   else if($data_type == 34){
@@ -2111,7 +2131,8 @@ function generate_display_field($frow, $currvalue) {
 
   // static text.  read-only, of course.
   else if ($data_type == 31) {
-    $s .= nl2br($frow['description']);
+    // $s .= nl2br($frow['description']);
+    $s .= parse_static_text($frow);
   }
 
   else if($data_type == 34){
@@ -3259,7 +3280,7 @@ function lbf_current_value($frow, $formid, $encounter) {
     }
     // It is an error if the field does not exist, but don't crash.
     $tmp = sqlQuery("SHOW COLUMNS FROM $table WHERE Field = ?", array($field_id));
-    if (empty($tmp)) return FALSE;
+    if (empty($tmp)) return '*?*';
     $pdrow = sqlQuery("SELECT `$field_id` AS field_value FROM $table WHERE pid = ? $orderby", array($pid));
     if (isset($pdrow)) $currvalue = $pdrow['field_value'];
   }
