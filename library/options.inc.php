@@ -1991,7 +1991,7 @@ function generate_display_field($frow, $currvalue) {
           if ($count) $s .= "</tr>";
           $s .= "<tr>";
         }
-        $s .= "<td>";
+        $s .= "<td nowrap>";
         $checked = in_array($option_id, $avalue);
         $s .= $checked ? '[ x ]' : '[ &nbsp;&nbsp; ]';
         $s .= '&nbsp;' . text(xl_list_label($lrow['title'])). '&nbsp;&nbsp;';
@@ -2641,21 +2641,38 @@ function isSkipped(&$frow, $currvalue) {
   return $prevcond ? $action : '';
 }
 
+// Load array of names of the given layout and its groups.
+function getLayoutProperties($formtype, &$grparr, $sel="grp_title") {
+  if ($sel != '*' && strpos($sel, 'grp_group_id') === FALSE) $sel = "grp_group_id, $sel";
+  $gres = sqlStatement("SELECT $sel FROM layout_group_properties WHERE grp_form_id = ? " .
+    "ORDER BY grp_group_id", array($formtype));
+  while ($grow = sqlFetchArray($gres)) {
+    $grparr[$grow['grp_group_id']] = $grow;
+  }
+}
+
 function display_layout_rows($formtype, $result1, $result2='') {
   global $item_count, $cell_count, $last_group, $CPR;
 
+  $grparr = array();
+  getLayoutProperties($formtype, $grparr, '*');
+
+  $TOPCPR = empty($grparr['']['grp_columns']) ? 4 : $grparr['']['grp_columns'];
+
   $fres = sqlStatement("SELECT * FROM layout_options " .
     "WHERE form_id = ? AND uor > 0 " .
-    "ORDER BY group_name, seq", array($formtype) );
+    "ORDER BY group_id, seq", array($formtype) );
 
   while ($frow = sqlFetchArray($fres)) {
-    $this_group = $frow['group_name'];
+    $this_group = $frow['group_id'];
     $titlecols  = $frow['titlecols'];
     $datacols   = $frow['datacols'];
     $data_type  = $frow['data_type'];
     $field_id   = $frow['field_id'];
     $list_id    = $frow['list_id'];
     $currvalue  = '';
+
+    $CPR = empty($grparr[$this_group]['grp_columns']) ? $TOPCPR : $grparr[$this_group]['grp_columns'];
 
     if ($formtype == 'DEM') {
       if (strpos($field_id, 'em_') === 0) {
@@ -2674,7 +2691,7 @@ function display_layout_rows($formtype, $result1, $result2='') {
 
     // Handle a data category (group) change.
     if (strcmp($this_group, $last_group) != 0) {
-      $group_name = substr($this_group, 1);
+      $group_name = $grparr[$this_group]['grp_title'];
       // totally skip generating the employer category, if it's disabled.
       if ($group_name === 'Employer' && $GLOBALS['omit_employers']) continue;
       disp_end_group();
@@ -2683,20 +2700,22 @@ function display_layout_rows($formtype, $result1, $result2='') {
 
     // filter out all the empty field data from the patient report.
     if (!empty($currvalue) && !($currvalue == '0000-00-00 00:00:00')) {
-	// Handle starting of a new row.
-	if (($titlecols > 0 && $cell_count >= $CPR) || $cell_count == 0) {
-	  disp_end_row();
-	  echo "<tr>";
-	  if ($group_name) {
-		echo "<td class='groupname'>";
-		echo text(xl_layout_label(preg_replace("/[|]./", " / ", $group_name)));
-    $group_name = '';
-	  } else {
-		//echo "<td class='' style='padding-right:5pt' valign='top'>";
-		echo "<td valign='top'>&nbsp;";
-	  }
-	  echo "</td>";
-	}
+      // Handle starting of a new row.
+      if (($titlecols > 0 && $cell_count >= $CPR) || $cell_count == 0) {
+        disp_end_row();
+        echo "<tr>";
+        if ($group_name) {
+          echo "<td class='groupname'>";
+
+          // echo text(xl_layout_label(preg_replace("/[|]./", " / ", $group_name)));
+          echo text(xl_layout_label($group_name));
+
+          $group_name = '';
+        } else {
+          echo "<td valign='top'>&nbsp;";
+        }
+        echo "</td>";
+      }
 
 	if ($item_count == 0 && $titlecols == 0) $titlecols = 1;
 
@@ -2745,18 +2764,22 @@ function display_layout_rows($formtype, $result1, $result2='') {
 function display_layout_tabs($formtype, $result1, $result2='') {
   global $item_count, $cell_count, $last_group, $CPR;
 
-  $fres = sqlStatement("SELECT distinct group_name FROM layout_options " .
+  $grparr = array();
+  getLayoutProperties($formtype, $grparr);
+
+  $fres = sqlStatement("SELECT distinct group_id FROM layout_options " .
     "WHERE form_id = ? AND uor > 0 " .
-    "ORDER BY group_name, seq", array($formtype) );
+    "ORDER BY group_id", array($formtype) );
 
   $first = true;
   while ($frow = sqlFetchArray($fres)) {
-	  $this_group = $frow['group_name'];
-      $group_name = substr($this_group, 1);
-	  if ($group_name === 'Employer' && $GLOBALS['omit_employers']) continue;
-      ?>
+	  $this_group = $frow['group_id'];
+    // $group_name = substr($this_group, 1);
+    $group_name = $grparr[$this_group]['grp_title'];
+    if ($group_name === 'Employer' && $GLOBALS['omit_employers']) continue;
+?>
 		<li <?php echo $first ? 'class="current"' : '' ?>>
-            <a href="#" id="header_tab_<?php echo str_replace(" ", "_",htmlspecialchars($group_name,ENT_QUOTES))?>">
+			<a href="#" id="header_tab_<?php echo htmlspecialchars($group_name,ENT_QUOTES); ?>">
                         <?php echo htmlspecialchars(xl_layout_label($group_name),ENT_NOQUOTES); ?></a>
 		</li>
 	  <?php
@@ -2767,13 +2790,18 @@ function display_layout_tabs($formtype, $result1, $result2='') {
 function display_layout_tabs_data($formtype, $result1, $result2='') {
   global $item_count, $cell_count, $last_group, $CPR,$condition_str;
 
-  $fres = sqlStatement("SELECT distinct group_name FROM layout_options " .
+  $grparr = array();
+  getLayoutProperties($formtype, $grparr, '*');
+
+  $TOPCPR = empty($grparr['']['grp_columns']) ? 4 : $grparr['']['grp_columns'];
+
+  $fres = sqlStatement("SELECT distinct group_id FROM layout_options " .
     "WHERE form_id = ? AND uor > 0 " .
-    "ORDER BY group_name, seq", array($formtype));
+    "ORDER BY group_id", array($formtype));
 
 	$first = true;
 	while ($frow = sqlFetchArray($fres)) {
-		$this_group = isset($frow['group_name']) ? $frow['group_name'] : "" ;
+		$this_group = isset($frow['group_id']) ? $frow['group_id'] : "" ;
 		$titlecols  = isset($frow['titlecols']) ? $frow['titlecols'] : "";
 		$datacols   = isset($frow['datacols']) ? $frow['datacols'] : "";
 		$data_type  = isset($frow['data_type']) ? $frow['data_type'] : "";
@@ -2781,10 +2809,11 @@ function display_layout_tabs_data($formtype, $result1, $result2='') {
 		$list_id    = isset($frow['list_id']) ? $frow['list_id'] : "";
 		$currvalue  = '';
 
-		if (substr($this_group,1,8) === 'Employer' && $GLOBALS['omit_employers']) continue;
+		if ($grparr[$this_group]['grp_columns'] === 'Employer' && $GLOBALS['omit_employers']) continue;
+    $CPR = empty($grparr[$this_group]['grp_columns']) ? $TOPCPR : $grparr[$this_group]['grp_columns'];
 
 		$group_fields_query = sqlStatement("SELECT * FROM layout_options " .
-		"WHERE form_id = ? AND uor > 0 AND group_name = ? " .
+		"WHERE form_id = ? AND uor > 0 AND group_id = ? " .
 		"ORDER BY seq", array($formtype, $this_group) );
 	?>
 
@@ -2826,7 +2855,10 @@ function display_layout_tabs_data($formtype, $result1, $result2='') {
 
 					// Handle a data category (group) change.
 					if (strcmp($this_group, $last_group) != 0) {
-					  $group_name = substr($this_group, 1);
+
+					  // $group_name = substr($this_group, 1);
+            $group_name = $grparr[$this_group]['grp_title'];
+
 					  // totally skip generating the employer category, if it's disabled.
 					  if ($group_name === 'Employer' && $GLOBALS['omit_employers']) continue;
 					  $last_group = $this_group;
@@ -2925,17 +2957,22 @@ function get_conditions_str($condition_str,$frow){
 function display_layout_tabs_data_editable($formtype, $result1, $result2='') {
   global $item_count, $cell_count, $last_group, $CPR,$condition_str;
 
-  $fres = sqlStatement("SELECT distinct group_name FROM layout_options " .
+  $grparr = array();
+  getLayoutProperties($formtype, $grparr, '*');
+
+  $TOPCPR = empty($grparr['']['grp_columns']) ? 4 : $grparr['']['grp_columns'];
+
+  $fres = sqlStatement("SELECT distinct group_id FROM layout_options " .
     "WHERE form_id = ? AND uor > 0 " .
-    "ORDER BY group_name, seq", array($formtype) );
+    "ORDER BY group_id", array($formtype) );
 
   $first = true;
   $condition_str = '';
 
 	while ($frow = sqlFetchArray($fres)) {
-		$this_group = $frow['group_name'];
-		$group_name = substr($this_group, 1);
-	        $group_name_esc = htmlspecialchars( $group_name, ENT_QUOTES);
+		$this_group = $frow['group_id'];
+    $group_name = $grparr[$this_group]['grp_title'];
+    $group_name_esc = text($group_name);
 		$titlecols  = $frow['titlecols'];
 		$datacols   = $frow['datacols'];
 		$data_type  = $frow['data_type'];
@@ -2943,11 +2980,12 @@ function display_layout_tabs_data_editable($formtype, $result1, $result2='') {
 		$list_id    = $frow['list_id'];
 		$currvalue  = '';
 
-		if (substr($this_group,1,8) === 'Employer' && $GLOBALS['omit_employers']) continue;
+		if ($grparr[$this_group]['grp_title'] === 'Employer' && $GLOBALS['omit_employers']) continue;
+    $CPR = empty($grparr[$this_group]['grp_columns']) ? $TOPCPR : $grparr[$this_group]['grp_columns'];
 
 		$group_fields_query = sqlStatement("SELECT * FROM layout_options " .
-		"WHERE form_id = ? AND uor > 0 AND group_name = ? " .
-		"ORDER BY seq", array($formtype,$this_group) );
+		"WHERE form_id = ? AND uor > 0 AND group_id = ? " .
+		"ORDER BY seq", array($formtype, $this_group));
 	?>
 
 		<div class="tab <?php echo $first ? 'current' : '' ?>" id="tab_<?php echo str_replace(' ', '_',$group_name_esc)?>" >
@@ -2986,7 +3024,8 @@ function display_layout_tabs_data_editable($formtype, $result1, $result2='') {
 
 					// Handle a data category (group) change.
 					if (strcmp($this_group, $last_group) != 0) {
-					  $group_name = substr($this_group, 1);
+					  // $group_name = substr($this_group, 1);
+
 					  // totally skip generating the employer category, if it's disabled.
 					  if ($group_name === 'Employer' && $GLOBALS['omit_employers']) continue;
 					  $last_group = $this_group;
@@ -3168,7 +3207,7 @@ function get_layout_form_value($frow, $prefix='form_') {
 function generate_layout_validation($form_id) {
   $fres = sqlStatement("SELECT * FROM layout_options " .
     "WHERE form_id = ? AND uor > 0 AND field_id != '' " .
-    "ORDER BY group_name, seq", array($form_id) );
+    "ORDER BY group_id, seq", array($form_id) );
 
   while ($frow = sqlFetchArray($fres)) {
     $data_type = $frow['data_type'];
@@ -3442,6 +3481,7 @@ function getListItemTitle($list, $option) {
   if (empty($row['title'])) return $option;
   return xl_list_label($row['title']);
 }
+
 //Added on 5-jun-2k14 (regarding get the smoking code descriptions)
 function getSmokeCodes()
 {

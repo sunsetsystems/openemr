@@ -282,7 +282,7 @@ if ($form_step == 5) {   // create the final compressed tar containing all files
 if ($form_step == 101) {
   echo "<p><b>&nbsp;" . xl('Select the configuration items to export') . ":</b></p>";
 
-  echo "<table cellspacing='10' cellpadding='0'>\n<tr>\n<td valign='top'>\n";
+  echo "<table cellspacing='10' cellpadding='0'>\n<tr>\n<td valign='top' nowrap>\n";
 
   echo "<b>" . xlt('Tables') . "</b><br />\n";
   echo "<input type='checkbox' name='form_cb_services' value='1' />\n";
@@ -314,12 +314,14 @@ if ($form_step == 101) {
   echo "</td><td valign='top'>\n";
   echo "<b>" . xlt('Layouts') . "</b><br />\n";
   echo "<select multiple name='form_sel_layouts[]' size='15'>";
-  $lres = sqlStatement("SELECT option_id, title FROM list_options WHERE " .
-    "list_id = 'lbfnames' AND activity = 1 ORDER BY title, seq");
+  $lres = sqlStatement("SELECT grp_form_id, grp_title FROM layout_group_properties WHERE " .
+    "grp_group_id = '' AND grp_activity = 1 ORDER BY grp_form_id");
   while ($lrow = sqlFetchArray($lres)) {
-    echo "<option value='" . attr($lrow['option_id']) . "'";
-    echo ">" . text(xl_layout_label($lrow['title'])) . "</option>\n";
+    $key = $lrow['grp_form_id'];
+    echo "<option value='" . attr($key) . "'";
+    echo ">" . text($key) . ": " . text(xl_layout_label($lrow['grp_title'])) . "</option>\n";
   }
+
   echo "</select>\n";
 
   echo "</td>\n</tr>\n</table>\n";
@@ -425,32 +427,29 @@ if ($form_step == 102)
           {
             $cmd .= "echo \"DELETE FROM layout_options WHERE form_id = '$layoutid';\" >> $EXPORT_FILE;";
           }
-          if (strpos($layoutid, 'LBF') === 0)
+          if (IS_WINDOWS)
           {
-           if (IS_WINDOWS)
-           {
-             # windows will place the quotes in the outputted code if they are there. we removed them here.
-             $cmd .= " echo DELETE FROM list_options WHERE list_id = 'lbfnames' AND option_id = '$layoutid'; >> $EXPORT_FILE & ";
-           }
-           else
-           {
-             $cmd .= "echo \"DELETE FROM list_options WHERE list_id = 'lbfnames' AND option_id = '$layoutid';\" >> $EXPORT_FILE;";
-           }
-            $cmd .= $dumppfx .
-              " --where=\"list_id = 'lbfnames' AND option_id = '$layoutid'\" " .
-              escapeshellarg($sqlconf["dbase"]) . " list_options" ;
-            if (IS_WINDOWS)
-            {
-              # windows uses the & to join statements.
-             $cmd .=  " >> $EXPORT_FILE & ";
-            }
-            else
-            {
-             $cmd .=  " >> $EXPORT_FILE;";
-            }
+           # windows will place the quotes in the outputted code if they are there. we removed them here.
+           $cmd .= "echo \"DELETE FROM layout_group_properties WHERE grp_form_id = '$layoutid';\" >> $EXPORT_FILE &;";
+          }
+          else
+          {
+           $cmd .= "echo \"DELETE FROM layout_group_properties WHERE grp_form_id = '$layoutid';\" >> $EXPORT_FILE;";
           }
           $cmd .= $dumppfx .
-            " --where=\"form_id = '$layoutid' ORDER BY group_name, seq, title\" " .
+            " --where=\"grp_form_id = '$layoutid'\" " .
+            escapeshellarg($sqlconf["dbase"]) . " layout_group_properties";
+          if (IS_WINDOWS)
+          {
+            # windows uses the & to join statements.
+           $cmd .=  " >> $EXPORT_FILE & ";
+          }
+          else
+          {
+           $cmd .=  " >> $EXPORT_FILE;";
+          }
+          $cmd .= $dumppfx .
+            " --where=\"form_id = '$layoutid' ORDER BY group_id, seq, title\" " .
             escapeshellarg($sqlconf["dbase"]) . " layout_options" ;
             if (IS_WINDOWS)
             {

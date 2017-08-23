@@ -104,19 +104,18 @@ if (!$from_trend_form && !$visitid) {
   die("Internal error: we do not seem to be in an encounter!");
 }
 
-// Get some info about this form.
-$tmp = sqlQuery("SELECT title, option_value, notes FROM list_options WHERE " .
-  "list_id = 'lbfnames' AND option_id = ? AND activity = 1", array($formname));
-$formtitle = $tmp['title'];
-$formhistory = 0 + $tmp['option_value'];
-
-$jobj = json_decode($tmp['notes'], true);
-if (!empty($jobj['columns'])) $CPR = intval($jobj['columns']);
-if (!empty($jobj['issue'  ])) $LBF_ISSUE_TYPE = $jobj['issue'];
-if (!empty($jobj['aco'    ])) $LBF_ACO = explode('|', $jobj['aco']);
-if (isset($jobj['services'])) $LBF_SERVICES_SECTION = $jobj['services'];
-if (isset($jobj['products'])) $LBF_PRODUCTS_SECTION = $jobj['products'];
-if (isset($jobj['diags'   ])) $LBF_DIAGS_SECTION = $jobj['diags'];
+$grparr = array();
+getLayoutProperties($formname, $grparr, '*');
+$lobj = $grparr[''];
+$formtitle = $lobj['grp_title'];
+$formhistory = 0 + $lobj['grp_repeats'];
+if (!empty($lobj['grp_columns'])) $CPR = intval($lobj['grp_columns']);
+if (!empty($lobj['grp_size'   ])) $FONTSIZE = intval($lobj['grp_size']);
+if (!empty($lobj['issue'      ])) $LBF_ISSUE_TYPE = $lobj['issue'];
+if (!empty($lobj['aco'        ])) $LBF_ACO = explode('|', $lobj['aco']);
+if ($lobj['grp_services']) $LBF_SERVICES_SECTION = $lobj['grp_services'] == '*' ? '' : $lobj['grp_services'];
+if ($lobj['grp_products']) $LBF_PRODUCTS_SECTION = $lobj['grp_products'] == '*' ? '' : $lobj['grp_products'];
+if ($lobj['grp_diags'   ]) $LBF_DIAGS_SECTION    = $lobj['grp_diags'   ] == '*' ? '' : $lobj['grp_diags'   ];
 
 // Check access control.
 if (!acl_check('admin', 'super') && !empty($LBF_ACO)) {
@@ -169,7 +168,7 @@ if (!empty($_POST['bn_save']) || !empty($_POST['bn_save_print']) || !empty($_POS
   $fres = sqlStatement("SELECT * FROM layout_options " .
     "WHERE form_id = ? AND uor > 0 AND field_id != '' AND " .
     "edit_options != 'H' AND edit_options NOT LIKE '%0%' " .
-    "ORDER BY group_name, seq", array($formname) );
+    "ORDER BY group_id, seq", array($formname) );
   while ($frow = sqlFetchArray($fres)) {
     $field_id  = $frow['field_id'];
     $data_type = $frow['data_type'];
@@ -750,6 +749,12 @@ function warehouse_changed(sel) {
 <?php
   $shrow = getHistoryData($pid);
 
+  /********************************************************************
+  // Load array of properties for this layout and its groups.
+  $grparr = array();
+  getLayoutProperties($formname, $grparr);
+  ********************************************************************/
+
   // Determine if this layout uses edit option "I" anywhere.
   // If not we default to only the first group being initially open.
   $tmprow = sqlQuery("SELECT form_id FROM layout_options " .
@@ -759,14 +764,13 @@ function warehouse_changed(sel) {
 
   $fres = sqlStatement("SELECT * FROM layout_options " .
     "WHERE form_id = ? AND uor > 0 " .
-    "ORDER BY group_name, seq", array($formname) );
+    "ORDER BY group_id, seq", array($formname));
   $cell_count = 0;
   $item_count = 0;
   $display_style = 'block';
 
-  // This is an array of the active group levels. Each entry is a group or
-  // subgroup name (with its order prefix) and represents a level of nesting.
-  $group_levels = array();
+  // This string is the active group levels. Each leading substring represents an instance of nesting.
+  $group_levels = '';
 
   // This indicates if </table> will need to be written to end the fields in a group.
   $group_table_active = false;
@@ -784,7 +788,7 @@ function warehouse_changed(sel) {
   $condition_str = '';
 
   while ($frow = sqlFetchArray($fres)) {
-    $this_group = $frow['group_name'];
+    $this_group = $frow['group_id'];
     $titlecols  = $frow['titlecols'];
     $datacols   = $frow['datacols'];
     $data_type  = $frow['data_type'];
@@ -843,42 +847,39 @@ function warehouse_changed(sel) {
       } // End "P" option logic.
     }
 
-    $this_levels = explode('|', $this_group);
+    $this_levels = $this_group;
     $i = 0;
-    $mincount = min(count($this_levels), count($group_levels));
+    $mincount = min(strlen($this_levels), strlen($group_levels));
     while ($i < $mincount && $this_levels[$i] == $group_levels[$i]) ++$i;
     // $i is now the number of initial matching levels.
 
     // If ending a group or starting a subgroup, terminate the current row and its table.
-    if ($group_table_active && ($i != count($group_levels) || $i != count($this_levels))) {
+    if ($group_table_active && ($i != strlen($group_levels) || $i != strlen($this_levels))) {
       end_row();
       echo " </table>\n";
       $group_table_active = false;
     }
 
     // Close any groups that we are done with.
-    while (count($group_levels) > $i) {
-      $gname = array_pop($group_levels);
+    while (strlen($group_levels) > $i) {
+      $gname = $grparr[$group_levels]['grp_title'];
+      $group_levels = substr($group_levels, 0, -1); // remove last character
       // No div for an empty group name.
-      if (strlen($gname) > 1) echo "</div>\n";
+      if (strlen($gname)) echo "</div>\n";
     }
 
     // If there are any new groups, open them.
-    while ($i < count($this_levels)) {
+    while ($i < strlen($this_levels)) {
       end_row();
       if ($group_table_active) {
         echo " </table>\n";
         $group_table_active = false;
       }
-
-      $gname = $this_levels[$i++];
-      array_push($group_levels, $gname);
-
+      $group_levels .= $this_levels[$i++];
+      $gname = $grparr[substr($group_levels, 0, $i)]['grp_title'];
       // Compute a short unique identifier for this group.
-      $group_seq  = 'lbf';
-      foreach ($group_levels as $tmp) $group_seq .= substr($tmp, 0, 1);
-      $group_name = substr($gname, 1);
-      // $group_name does not include the order prefix character.
+      $group_seq = 'lbf' . $group_levels;
+      $group_name = $gname;
 
       if ($some_group_is_open) {
         // Must have edit option "I" in first item for its group to be initially open.
@@ -886,7 +887,7 @@ function warehouse_changed(sel) {
       }
 
       // If group name is blank, no checkbox or div.
-      if (strlen($gname) > 1) {
+      if (strlen($gname)) {
         echo "<br /><span class='bold'><input type='checkbox' name='form_cb_" . attr($group_seq) . "' value='1' " .
           "onclick='return divclick(this,\"div_" . attr(addslashes($group_seq)) . "\");'";
         if ($display_style == 'block') echo " checked";
@@ -1019,10 +1020,11 @@ function warehouse_changed(sel) {
     echo " </table>\n";
     $group_table_active = false;
   }
-  while (count($group_levels)) {
-    $gname = array_pop($group_levels);
+  while (strlen($group_levels)) {
+    $gname = $grparr[$group_levels]['grp_title'];
+    $group_levels = substr($group_levels, 0, -1); // remove last character
     // No div for an empty group name.
-    if (strlen($gname) > 1) echo "</div>\n";
+    if (strlen($gname)) echo "</div>\n";
   }
 
   $display_style = 'none';

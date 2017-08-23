@@ -2239,3 +2239,31 @@ ALTER TABLE `forms` ADD COLUMN `issue_id` bigint(20) NOT NULL default 0 COMMENT 
 #IfMissingColumn forms provider_id
 ALTER TABLE `forms` ADD COLUMN `provider_id` bigint(20) NOT NULL default 0 COMMENT 'references users.id to identify a provider';
 #EndIf
+
+#IfNotTable layout_group_properties
+CREATE TABLE `layout_group_properties` (
+  grp_form_id     varchar(31)    not null,
+  grp_group_id    varchar(31)    not null default '' comment 'empty when representing the whole form',
+  grp_title       varchar(63)    not null default '' comment 'descriptive name of the form or group',
+  grp_subtitle    varchar(63)    not null default '' comment 'for display under the title',
+  grp_mapping     varchar(31)    not null default '' comment 'the form category',
+  grp_seq         int(11)        not null default 0  comment 'optional order within mapping',
+  grp_activity    tinyint(1)     not null default 1,
+  grp_repeats     int(11)        not null default 0,
+  grp_columns     int(11)        not null default 0,
+  grp_size        int(11)        not null default 0,
+  grp_issue_type  varchar(75)    not null default '',
+  grp_aco_spec    varchar(63)    not null default '',
+  grp_services    varchar(4095)  not null default '',
+  grp_products    varchar(4095)  not null default '',
+  grp_diags       varchar(4095)  not null default '',
+  PRIMARY KEY (grp_form_id, grp_group_id)
+) ENGINE=MyISAM;
+ALTER TABLE layout_options ADD COLUMN group_id VARCHAR(31) NOT NULL default '' AFTER group_name;
+#ConvertLayoutProperties
+ALTER TABLE layout_options DROP COLUMN group_name;
+DELETE FROM list_options WHERE list_id = 'lbfnames';
+DELETE FROM list_options WHERE list_id = 'lists' AND option_id = 'lbfnames';
+DELETE FROM list_options WHERE list_id = 'transactions';
+DELETE FROM list_options WHERE list_id = 'lists' AND option_id = 'transactions';
+#EndIf

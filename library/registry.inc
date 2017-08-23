@@ -98,5 +98,4 @@ function isRegistered ( $directory, $state = 1)
     if ($result['id'] != '') return true;
     return false;
 }
-
 ?>
