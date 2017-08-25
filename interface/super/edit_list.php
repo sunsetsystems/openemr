@@ -31,9 +31,16 @@ require_once("$srcdir/options.inc.php");
 
 $list_id = empty($_REQUEST['list_id']) ? 'language' : $_REQUEST['list_id'];
 
+// Indicates if we were invoked by the layout editor to create a new layout.
+$from_layout = empty($_REQUEST['from_layout']) ? 0 : 1;
+
 // Check authorization.
 $thisauth = acl_check('admin', 'super');
 if (!$thisauth) die(xl('Not authorized'));
+
+// This will be relevant if we happen to be saving the lbfnames list,
+// and will retain the ID of the last layout item that was saved.
+$last_list_item_id = '';
 
 // If we are saving, then save.
 //
@@ -211,6 +218,7 @@ if ($_POST['formaction']=='save' && $list_id) {
                 ")");
             }
         }
+        $last_list_item_id = $id;
     }
 }
 else if ($_POST['formaction']=='addlist') {
@@ -237,6 +245,15 @@ else if ($_POST['formaction']=='deletelist') {
     sqlStatement("DELETE FROM list_options WHERE list_id = '".$_POST['list_id']."'");
     // delete the list from the master list-of-lists
     sqlStatement("DELETE FROM list_options WHERE list_id = 'lists' and option_id='".$_POST['list_id']."'");
+}
+
+// If we came from the layout editor and added a layout, then go back there.
+if ($from_layout && $last_list_item_id) {
+  echo "<html><head><script language='JavaScript'>\n";
+  echo "top.restoreSession();\n";
+  echo "location = 'edit_layout.php?layout_id=" . urlencode($last_list_item_id) . "';\n";
+  echo "</script></head></html>\n";
+  exit;
 }
 
 $opt_line_no = 0;
@@ -801,6 +818,7 @@ function mysubmit() {
 
 <form method='post' name='theform' id='theform' action='edit_list.php'>
 <input type="hidden" name="formaction" id="formaction">
+<input type='hidden' name='from_layout' value='<?php echo $from_layout; ?>' />
 
 <p><b><?php xl('Edit list','e'); ?>:</b>&nbsp;
 <select name='list_id' id="list_id">

@@ -966,6 +966,12 @@ function cidChanged(lino, seq) {
   setListItemOptions(lino, seq, false);
 }
 
+// This is called when the New Layout button is clicked.
+function doNewLayout() {
+  top.restoreSession();
+  location = 'edit_list.php?list_id=lbfnames&from_layout=1';
+}
+
 // This is called whenever a validation rule field ID selection is changed.
 function valChanged(lino) {
     changeColor(lino);
@@ -1033,7 +1039,10 @@ foreach ($layouts as $key => $value) {
   echo ">$value</option>\n";
 }
 ?>
-</select></div><div><p>
+</select>
+&nbsp;
+<input type='button' value='<?php echo xla('New Layout'); ?>' onclick='doNewLayout()' />
+</div><div><p>
 <?php if ($layout_id) { ?>
 <input type='button' class='addgroup' id='addgroup' value=<?php xl('Add Group','e','\'','\''); ?>/>
 <span style="font-size:90%"> &nbsp;
