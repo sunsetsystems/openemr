@@ -2438,8 +2438,16 @@ function display_layout_rows($formtype, $result1, $result2='') {
 	}
 	++$item_count;
 
-	// Added 5-09 by BM - Translate label if applicable
-	if ($frow['title']) echo htmlspecialchars(xl_layout_label($frow['title']).":",ENT_NOQUOTES); else echo "&nbsp;";
+  // Added 5-09 by BM - Translate label if applicable
+  if ($frow['title']) {
+    $tmp = xl_layout_label($frow['title']);
+    echo text($tmp);
+    // Append colon only if label does not end with punctuation.
+    if (strpos('?!.,:-=', substr($tmp, -1, 1)) === FALSE) echo ':';
+  }
+  else {
+    echo "&nbsp;";
+  }
 
 	// Handle starting of a new data cell.
 	if ($datacols > 0) {
@@ -2567,8 +2575,18 @@ function display_layout_tabs_data($formtype, $result1, $result2='') {
 
 					$field_id_label = 'label_'.$group_fields['field_id'];
 					echo "<span id='".attr($field_id_label)."'>";
-					// Added 5-09 by BM - Translate label if applicable
-					if ($group_fields['title']) echo htmlspecialchars(xl_layout_label($group_fields['title']).":",ENT_NOQUOTES); else echo "&nbsp;";
+
+          // Added 5-09 by BM - Translate label if applicable
+          if ($group_fields['title']) {
+            $tmp = xl_layout_label($group_fields['title']);
+            echo text($tmp);
+            // Append colon only if label does not end with punctuation.
+            if (strpos('?!.,:-=', substr($tmp, -1, 1)) === FALSE) echo ':';
+          }
+          else {
+            echo "&nbsp;";
+          }
+
 					echo "</span>";
 
 					// Handle starting of a new data cell.
@@ -2703,8 +2721,16 @@ function display_layout_tabs_data_editable($formtype, $result1, $result2='') {
 					}
 					++$item_count;
 
-					// Added 5-09 by BM - Translate label if applicable
-					if ($group_fields['title']) echo (htmlspecialchars( xl_layout_label($group_fields['title']), ENT_NOQUOTES).":"); else echo "&nbsp;";
+          // Added 5-09 by BM - Translate label if applicable
+          if ($group_fields['title']) {
+            $tmp = xl_layout_label($group_fields['title']);
+            echo text($tmp);
+            // Append colon only if label does not end with punctuation.
+            if (strpos('?!.,:-=', substr($tmp, -1, 1)) === FALSE) echo ':';
+          }
+          else {
+            echo "&nbsp;";
+          }
 
 					// Handle starting of a new data cell.
 					if ($datacols > 0) {

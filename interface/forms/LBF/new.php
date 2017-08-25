@@ -603,7 +603,15 @@ function validate(f) {
     ++$item_count;
 
     echo "<b>";
-    if ($frow['title']) echo text(xl_layout_label($frow['title']) . ":"); else echo "&nbsp;";
+    if ($frow['title']) {
+      $tmp = xl_layout_label($frow['title']);
+      echo text($tmp);
+      // Append colon only if label does not end with punctuation.
+      if (strpos('?!.,:-=', substr($tmp, -1, 1)) === FALSE) echo ':';
+    }
+    else {
+      echo "&nbsp;";
+    }
     echo "</b>";
 
     // Note the labels are not repeated in the history columns.
