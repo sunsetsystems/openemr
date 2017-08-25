@@ -82,19 +82,6 @@ function end_row() {
   }
 }
 
-function end_group() {
-  global $last_group;
-  if (strlen($last_group) > 0) {
-    end_row();
-    echo " </table>\n";
-    // No div for an empty group name.
-    if (strlen($last_group) > 1) {
-      echo "</div>\n"; // div after checkbox
-      echo "</div>\n"; // outer div, including checkbox
-    }
-  }
-}
-
 $formname = isset($_GET['formname']) ? $_GET['formname'] : '';
 $formid   = isset($_GET['id']      ) ? intval($_GET['id']) : 0;
 $portalid = isset($_GET['portalid']) ? intval($_GET['portalid']) : 0;
@@ -597,10 +584,16 @@ function warehouse_changed(sel) {
   $fres = sqlStatement("SELECT * FROM layout_options " .
     "WHERE form_id = ? AND uor > 0 " .
     "ORDER BY group_name, seq", array($formname) );
-  $last_group = '';
   $cell_count = 0;
   $item_count = 0;
   $display_style = 'block';
+
+  // This is an array of the active group levels. Each entry is a group or
+  // subgroup name (with its order prefix) and represents a level of nesting.
+  $group_levels = array();
+
+  // This indicates if </table> will need to be written to end the fields in a group.
+  $group_table_active = false;
 
   // This is an array keyed on forms.form_id for other occurrences of this
   // form type.  The maximum number of such other occurrences to display is
@@ -686,12 +679,42 @@ function warehouse_changed(sel) {
       } // End "P" option logic.
     }
 
-    // Handle a data category (group) change.
-    if (strcmp($this_group, $last_group) != 0) {
-      end_group();
-      $group_seq  = 'lbf' . substr($this_group, 0, 1);
-      $group_name = substr($this_group, 1);
-      $last_group = $this_group;
+    $this_levels = explode('|', $this_group);
+    $i = 0;
+    $mincount = min(count($this_levels), count($group_levels));
+    while ($i < $mincount && $this_levels[$i] == $group_levels[$i]) ++$i;
+    // $i is now the number of initial matching levels.
+
+    // If ending a group or starting a subgroup, terminate the current row and its table.
+    if ($group_table_active && ($i != count($group_levels) || $i != count($this_levels))) {
+      end_row();
+      echo " </table>\n";
+      $group_table_active = false;
+    }
+
+    // Close any groups that we are done with.
+    while (count($group_levels) > $i) {
+      $gname = array_pop($group_levels);
+      // No div for an empty group name.
+      if (strlen($gname) > 1) echo "</div>\n";
+    }
+
+    // If there are any new groups, open them.
+    while ($i < count($this_levels)) {
+      end_row();
+      if ($group_table_active) {
+        echo " </table>\n";
+        $group_table_active = false;
+      }
+
+      $gname = $this_levels[$i++];
+      array_push($group_levels, $gname);
+
+      // Compute a short unique identifier for this group.
+      $group_seq  = 'lbf';
+      foreach ($group_levels as $tmp) $group_seq .= substr($tmp, 0, 1);
+      $group_name = substr($gname, 1);
+      // $group_name does not include the order prefix character.
 
       if ($some_group_is_open) {
         // Must have edit option "I" in first item for its group to be initially open.
@@ -699,16 +722,16 @@ function warehouse_changed(sel) {
       }
 
       // If group name is blank, no checkbox or div.
-      if (strlen($this_group) > 1) {
-        echo "<div id='outerdiv_" . attr($group_seq) . "'>\n";
+      if (strlen($gname) > 1) {
         echo "<br /><span class='bold'><input type='checkbox' name='form_cb_" . attr($group_seq) . "' value='1' " .
           "onclick='return divclick(this,\"div_" . attr(addslashes($group_seq)) . "\");'";
         if ($display_style == 'block') echo " checked";
         echo " /><b>" . text(xl_layout_label($group_name)) . "</b></span>\n";
         echo "<div id='div_" . attr($group_seq) . "' class='section' style='display:" . attr($display_style) . ";'>\n";
       }
-      // echo " <table border='0' cellpadding='0' width='100%'>\n";
-      echo " <table border='0' cellspacing='0' cellpadding='0' width='100%' class='lbfdata'>\n";
+
+      $group_table_active = true;
+      echo " <table border='0' cellspacing='0' cellpadding='0'>\n";
       $display_style = 'none';
 
       // Initialize historical data array and write date headers.
@@ -740,7 +763,6 @@ function warehouse_changed(sel) {
         }
         echo " </tr>";
       }
-
     }
 
     // Handle starting of a new row.
@@ -827,7 +849,17 @@ function warehouse_changed(sel) {
 
   }
 
-  end_group();
+  // Close all open groups.
+  if ($group_table_active) {
+    end_row();
+    echo " </table>\n";
+    $group_table_active = false;
+  }
+  while (count($group_levels)) {
+    $gname = array_pop($group_levels);
+    // No div for an empty group name.
+    if (strlen($gname) > 1) echo "</div>\n";
+  }
 
   $display_style = 'none';
 

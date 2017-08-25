@@ -2227,3 +2227,7 @@ INSERT INTO `list_options` (`list_id`, `option_id`, `title`, `seq`, `is_default`
 #IfNotColumnType facility country_code varchar(30)
 ALTER TABLE `facility` CHANGE `country_code` `country_code` varchar(30) NOT NULL default '';
 #EndIf
+
+#IfNotColumnType layout_options group_name varchar(255)
+ALTER TABLE `layout_options` CHANGE `group_name` `group_name` varchar(255) NOT NULL default '';
+#EndIf
