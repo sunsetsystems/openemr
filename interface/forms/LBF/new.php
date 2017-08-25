@@ -416,7 +416,7 @@ function trimlen(s) {
 function validate(f) {
 <?php generate_layout_validation($formname); ?>
  // Validation for Fee Sheet stuff:
- if (jsLineItemValidation && !jsLineItemValidation(f)) return false;
+ if (window.jsLineItemValidation && !jsLineItemValidation(f)) return false;
  somethingChanged = false; // turn off "are you sure you want to leave"
  top.restoreSession();
  return true;
