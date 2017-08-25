@@ -21,17 +21,17 @@ $esignApi = new Esign\Api();
 function openNewForm(sel) {
   top.restoreSession();
   FormNameValueArray = sel.split('formname=');
-  if(FormNameValueArray[1] == 'newpatient')
-  {
+  if (FormNameValueArray[1] == 'newpatient') {
     parent.location.href = sel;
   }
-  else if (!parent.Forms)
-  {
-    location.href = sel;
-  }
-  else
-  {
+  else if (parent.Forms && (parent.name == 'RTop' || parent.name == 'RBot')) {
     parent.Forms.location.href = sel;
+  }
+  else if (window.Forms) {
+    window.Forms.location.href = sel;
+  }
+  else {
+    window.location.href = sel;
   }
 }
 

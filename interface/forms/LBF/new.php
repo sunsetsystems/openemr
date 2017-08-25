@@ -39,6 +39,8 @@ $CPR = 4; // cells per row
 
 $pprow = array();
 
+$alertmsg = '';
+
 // $is_lbf is defined in trend_form.php and indicates that we are being
 // invoked from there; in that case the current encounter is irrelevant.
 if (empty($is_lbf) && !$encounter) {
@@ -103,9 +105,21 @@ $tmp = sqlQuery("SELECT title, option_value, notes FROM list_options WHERE " .
 $formtitle = $tmp['title'];
 $formhistory = 0 + $tmp['option_value'];
 
-// Notes can be used to specify number of columns in the form.
-if (ctype_digit($tmp['notes']) && $tmp['notes'] > 0 && $tmp['notes'] < 13) {
-  $CPR = intval($tmp['notes']);
+if (preg_match('/columns=([0-9]+)/', $tmp['notes'], $matches)) {
+  if ($matches[1] > 0 && $matches[1] < 13) $CPR = intval($matches[1]);
+}
+if (preg_match('/services=([a-zA-Z0-9_-]*)/', $tmp['notes'], $matches)) {
+  // Note if this is defined then we will make a Services section on the page.
+  $LBF_SERVICES_SECTION = $matches[1];
+}
+if (preg_match('/products=([a-zA-Z0-9_-]*)/', $tmp['notes'], $matches)) {
+  // Note if this is defined then we will make a Products section on the page.
+  $LBF_PRODUCTS_SECTION = $matches[1];
+}
+
+if (isset($LBF_SERVICES_SECTION) || isset($LBF_PRODUCTS_SECTION)) {
+  require_once("$srcdir/FeeSheetHtml.class.php");
+  $fs = new FeeSheetHtml($pid, $encounter);
 }
 
 if (empty($is_lbf)) {
@@ -213,14 +227,28 @@ if ($_POST['bn_save']) {
     }
   }
 
-  // Support custom behavior at save time, such as going to another form.
-  if (function_exists($formname . '_save_exit')) {
-    if (call_user_func($formname . '_save_exit')) exit;
+  if (isset($fs)) {
+    $bill = is_array($_POST['form_fs_bill']) ? $_POST['form_fs_bill'] : null;
+    $prod = is_array($_POST['form_fs_prod']) ? $_POST['form_fs_prod'] : null;
+    $alertmsg = $fs->checkInventory($prod);
+    // If there is an inventory error then no services or products will be saved, and
+    // the form will be redisplayed with an error alert and everything else saved.
+    if (!$alertmsg) {
+      $fs->save($bill, $prod, NULL, NULL);
+      $fs->updatePriceLevel($_POST['form_fs_pricelevel']);
+    }
   }
-  formHeader("Redirecting....");
-  formJump();
-  formFooter();
-  exit;
+
+  if (!$alertmsg) {
+    // Support custom behavior at save time, such as going to another form.
+    if (function_exists($formname . '_save_exit')) {
+      if (call_user_func($formname . '_save_exit')) exit;
+    }
+    formHeader("Redirecting....");
+    formJump();
+    formFooter();
+    exit;
+  }
 }
 
 ?>
@@ -326,6 +354,19 @@ var current_sel_name = '';
 // Appends to or erases the current list of related codes.
 function set_related(codetype, code, selector, codedesc) {
  var f = document.forms[0];
+<?php if (isset($fs)) { ?>
+ // This is the case of selecting a code for the Fee Sheet:
+ if (!current_sel_name) {
+  if (code) {
+   $.getScript('<?php echo $GLOBALS['web_root'] ?>/library/ajax/code_attributes_ajax.php' +
+    '?codetype='   + encodeURIComponent(codetype) +
+    '&code='       + encodeURIComponent(code) +
+    '&selector='   + encodeURIComponent(selector) +
+    '&pricelevel=' + encodeURIComponent(f.form_fs_pricelevel.value));
+  }
+  return '';
+ }
+<?php } ?>
  // frc will be the input element containing the codes.
  // frcd, if set, will be the input element containing their descriptions.
  var frc = f[current_sel_name];
@@ -353,12 +394,12 @@ function set_related(codetype, code, selector, codedesc) {
  return '';
 }
 
-// This invokes the find-code popup.
+// This invokes the "dynamic" find-code popup.
 function sel_related(elem, codetype) {
- current_sel_name = elem.name;
- var url = '<?php echo $rootdir ?>/patient_file/encounter/find_code_popup.php';
+ current_sel_name = elem ? elem.name : '';
+ var url = '<?php echo $rootdir ?>/patient_file/encounter/find_code_dynamic.php';
  if (codetype) url += '?codetype=' + codetype;
- dlgopen(url, '_blank', 500, 400);
+ dlgopen(url, '_blank', 800, 500);
 }
 
 // Compute the length of a string without leading and trailing spaces.
@@ -374,10 +415,134 @@ function trimlen(s) {
 // Validation logic for form submission.
 function validate(f) {
 <?php generate_layout_validation($formname); ?>
+ // Validation for Fee Sheet stuff:
+ if (jsLineItemValidation && !jsLineItemValidation(f)) return false;
  somethingChanged = false; // turn off "are you sure you want to leave"
  top.restoreSession();
  return true;
 }
+
+<?php
+if (isset($fs)) { 
+  // jsLineItemValidation() function for the fee sheet stuff.
+  echo $fs->jsLineItemValidation('form_fs_bill', 'form_fs_prod');
+?>
+
+// Add a service line item.
+function fs_append_service(code_type, code, desc, price) {
+ var telem = document.getElementById('fs_services_table');
+ var lino = telem.rows.length - 1;
+ var trelem = telem.insertRow(telem.rows.length);
+ trelem.innerHTML =
+  "<td class='text'>" + code + "&nbsp;</td>" +
+  "<td class='text'>" + desc + "&nbsp;</td>" +
+  "<td class='text'>" +
+  "<select name='form_fs_bill[" + lino + "][provid]'>" +
+  "<?php echo addslashes($fs->genProviderOptionList('-- ' . xl('Default') . ' --')) ?>" +
+  "</select>&nbsp;" +
+  "</td>" +
+  "<td class='text' align='right'>" + price + "&nbsp;</td>" +
+  "<td class='text' align='right'>" +
+  "<input type='checkbox' name='form_fs_bill[" + lino + "][del]' value='1' />" +
+  "<input type='hidden' name='form_fs_bill[" + lino + "][code_type]' value='" + code_type + "' />" +
+  "<input type='hidden' name='form_fs_bill[" + lino + "][code]'      value='" + code      + "' />" +
+  "<input type='hidden' name='form_fs_bill[" + lino + "][price]'     value='" + price     + "' />" +
+  "</td>";
+}
+
+// Add a product line item.
+function fs_append_product(code_type, code, desc, price, warehouses) {
+ var telem = document.getElementById('fs_products_table');
+ var lino = telem.rows.length - 1;
+ var trelem = telem.insertRow(telem.rows.length);
+ trelem.innerHTML =
+  "<td class='text'>" + desc + "&nbsp;</td>" +
+  "<td class='text'>" +
+  "<select name='form_fs_prod[" + lino + "][warehouse]'>" + warehouses + "</select>&nbsp;" +
+  "</td>" +
+  "<td class='text' align='right'>" +
+  "<input type='text' name='form_fs_prod[" + lino + "][units]' size='3' value='1' />&nbsp;" +
+  "</td>" +
+  "<td class='text' align='right'>" + price + "&nbsp;</td>" +
+  "<td class='text' align='right'>" +
+  "<input type='checkbox' name='form_fs_prod[" + lino + "][del]'     value='1' />" +
+  "<input type='hidden'   name='form_fs_prod[" + lino + "][drug_id]' value='" + code      + "' />" +
+  "<input type='hidden'   name='form_fs_prod[" + lino + "][price]'   value='" + price     + "' />" +
+  "</td>";
+}
+
+// Respond to clicking a checkbox for adding (or removing) a specific service.
+function fs_service_clicked(cb) {
+  var f = cb.form;
+  // The checkbox value is a JSON array containing the service's code type, code, description,
+  // and price for each price level.
+  var a = JSON.parse(cb.value);
+  if (!cb.checked) {
+    // The checkbox was UNchecked.
+    // Find last row with a matching code_type and code and set its del flag.
+    var telem = document.getElementById('fs_services_table');
+    var lino = telem.rows.length - 2;
+    for (; lino >= 0; --lino) {
+      var pfx = "form_fs_bill[" + lino + "]";
+      if (f[pfx + "[code_type]"].value == a[0] && f[pfx + "[code]"].value == a[1]) {
+        f[pfx + "[del]"].checked = true;
+        break;
+      }
+    }
+    return;
+  }
+  $.getScript('<?php echo $GLOBALS['web_root'] ?>/library/ajax/code_attributes_ajax.php' +
+    '?codetype='   + encodeURIComponent(a[0]) +
+    '&code='       + encodeURIComponent(a[1]) +
+    '&pricelevel=' + encodeURIComponent(f.form_fs_pricelevel.value));
+}
+
+// Respond to clicking a checkbox for adding (or removing) a specific service.
+function fs_product_clicked(cb) {
+  var f = cb.form;
+  // The checkbox value is a JSON array containing the product's code type, code and selector.
+  var a = JSON.parse(cb.value);
+  if (!cb.checked) {
+    // The checkbox was UNchecked.
+    // Find last row with a matching product ID and set its del flag.
+    var telem = document.getElementById('fs_products_table');
+    var lino = telem.rows.length - 2;
+    for (; lino >= 0; --lino) {
+      var pfx = "form_fs_prod[" + lino + "]";
+      if (f[pfx + "[code_type]"].value == a[0] && f[pfx + "[code]"].value == a[1]) {
+        f[pfx + "[del]"].checked = true;
+        break;
+      }
+    }
+    return;
+  }
+  $.getScript('<?php echo $GLOBALS['web_root'] ?>/library/ajax/code_attributes_ajax.php' +
+    '?codetype='   + encodeURIComponent(a[0]) +
+    '&code='       + encodeURIComponent(a[1]) +
+    '&selector='   + encodeURIComponent(a[2]) +
+    '&pricelevel=' + encodeURIComponent(f.form_fs_pricelevel.value));
+}
+
+// This is called back by code_attributes_ajax.php to complete the appending of a line item.
+function code_attributes_handler(codetype, code, desc, price, warehouses) {
+ if (codetype == 'PROD') {
+  fs_append_product(codetype, code, desc, price, warehouses);
+ }
+ else {
+  fs_append_service(codetype, code, desc, price);
+ }
+}
+
+function warehouse_changed(sel) {
+ if (!confirm('<?php echo xl('Do you really want to change Warehouse?'); ?>')) {
+  // They clicked Cancel so reset selection to its default state.
+  for (var i = 0; i < sel.options.length; ++i) {
+   sel.options[i].selected = sel.options[i].defaultSelected;
+  }
+ }
+}
+
+<?php } // end if (isset($fs)) ?>
 
 <?php if (function_exists($formname . '_javascript')) call_user_func($formname . '_javascript'); ?>
 
@@ -651,10 +816,176 @@ function validate(f) {
   }
 
   end_group();
+
+  if (isset($LBF_SERVICES_SECTION)) {
+
+    // Create the checkbox and div for the Services Section.
+    echo "<br /><span class='bold'><input type='checkbox' name='form_cb_fs_services' value='1' " .
+      "onclick='return divclick(this, \"div_fs_services\");'";
+    if ($display_style == 'block') echo " checked";
+    echo " /><b>" . xlt('Services') . "</b></span>\n";
+    echo "<div id='div_fs_services' class='section' style='display:" . attr($display_style) . ";'>\n";
+    echo "<center>\n";
+    $display_style = 'none';
+
+    // If there is an associated list, generate a checkbox for each service in the list.
+    if ($LBF_SERVICES_SECTION) {
+      $lres = sqlStatement("SELECT * FROM list_options " .
+        "WHERE list_id = ? ORDER BY seq, title", array($LBF_SERVICES_SECTION));
+      echo "<table cellpadding='0' cellspacing='0' width='100%'>\n";
+      $cols = 3;
+      $tdpct = (int) (100 / $cols);
+      for ($count = 0; $lrow = sqlFetchArray($lres); ++$count) {
+        $codes = $lrow['codes'];
+        $codes_esc = htmlspecialchars($codes, ENT_QUOTES);
+        $cbval = $fs->genCodeSelectorValue($codes);
+        if ($count % $cols == 0) {
+          if ($count) echo " </tr>\n";
+          echo " <tr>\n";
+        }
+        echo "  <td width='$tdpct%'>";
+        echo "<input type='checkbox' id='form_fs_services[$codes_esc]' " .
+          "onclick='fs_service_clicked(this)' value='" . attr($cbval) . "'";
+        if ($fs->code_is_in_fee_sheet) echo " checked";
+        $title = empty($lrow['title']) ? $lrow['option_id'] : xl_list_label($lrow['title']);
+        echo " />" . htmlspecialchars($title, ENT_NOQUOTES);
+        echo "</td>\n";
+      }
+      if ($count) echo " </tr>\n";
+      echo "</table>\n";
+    }
+
+    // A row for Search, Main Provider, Price Level.
+    $ctype = $GLOBALS['ippf_specific'] ? 'MA' : '';
+    echo "<p class='bold'>";
+    echo "<input type='button' value='" . xla('Search Other Services') . "' onclick='sel_related(null,\"$ctype\")' />&nbsp;&nbsp;";
+    echo xlt('Main Provider') . ": ";
+    echo $fs->genProviderSelect("form_fs_provid", ' ', $fs->provider_id);
+    echo "\n";
+    echo "</p>\n";
+
+    // Generate a line for each service already in this FS.
+    echo "<table cellpadding='0' cellspacing='2' id='fs_services_table'>\n";
+    echo " <tr>\n";
+    echo "  <td class='bold' colspan='2'>" . xlt('Services Provided') . "&nbsp;</td>\n";
+    echo "  <td class='bold'>" . xlt('Provider') . "&nbsp;</td>\n";
+    echo "  <td class='bold' align='right'>" . xlt('Price'   ) . "&nbsp;</td>\n";
+    echo "  <td class='bold' align='right'>" . xlt('Delete'  ) . "</td>\n";
+    echo " </tr>\n";
+    $fs->loadServiceItems();
+    foreach ($fs->serviceitems as $lino => $li) {
+      echo " <tr>\n";
+      echo "  <td class='text'>" . text($li['code']) . "&nbsp;</td>\n";
+      echo "  <td class='text'>" . text($li['code_text']) . "&nbsp;</td>\n";
+      echo "  <td class='text'>" .
+        $fs->genProviderSelect("form_fs_bill[$lino][provid]", '-- ' . xl("Default") . ' --', $li['provid']) .
+        "  &nbsp;</td>\n";
+      echo "  <td class='text' align='right'>" . oeFormatMoney($li['price']) . "&nbsp;</td>\n";
+      echo "  <td class='text' align='right'>\n" .
+        "   <input type='checkbox' name='form_fs_bill[$lino][del]' " .
+        "value='1'" . ($li['del'] ? " checked" : "") . " />\n";
+      foreach ($li['hidden'] as $hname => $hvalue) {
+        echo "   <input type='hidden' name='form_fs_bill[$lino][$hname]' value='" . attr($hvalue) . "' />\n";
+      }
+      echo "  </td>\n";
+      echo " </tr>\n";
+    }
+    echo "</table>\n";
+    echo "</center>\n";
+    echo "</div>\n";
+
+  } // End Services Section
+
+  if (isset($LBF_PRODUCTS_SECTION)) {
+
+    // Create the checkbox and div for the Products Section.
+    echo "<br /><span class='bold'><input type='checkbox' name='form_cb_fs_products' value='1' " .
+      "onclick='return divclick(this, \"div_fs_products\");'";
+    if ($display_style == 'block') echo " checked";
+    echo " /><b>" . xlt('Products') . "</b></span>\n";
+    echo "<div id='div_fs_products' class='section' style='display:" . attr($display_style) . ";'>\n";
+    echo "<center>\n";
+    $display_style = 'none';
+
+    // If there is an associated list, generate a checkbox for each product in the list.
+    if ($LBF_PRODUCTS_SECTION) {
+      $lres = sqlStatement("SELECT * FROM list_options " .
+        "WHERE list_id = ? ORDER BY seq, title", array($LBF_PRODUCTS_SECTION));
+      echo "<table cellpadding='0' cellspacing='0' width='100%'>\n";
+      $cols = 3;
+      $tdpct = (int) (100 / $cols);
+      for ($count = 0; $lrow = sqlFetchArray($lres); ++$count) {
+        $codes = $lrow['codes'];
+        $codes_esc = htmlspecialchars($codes, ENT_QUOTES);
+        $cbval = $fs->genCodeSelectorValue($codes);
+        if ($count % $cols == 0) {
+          if ($count) echo " </tr>\n";
+          echo " <tr>\n";
+        }
+        echo "  <td width='$tdpct%'>";
+        echo "<input type='checkbox' id='form_fs_products[$codes_esc]' " .
+          "onclick='fs_product_clicked(this)' value='" . attr($cbval) . "'";
+        if ($fs->code_is_in_fee_sheet) echo " checked";
+        $title = empty($lrow['title']) ? $lrow['option_id'] : xl_list_label($lrow['title']);
+        echo " />" . htmlspecialchars($title, ENT_NOQUOTES);
+        echo "</td>\n";
+      }
+      if ($count) echo " </tr>\n";
+      echo "</table>\n";
+    }
+
+    // A row for Search
+    $ctype = $GLOBALS['ippf_specific'] ? 'MA' : '';
+    echo "<p class='bold'>";
+    echo "<input type='button' value='" . xla('Search Other Products') . "' onclick='sel_related(null,\"PROD\")' />&nbsp;&nbsp;";
+    echo "</p>\n";
+
+    // Generate a line for each product already in this FS.
+    echo "<table cellpadding='0' cellspacing='2' id='fs_products_table'>\n";
+    echo " <tr>\n";
+    echo "  <td class='bold'>" . xlt('Products Provided') . "&nbsp;</td>\n";
+    echo "  <td class='bold'>" . xlt('Warehouse'        ) . "&nbsp;</td>\n";
+    echo "  <td class='bold' align='right'>" . xlt('Quantity') . "&nbsp;</td>\n";
+    echo "  <td class='bold' align='right'>" . xlt('Price'   ) . "&nbsp;</td>\n";
+    echo "  <td class='bold' align='right'>" . xlt('Delete'  ) . "</td>\n";
+    echo " </tr>\n";
+    $fs->loadProductItems();
+    foreach ($fs->productitems as $lino => $li) {
+      echo " <tr>\n";
+      echo "  <td class='text'>" . text($li['code_text']) . "&nbsp;</td>\n";
+      echo "  <td class='text'>" .
+        $fs->genWarehouseSelect("form_fs_prod[$lino][warehouse]", '', $li['warehouse'], false, $li['hidden']['drug_id'], true) .
+        "  &nbsp;</td>\n";
+      echo "  <td class='text' align='right'>" .
+        "<input type='text' name='form_fs_prod[$lino][units]' size='3' value='" . $li['units'] . "' />" .
+        "&nbsp;</td>\n";
+      echo "  <td class='text' align='right'>" . oeFormatMoney($li['price']) . "&nbsp;</td>\n";
+      echo "  <td class='text' align='right'>\n" .
+        "   <input type='checkbox' name='form_fs_prod[$lino][del]' " .
+        "value='1'" . ($li['del'] ? " checked" : "") . " />\n";
+      foreach ($li['hidden'] as $hname => $hvalue) {
+        echo "   <input type='hidden' name='form_fs_prod[$lino][$hname]' value='" . attr($hvalue) . "' />\n";
+      }
+      echo "  </td>\n";
+      echo " </tr>\n";
+    }
+    echo "</table>\n";
+    echo "</center>\n";
+    echo "</div>\n";
+
+  } // End Products Section
+
 ?>
 
-<p style='text-align:center'>
+<p style='text-align:center' class='bold'>
 <?php if (empty($is_lbf)) { ?>
+<?php
+  if (isset($LBF_SERVICES_SECTION) || isset($LBF_PRODUCTS_SECTION)) {
+    echo xlt('Price Level') . ": ";
+    echo $fs->generatePriceLevelSelector('form_fs_pricelevel');
+    echo "&nbsp;&nbsp;";
+  }
+?>
 <input type='submit' name='bn_save' value='<?php echo xla('Save') ?>' />
 <?php
 if (function_exists($formname . '_additional_buttons')) {
@@ -664,12 +995,11 @@ if (function_exists($formname . '_additional_buttons')) {
 ?>
 &nbsp;
 <input type='button' value='<?php echo xla('Cancel') ?>' onclick="top.restoreSession();location='<?php echo $GLOBALS['form_exit_url']; ?>'" />
-&nbsp;
 <?php if ($form_is_graphable) { ?>
-<input type='button' value='<?php echo xla('Show Graph') ?>' onclick="top.restoreSession();location='../../patient_file/encounter/trend_form.php?formname=<?php echo attr($formname); ?>'" />
 &nbsp;
+<input type='button' value='<?php echo xla('Show Graph') ?>' onclick="top.restoreSession();location='../../patient_file/encounter/trend_form.php?formname=<?php echo attr($formname); ?>'" />
 <?php } ?>
-<?php } else { ?>
+<?php } else { // $is_lbf is true ?>
 <input type='button' value='<?php echo xla('Back') ?>' onclick='window.history.back();' />
 <?php } ?>
 </p>
@@ -692,11 +1022,9 @@ if (function_exists($formname . '_javascript_onload')) {
   call_user_func($formname . '_javascript_onload');
 }
 
-// TBD: If $alertmsg, display it with a JavaScript alert().
-
 // New form and this patient has a portal login and we have not loaded portal data.
 // Check if there is portal data pending for this patient and form type.
-if (!$formid && $GLOBALS['gbl_portal_cms_enable'] && $cmsportal_login && !$portalid) {
+if (!$alertmsg && !$formid && $GLOBALS['gbl_portal_cms_enable'] && $cmsportal_login && !$portalid) {
   $portalres = cms_portal_call(array('action' => 'checkptform', 'form' => $formname, 'patient' => $cmsportal_login));
   if ($portalres['errmsg']) {
     die(text($portalres['errmsg'])); // TBD: Change to alertmsg
@@ -708,6 +1036,10 @@ if (!$formid && $GLOBALS['gbl_portal_cms_enable'] && $cmsportal_login && !$porta
     echo " document.location.href = 'load_form.php?formname=$formname&portalid=$portalid';\n";
     echo "}\n";
   }
+}
+
+if ($alertmsg) {
+  echo "alert('" . addslashes($alertmsg) . "');\n";
 }
 ?>
 </script>

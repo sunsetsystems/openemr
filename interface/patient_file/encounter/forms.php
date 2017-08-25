@@ -589,7 +589,7 @@ if ( $esign->isButtonViewable() ) {
             echo "<a href=# class='css_button_small form-edit-button-locked' id='form-edit-button-".attr($formdir)."-".attr($iter['id'])."'><span>".xlt('Locked')."</span></a>";
         } else {
             echo "<a class='css_button_small form-edit-button' id='form-edit-button-".attr($formdir)."-".attr($iter['id'])."' target='".
-                    "_parent" .
+                    "Forms" .
                     "' href='$rootdir/patient_file/encounter/view_form.php?" .
                     "formname=" . attr($formdir) . "&id=" . attr($iter['form_id']) .
                     "' onclick='top.restoreSession()'>";
@@ -603,7 +603,7 @@ if ( $esign->isButtonViewable() ) {
         if (acl_check('admin', 'super') ) {
             if ( $formdir != 'newpatient') {
                 // a link to delete the form from the encounter
-                echo "<a target='_parent'" .
+                echo "<a target='Forms'" .
                     " href='$rootdir/patient_file/encounter/delete_form.php?" .
                     "formname=" . $formdir .
                     "&id=" . $iter['id'] .
