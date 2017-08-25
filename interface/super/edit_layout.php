@@ -585,6 +585,7 @@ function writeFieldLine($linedata) {
         ", E = " . xla('Dup Check on only Edit') .
         ", W = " . xla('Dup Check on only New') .
         ", G = " . xla('Graphable') .
+        ", I = " . xla('Initially Open Group') .
         ", L = " . xla('Lab Order') .
         ", N = " . xla('New Patient Form') .
         ", O = " . xla('Order Processor') .
