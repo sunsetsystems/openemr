@@ -42,12 +42,6 @@ $pprow = array();
 
 $alertmsg = '';
 
-// $is_lbf is defined in trend_form.php and indicates that we are being
-// invoked from there; in that case the current encounter is irrelevant.
-if (empty($is_lbf) && !$encounter) {
-  die("Internal error: we do not seem to be in an encounter!");
-}
-
 function end_cell() {
   global $item_count, $cell_count, $historical_ids;
   if ($item_count > 0) {
@@ -83,9 +77,31 @@ function end_row() {
   }
 }
 
+// $is_lbf is defined in trend_form.php and indicates that we are being
+// invoked from there; in that case the current encounter is irrelevant.
+$from_trend_form = !empty($is_lbf);
+
+// This is true if the page is loaded into an iframe in add_edit_issue.php.
+$from_issue_form = !empty($_REQUEST['from_issue_form']);
+
 $formname = isset($_GET['formname']) ? $_GET['formname'] : '';
 $formid   = isset($_GET['id']      ) ? intval($_GET['id']) : 0;
 $portalid = isset($_GET['portalid']) ? intval($_GET['portalid']) : 0;
+
+$visitid = intval(empty($_GET['visitid']) ? $encounter : $_GET['visitid']);
+
+// If necessary get the encounter from the forms table entry for this form.
+if ($formid && !$visitid) {
+  $frow = sqlQuery("SELECT pid, encounter FROM forms WHERE " .
+    "form_id = ? AND formdir = ? AND deleted = 0",
+    array($formid, $formname));
+  $visitid = intval($frow['encounter']);
+  if ($row['pid'] != $pid) die("Internal error: patient ID mismatch!");
+}
+
+if (!$from_trend_form && !$visitid) {
+  die("Internal error: we do not seem to be in an encounter!");
+}
 
 // Get some info about this form.
 $tmp = sqlQuery("SELECT title, option_value, notes FROM list_options WHERE " .
@@ -109,12 +125,17 @@ if (preg_match('/\\bdiags=([a-zA-Z0-9_-]*)/', $tmp['notes'], $matches)) {
   $LBF_DIAGS_SECTION = $matches[1];
 }
 
-if (isset($LBF_SERVICES_SECTION) || isset($LBF_PRODUCTS_SECTION) || isset($LBF_DIAGS_SECTION)) {
-  require_once("$srcdir/FeeSheetHtml.class.php");
-  $fs = new FeeSheetHtml($pid, $encounter);
+if (preg_match('/\\bissue=([a-zA-Z0-9_-]*)/', $tmp['notes'], $matches)) {
+  // Note if defined this is an issue type associated with the LBF.
+  $LBF_ISSUE_TYPE = $matches[1];
 }
 
-if (empty($is_lbf)) {
+if (isset($LBF_SERVICES_SECTION) || isset($LBF_PRODUCTS_SECTION) || isset($LBF_DIAGS_SECTION)) {
+  require_once("$srcdir/FeeSheetHtml.class.php");
+  $fs = new FeeSheetHtml($pid, $visitid);
+}
+
+if (!$from_trend_form) {
   $fname = $GLOBALS['OE_SITE_DIR'] . "/LBF/$formname.plugin.php";
   if (file_exists($fname)) include_once($fname);
 }
@@ -130,8 +151,16 @@ if (!empty($_POST['bn_save']) || !empty($_POST['bn_save_print'])) {
       "( field_id, field_value ) VALUES ( '', '' )");
     sqlStatement("DELETE FROM lbf_data WHERE form_id = ? AND " .
       "field_id = ''", array($newid));
-    addForm($encounter, $formtitle, $newid, $formname, $pid, $userauthorized);
+    addForm($visitid, $formtitle, $newid, $formname, $pid, $userauthorized);
   }
+
+  // If there is an issue ID, update it in the forms table entry.
+  if (isset($_POST['form_issue_id'])) {
+    $my_form_id = $formid ? $formid : $newid;
+    sqlStatement("UPDATE forms SET issue_id = ? WHERE formdir = ? AND form_id = ? AND deleted = 0",
+      array($_POST['form_issue_id'], $formname, $my_form_id));
+  }
+
   $sets = "";
   $fres = sqlStatement("SELECT * FROM layout_options " .
     "WHERE form_id = ? AND uor > 0 AND field_id != '' AND " .
@@ -178,7 +207,7 @@ if (!empty($_POST['bn_save']) || !empty($_POST['bn_save_print'])) {
       sqlStatement("REPLACE INTO shared_attributes SET " .
         "pid = ?, encounter = ?, field_id = ?, last_update = NOW(), " .
         "user_id = ?, field_value = ?",
-        array($pid, $encounter, $field_id, $_SESSION['authUserID'], $value));
+        array($pid, $visitid, $field_id, $_SESSION['authUserID'], $value));
       continue;
     }
     else if ($source == 'V') {
@@ -186,7 +215,7 @@ if (!empty($_POST['bn_save']) || !empty($_POST['bn_save_print'])) {
       $esc_field_id = escape_sql_column_name($field_id, array('form_encounter'));
       sqlStatement("UPDATE form_encounter SET `$esc_field_id` = ? WHERE " .
         "pid = ? AND encounter = ?",
-        array($value, $pid, $encounter));
+        array($value, $pid, $visitid));
       continue;
     }
     // It's a normal form field, save to lbf_data.
@@ -231,7 +260,7 @@ if (!empty($_POST['bn_save']) || !empty($_POST['bn_save_print'])) {
     }
   }
 
-  if (!$alertmsg) {
+  if (!$alertmsg && !$from_issue_form) {
     // Support custom behavior at save time, such as going to another form.
     if (function_exists($formname . '_save_exit')) {
       if (call_user_func($formname . '_save_exit')) exit;
@@ -245,7 +274,7 @@ if (!empty($_POST['bn_save']) || !empty($_POST['bn_save_print'])) {
         "window.open('$rootdir/forms/LBF/printable.php?" .
         "formname="   . urlencode($formname )            .
         "&formid="    . urlencode($formid   )            .
-        "&visitid="   . urlencode($encounter)            .
+        "&visitid="   . urlencode($visitid  )            .
         "&patientid=" . urlencode($pid      )            .
         "', '_blank');\n"                                .
         "</script>\n";
@@ -611,13 +640,13 @@ function warehouse_changed(sel) {
 
   $cmsportal_login = '';
   $portalres = FALSE;
-  if (empty($is_lbf)) {
+  if (!$from_trend_form) {
     $enrow = sqlQuery("SELECT p.fname, p.mname, p.lname, p.cmsportal_login, " .
       "fe.date FROM " .
       "form_encounter AS fe, forms AS f, patient_data AS p WHERE " .
       "p.pid = ? AND f.pid = p.pid AND f.encounter = ? AND " .
       "f.formdir = 'newpatient' AND f.deleted = 0 AND " .
-      "fe.id = f.form_id LIMIT 1", array($pid, $encounter));
+      "fe.id = f.form_id LIMIT 1", array($pid, $visitid));
     echo "<p class='title' style='margin-top:8px;margin-bottom:8px;text-align:center'>\n";
     echo text($formtitle) . " " . xlt('for') . ' ';
     echo text($enrow['fname']) . ' ' . text($enrow['mname']) . ' ' . text($enrow['lname']);
@@ -712,11 +741,11 @@ function warehouse_changed(sel) {
         $currvalue = cms_field_to_lbf($data_type, $field_id, $portalres['fields']);
       }
       if ($currvalue === '') {
-        $currvalue = lbf_current_value($frow, $formid, $is_lbf ? 0 : $encounter);
+        $currvalue = lbf_current_value($frow, $formid, $from_trend_form ? 0 : $visitid);
       }
       if ($currvalue === FALSE) continue; // column does not exist, should not happen
       // Handle "P" edit option to default to the previous value of a form field.
-      if (!$is_lbf && empty($currvalue) && strpos($edit_options, 'P') !== FALSE) {
+      if (!$from_trend_form && empty($currvalue) && strpos($edit_options, 'P') !== FALSE) {
         if ($source == 'F' && !$formid) {
           // Form attribute for new form, get value from most recent form instance.
           // Form attributes of existing forms are expected to have existing values.
@@ -739,7 +768,7 @@ function warehouse_changed(sel) {
             "sa.pid = e2.pid AND sa.encounter = e2.encounter AND sa.field_id = ?" .
             "WHERE e1.pid = ? AND e1.encounter = ? " .
             "ORDER BY e2.date DESC, e2.encounter DESC LIMIT 1",
-            array($field_id, $pid, $encounter));
+            array($field_id, $pid, $visitid));
           if (isset($tmp['field_value'])) $currvalue = $tmp['field_value'];
         }
       } // End "P" option logic.
@@ -805,7 +834,7 @@ function warehouse_changed(sel) {
       if ($formhistory > 0) {
         echo " <tr>";
         echo "<td colspan='" . attr($CPR) . "' align='right' class='bold'>";
-        if (empty($is_lbf)){
+        if (!$from_trend_form){
             // Including actual date per IPPF request 2012-08-23.
             echo oeFormatShortDate(substr($enrow['date'], 0, 10));
             echo ' (' . htmlspecialchars(xl('Current')) . ')';
@@ -900,7 +929,7 @@ function warehouse_changed(sel) {
     ++$item_count;
 
     // Skip current-value fields for the display-only case.
-    if (empty($is_lbf)) {
+    if (!$from_trend_form) {
       if ($frow['edit_options'] == 'H')
         echo generate_display_field($frow, $currvalue);
       else
@@ -1167,15 +1196,42 @@ function warehouse_changed(sel) {
 ?>
 
 <p style='text-align:center' class='bold'>
-<?php if (empty($is_lbf)) { ?>
+<?php if (!$from_trend_form) { ?>
 <?php
+  // Generate price level selector if we are doing services or products.
   if (isset($LBF_SERVICES_SECTION) || isset($LBF_PRODUCTS_SECTION)) {
     echo xlt('Price Level') . ": ";
     echo $fs->generatePriceLevelSelector('form_fs_pricelevel');
     echo "&nbsp;&nbsp;";
   }
+  // If appropriate build a drop-down selector of issues of this type for this patient.
+  // We skip this if in an issue form tab because removing and adding visit form tabs is
+  // beyond the current scope of that code.
+  if (!empty($LBF_ISSUE_TYPE) && !$from_issue_form) {
+    // echo "\n<!-- formname = '$formname' formid = '$formid' -->\n"; // debugging
+    $firow = sqlQuery("SELECT issue_id FROM forms WHERE formdir = ? AND form_id = ? AND deleted = 0",
+      array($formname, $formid));
+    $form_issue_id = empty($firow['issue_id']) ? 0 : intval($firow['issue_id']);
+    $query = "SELECT id, title, date, begdate FROM lists WHERE pid = ? AND type = ? " .
+      "ORDER BY COALESCE(begdate, date) DESC, id DESC";
+    $ires = sqlStatement($query, array($pid, $LBF_ISSUE_TYPE));
+    echo "<select name='form_issue_id'>\n";
+    echo " <option value='0'>-- " . xlt('Select Case') . " --</option>\n";
+    while ($irow = sqlFetchArray($ires)) {
+      $issueid = $irow['id'];
+      $issuedate = oeFormatShortDate(empty($irow['begdate']) ? $irow['date'] : $irow['begdate']);
+      echo " <option value='$issueid'";
+      if ($issueid == $form_issue_id) echo " selected";
+      echo ">$issuedate " . text($irow['title']) . "</option>\n";
+    }
+    echo "</select>\n";
+    echo "&nbsp;&nbsp;";
+  }
 ?>
 <input type='submit' name='bn_save' value='<?php echo xla('Save') ?>' />
+
+<?php if (!$from_issue_form) { ?>
+
 &nbsp;
 <input type='submit' name='bn_save_print' value='<?php echo xla('Save and Print') ?>' />
 <?php
@@ -1190,9 +1246,14 @@ if (function_exists($formname . '_additional_buttons')) {
 &nbsp;
 <input type='button' value='<?php echo xla('Show Graph') ?>' onclick="top.restoreSession();location='../../patient_file/encounter/trend_form.php?formname=<?php echo attr($formname); ?>'" />
 <?php } ?>
-<?php } else { // $is_lbf is true ?>
+
+<?php } // end not from issue form ?>
+
+<?php } else { // $from_trend_form is true ?>
 <input type='button' value='<?php echo xla('Back') ?>' onclick='window.history.back();' />
 <?php } ?>
+
+<input type='hidden' name='from_issue_form' value='<?php echo text($from_issue_form); ?>' />
 </p>
 
 </form>

@@ -2231,3 +2231,7 @@ ALTER TABLE `facility` CHANGE `country_code` `country_code` varchar(30) NOT NULL
 #IfNotColumnType layout_options group_name varchar(255)
 ALTER TABLE `layout_options` CHANGE `group_name` `group_name` varchar(255) NOT NULL default '';
 #EndIf
+
+#IfMissingColumn forms issue_id
+ALTER TABLE `forms` ADD COLUMN `issue_id` bigint(20) NOT NULL default 0 COMMENT 'references lists.id to identify a case';
+#EndIf
