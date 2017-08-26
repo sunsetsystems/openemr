@@ -2235,3 +2235,7 @@ ALTER TABLE `layout_options` CHANGE `group_name` `group_name` varchar(255) NOT N
 #IfMissingColumn forms issue_id
 ALTER TABLE `forms` ADD COLUMN `issue_id` bigint(20) NOT NULL default 0 COMMENT 'references lists.id to identify a case';
 #EndIf
+
++#IfMissingColumn forms provider_id
++ALTER TABLE `forms` ADD COLUMN `provider_id` bigint(20) NOT NULL default 0 COMMENT 'references users.id to identify a provider';
++#EndIf
