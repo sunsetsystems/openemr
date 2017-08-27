@@ -697,40 +697,49 @@ function generate_form_field($frow, $currvalue) {
 
   // a set of labeled checkboxes
   else if ($data_type == 21) {
-    // In this special case, fld_length is the number of columns generated.
-    $cols = max(1, $frow['fld_length']);
-    $avalue = explode('|', $currvalue);
-    $lres = sqlStatement("SELECT * FROM list_options " .
-      "WHERE list_id = ? AND activity = 1 ORDER BY seq, title", array($list_id) );
-    echo "<table cellpadding='0' cellspacing='0' width='100%'>";
-    $tdpct = (int) (100 / $cols);
-    for ($count = 0; $lrow = sqlFetchArray($lres); ++$count) {
-      $option_id = $lrow['option_id'];
-      $option_id_esc = htmlspecialchars( $option_id, ENT_QUOTES);
-      // if ($count) echo "<br />";
-      if ($count % $cols == 0) {
-        if ($count) echo "</tr>";
-        echo "<tr>";
-      }
-      echo "<td width='$tdpct%'>";
-      echo "<input type='checkbox' name='form_{$field_id_esc}[$option_id_esc]'" .
-        "id='form_{$field_id_esc}[$option_id_esc]' value='1' $lbfonchange";
-      if (in_array($option_id, $avalue)) echo " checked";
-
-      // Added 5-09 by BM - Translate label if applicable
-      echo " $disabled />" . htmlspecialchars( xl_list_label($lrow['title']), ENT_NOQUOTES);
-
-      echo "</td>";
+    // If no list then it's a single checkbox and its value is "Yes" or empty.
+    if (!$list_id) {
+      echo "<input type='checkbox' name='form_{$field_id_esc}'" .
+        "id='form_{$field_id_esc}' value='Yes' $lbfonchange";
+      if ($currvalue) echo " checked";
+      echo " $disabled />";
     }
-    if ($count) {
-      echo "</tr>";
-      if ($count > $cols) {
-        // Add some space after multiple rows of checkboxes.
-	$cols = htmlspecialchars( $cols, ENT_QUOTES);
-        echo "<tr><td colspan='$cols' style='height:0.7em'></td></tr>";
+    else {
+      // In this special case, fld_length is the number of columns generated.
+      $cols = max(1, $frow['fld_length']);
+      $avalue = explode('|', $currvalue);
+      $lres = sqlStatement("SELECT * FROM list_options " .
+        "WHERE list_id = ? AND activity = 1 ORDER BY seq, title", array($list_id) );
+      echo "<table cellpadding='0' cellspacing='0' width='100%'>";
+      $tdpct = (int) (100 / $cols);
+      for ($count = 0; $lrow = sqlFetchArray($lres); ++$count) {
+        $option_id = $lrow['option_id'];
+        $option_id_esc = htmlspecialchars( $option_id, ENT_QUOTES);
+        // if ($count) echo "<br />";
+        if ($count % $cols == 0) {
+          if ($count) echo "</tr>";
+          echo "<tr>";
+        }
+        echo "<td width='$tdpct%'>";
+        echo "<input type='checkbox' name='form_{$field_id_esc}[$option_id_esc]'" .
+          "id='form_{$field_id_esc}[$option_id_esc]' value='1' $lbfonchange";
+        if (in_array($option_id, $avalue)) echo " checked";
+
+        // Added 5-09 by BM - Translate label if applicable
+        echo " $disabled />" . htmlspecialchars( xl_list_label($lrow['title']), ENT_NOQUOTES);
+    
+        echo "</td>";
       }
+      if ($count) {
+        echo "</tr>";
+        if ($count > $cols) {
+          // Add some space after multiple rows of checkboxes.
+          $cols = htmlspecialchars( $cols, ENT_QUOTES);
+          echo "<tr><td colspan='$cols' style='height:0.7em'></td></tr>";
+        }
+      }
+      echo "</table>";
     }
-    echo "</table>";
   }
 
   // a set of labeled text input fields
@@ -1396,36 +1405,43 @@ function generate_print_field($frow, $currvalue) {
     echo $tmp;
   }
 
-  // a set of labeled checkboxes
+  // a single checkbox or set of labeled checkboxes
   else if ($data_type == 21) {
-    // In this special case, fld_length is the number of columns generated.
-    $cols = max(1, $fld_length);
-    $avalue = explode('|', $currvalue);
-    $lres = sqlStatement("SELECT * FROM list_options " .
-      "WHERE list_id = ? AND activity = 1 ORDER BY seq, title", array($list_id) );
-    echo "<table cellpadding='0' cellspacing='0' width='100%'>";
-    $tdpct = (int) (100 / $cols);
-    for ($count = 0; $lrow = sqlFetchArray($lres); ++$count) {
-      $option_id = $lrow['option_id'];
-      if ($count % $cols == 0) {
-        if ($count) echo "</tr>";
-        echo "<tr>";
-      }
-      echo "<td width='$tdpct%'>";
+    if (!$list_id) {
       echo "<input type='checkbox'";
-      if (in_array($option_id, $avalue)) echo " checked";
-      echo ">" . htmlspecialchars( xl_list_label($lrow['title']), ENT_NOQUOTES);
-      echo "</td>";
+      if ($currvalue) echo " checked";
+      echo " />";
     }
-    if ($count) {
-      echo "</tr>";
-      if ($count > $cols) {
-        // Add some space after multiple rows of checkboxes.
-	$cols = htmlspecialchars( $cols, ENT_QUOTES);
-        echo "<tr><td colspan='$cols' style='height:0.7em'></td></tr>";
+    else {
+      // In this special case, fld_length is the number of columns generated.
+      $cols = max(1, $fld_length);
+      $avalue = explode('|', $currvalue);
+      $lres = sqlStatement("SELECT * FROM list_options " .
+        "WHERE list_id = ? AND activity = 1 ORDER BY seq, title", array($list_id) );
+      echo "<table cellpadding='0' cellspacing='0' width='100%'>";
+      $tdpct = (int) (100 / $cols);
+      for ($count = 0; $lrow = sqlFetchArray($lres); ++$count) {
+        $option_id = $lrow['option_id'];
+        if ($count % $cols == 0) {
+          if ($count) echo "</tr>";
+          echo "<tr>";
+        }
+        echo "<td width='$tdpct%'>";
+        echo "<input type='checkbox'";
+        if (in_array($option_id, $avalue)) echo " checked";
+        echo ">" . htmlspecialchars( xl_list_label($lrow['title']), ENT_NOQUOTES);
+        echo "</td>";
       }
+      if ($count) {
+        echo "</tr>";
+        if ($count > $cols) {
+          // Add some space after multiple rows of checkboxes.
+          $cols = htmlspecialchars( $cols, ENT_QUOTES);
+          echo "<tr><td colspan='$cols' style='height:0.7em'></td></tr>";
+        }
+      }
+      echo "</table>";
     }
-    echo "</table>";
   }
 
   // a set of labeled text input fields
@@ -1876,20 +1892,23 @@ function generate_display_field($frow, $currvalue) {
     $s = htmlspecialchars($crow['pc_catname'],ENT_NOQUOTES);
   }
 
-  // a set of labeled checkboxes
+  // a single checkbox or set of labeled checkboxes
   else if ($data_type == 21) {
-    $avalue = explode('|', $currvalue);
-    $lres = sqlStatement("SELECT * FROM list_options " .
-      "WHERE list_id = ? AND activity = 1 ORDER BY seq, title", array($list_id) );
-    $count = 0;
-    while ($lrow = sqlFetchArray($lres)) {
-      $option_id = $lrow['option_id'];
-      if (in_array($option_id, $avalue)) {
-        if ($count++) $s .= "<br />";
-
-	// Added 5-09 by BM - Translate label if applicable
-        $s .= nl2br(htmlspecialchars(xl_list_label($lrow['title'])),ENT_NOQUOTES);
-
+    if (!$list_id) {
+      $s .= $currvalue ? xlt('Yes') : xlt('No');
+    }
+    else {
+      $avalue = explode('|', $currvalue);
+      $lres = sqlStatement("SELECT * FROM list_options " .
+        "WHERE list_id = ? AND activity = 1 ORDER BY seq, title", array($list_id) );
+      $count = 0;
+      while ($lrow = sqlFetchArray($lres)) {
+        $option_id = $lrow['option_id'];
+        if (in_array($option_id, $avalue)) {
+          if ($count++) $s .= "<br />";
+          // Added 5-09 by BM - Translate label if applicable
+          $s .= nl2br(htmlspecialchars(xl_list_label($lrow['title'])),ENT_NOQUOTES);
+        }
       }
     }
   }
@@ -2206,15 +2225,20 @@ function generate_plaintext_field($frow, $currvalue) {
 
   // a set of labeled checkboxes
   else if ($data_type == 21) {
-    $avalue = explode('|', $currvalue);
-    $lres = sqlStatement("SELECT * FROM list_options " .
-      "WHERE list_id = ? AND activity = 1 ORDER BY seq, title", array($list_id) );
-    $count = 0;
-    while ($lrow = sqlFetchArray($lres)) {
-      $option_id = $lrow['option_id'];
-      if (in_array($option_id, $avalue)) {
-        if ($count++) $s .= "; ";
-        $s .= xl_list_label($lrow['title']);
+    if (!$list_id) {
+      $s .= $currvalue ? xlt('Yes') : xlt('No');
+    }
+    else {
+      $avalue = explode('|', $currvalue);
+      $lres = sqlStatement("SELECT * FROM list_options " .
+        "WHERE list_id = ? AND activity = 1 ORDER BY seq, title", array($list_id) );
+      $count = 0;
+      while ($lrow = sqlFetchArray($lres)) {
+        $option_id = $lrow['option_id'];
+        if (in_array($option_id, $avalue)) {
+          if ($count++) $s .= "; ";
+          $s .= xl_list_label($lrow['title']);
+        }
       }
     }
   }
@@ -2797,11 +2821,18 @@ function get_layout_form_value($frow, $prefix='form_') {
   $value  = '';
   if (isset($_POST["$prefix$field_id"])) {
     if ($data_type == 21) {
-      // $_POST["$prefix$field_id"] is an array of checkboxes and its keys
-      // must be concatenated into a |-separated string.
-      foreach ($_POST["$prefix$field_id"] as $key => $val) {
-        if (strlen($value)) $value .= '|';
-        $value .= $key;
+      if (!$frow['list_id']) {
+        if (!empty($_POST["form_$field_id"])) {
+          $value = xlt('Yes');
+        }
+      }
+      else {
+        // $_POST["$prefix$field_id"] is an array of checkboxes and its keys
+        // must be concatenated into a |-separated string.
+        foreach ($_POST["$prefix$field_id"] as $key => $val) {
+          if (strlen($value)) $value .= '|';
+          $value .= $key;
+        }
       }
     }
     else if ($data_type == 22) {
