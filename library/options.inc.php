@@ -1793,7 +1793,7 @@ function generate_print_field($frow, $currvalue) {
 
   // Image from canvas drawing
   else if ($data_type == 40) {
-    echo "<img src='" . attr($currvalue) . "'>";
+    if ($currvalue) echo "<img src='" . attr($currvalue) . "'>";
   }
 
 }
@@ -2226,7 +2226,7 @@ function generate_display_field($frow, $currvalue) {
 
   // Image from canvas drawing
   else if ($data_type == 40) {
-    $s .= "<img src='" . attr($currvalue) . "'>";
+    if ($currvalue) $s .= "<img src='" . attr($currvalue) . "'>";
   }
 
   return $s;
