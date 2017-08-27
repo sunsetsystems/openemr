@@ -361,6 +361,8 @@ function generate_form_field($frow, $currvalue) {
       $tmp .= "this.value = this.value.toUpperCase();";
     if ($tmp) echo " onchange='$tmp'";
     $tmp = htmlspecialchars( $GLOBALS['gbl_mask_patient_id'], ENT_QUOTES);
+    // If mask is for use at save time, treat as no mask.
+    if (strpos($tmp, '^') !== FALSE) $tmp = '';    
     if ($field_id == 'pubpid' && strlen($tmp) > 0) {
       echo " onkeyup='maskkeyup(this,\"$tmp\")'";
       echo " onblur='maskblur(this,\"$tmp\")'";
@@ -564,7 +566,9 @@ function generate_form_field($frow, $currvalue) {
       $optionValue = htmlspecialchars( $urow['id'], ENT_QUOTES);
       $optionLabel = htmlspecialchars( $uname, ENT_NOQUOTES);
       echo "<option value='$optionValue'";
-      $title = $urow['username'] ? xl('Local') : xl('External');
+      // Failure to translate Local and External is not an error here;
+      // they are only used as internal flags and must not be translated!
+      $title = $urow['username'] ? 'Local' : 'External';
       $optionTitle = htmlspecialchars( $title, ENT_QUOTES);
       echo " title='$optionTitle'";
       if ($urow['id'] == $currvalue) echo " selected";
@@ -575,6 +579,10 @@ function generate_form_field($frow, $currvalue) {
 
   // A billing code. If description matches an existing code type then that type is used.
   else if ($data_type == 15) {
+    $codetype = '';
+    if (!empty($frow['description']) && isset($code_types[$frow['description']])) {
+      $codetype = $frow['description'];
+    }      
     $fldlength = htmlspecialchars( $frow['fld_length'], ENT_QUOTES);
     $maxlength = $frow['max_length'];
     $string_maxlength = "";
@@ -728,7 +736,7 @@ function generate_form_field($frow, $currvalue) {
       $avalue = explode('|', $currvalue);
       $lres = sqlStatement("SELECT * FROM list_options " .
         "WHERE list_id = ? AND activity = 1 ORDER BY seq, title", array($list_id) );
-      echo "<table cellpadding='0' cellspacing='0' width='100%'>";
+      echo "<table cellpadding='0' cellspacing='0' width='100%' title='".attr($description)."'>";
       $tdpct = (int) (100 / $cols);
       for ($count = 0; $lrow = sqlFetchArray($lres); ++$count) {
         $option_id = $lrow['option_id'];
@@ -1189,7 +1197,7 @@ function generate_print_field($frow, $currvalue) {
 
   // generic single-selection list
   //  Supports backup lists.
-  if ($data_type == 1 || $data_type == 26 || $data_type == 33) {
+  if (false && ($data_type == 1 || $data_type == 26 || $data_type == 33)) {
     if (empty($fld_length)) {
       if ($list_id == 'titles') {
         $fld_length = 3;
@@ -1580,7 +1588,7 @@ function generate_print_field($frow, $currvalue) {
   }
 
   // a set of labeled radio buttons
-  else if ($data_type == 27) {
+  else if ($data_type == 27 || $data_type == 1 || $data_type == 26 || $data_type == 33) {
     // In this special case, fld_length is the number of columns generated.
     $cols = max(1, $frow['fld_length']);
     $lres = sqlStatement("SELECT * FROM list_options " .
@@ -1595,9 +1603,10 @@ function generate_print_field($frow, $currvalue) {
       }
       echo "<td width='$tdpct%'>";
       echo "<input type='radio'";
-      if ((strlen($currvalue) == 0 && $lrow['is_default']) ||
-          (strlen($currvalue)  > 0 && $option_id == $currvalue))
-      {
+      // if ((strlen($currvalue) == 0 && $lrow['is_default']) ||
+      //     (strlen($currvalue)  > 0 && $option_id == $currvalue)) {
+      if (strlen($currvalue)  > 0 && $option_id == $currvalue) {
+        // Do not use defaults for these printable forms.
         echo " checked";
       }
       echo ">" . htmlspecialchars( xl_list_label($lrow['title']), ENT_NOQUOTES);
@@ -1711,10 +1720,34 @@ function generate_print_field($frow, $currvalue) {
 
   //facilities drop-down list
   else if ($data_type == 35) {
-    if (empty($currvalue)){
-      $currvalue = 0;
+    // In this special case, fld_length is the number of columns generated.
+    $cols = max(1, $frow['fld_length']);
+    $lres = sqlStatement("SELECT id, name FROM facility ORDER BY name");
+    echo "<table cellpadding='0' cellspacing='0' width='100%'>";
+    $tdpct = (int) (100 / $cols);
+    for ($count = 0; $lrow = sqlFetchArray($lres); ++$count) {
+      $option_id = $lrow['id'];
+      if ($count % $cols == 0) {
+        if ($count) echo "</tr>";
+        echo "<tr>";
+      }
+      echo "<td width='$tdpct%'>";
+      echo "<input type='radio'";
+      if (strlen($currvalue)  > 0 && $option_id == $currvalue) {
+        // Do not use defaults for these printable forms.
+        echo " checked";
+      }
+      echo ">" . htmlspecialchars($lrow['name']);
+      echo "</td>";
     }
-    dropdown_facility($selected = $currvalue, $name = "form_$field_id_esc", $allow_unspecified = true, $allow_allfacilities = false);
+    if ($count) {
+      echo "</tr>";
+      if ($count > $cols) {
+        // Add some space after multiple rows of radio buttons.
+        echo "<tr><td colspan='$cols' style='height:0.7em'></td></tr>";
+      }
+    }
+    echo "</table>";
   }
 
   //Multi-select
@@ -1881,7 +1914,27 @@ function generate_display_field($frow, $currvalue) {
 
   // billing code
   else if ($data_type == 15) {
-    $s = htmlspecialchars($currvalue,ENT_NOQUOTES);
+    $s = '';
+    if (!empty($currvalue)) {
+      $relcodes = explode(';', $currvalue);
+      foreach ($relcodes as $codestring) {
+        if ($codestring === '') continue;
+        list($codetype, $code) = explode(':', $codestring);
+        $query = "SELECT c.code_text FROM codes AS c, code_types AS ct WHERE " .
+          "ct.ct_key = '$codetype' AND " .
+          "c.code_type = ct.ct_id AND " .
+          "c.code = '$code' AND c.active = 1 " .
+          "ORDER BY c.id LIMIT 1";
+        $nrow = sqlQuery($query);
+        if ($s !== '') $s .= '; ';
+        if (!empty($nrow['code_text'])) {
+          $s .= $nrow['code_text'];
+        }
+        else {
+          $s .= $codestring . ' (' . xl('not found') . ')';
+        }
+      }
+    }
   }
 
   // insurance company list
@@ -2997,6 +3050,7 @@ function generate_layout_validation($form_id) {
 
     if ($frow['uor'] < 2) continue;
 
+    echo " if (f.$fldname && !f.$fldname.disabled) {\n";
     switch($data_type) {
       case  1:
       case 11:
@@ -3004,6 +3058,14 @@ function generate_layout_validation($form_id) {
       case 13:
       case 14:
       case 26:
+        echo
+        "  if (f.$fldname.selectedIndex <= 0) {\n" .
+        "   alert(\"" . addslashes(xl('Please choose a value for')) .
+        ":\\n" . addslashes(xl_layout_label($fldtitle)) . "\");\n" .
+        "   if (f.$fldname.focus) f.$fldname.focus();\n" .
+        "   return false;\n" .
+        "  }\n";
+        break;          
       case 33:
         echo
         " if (f.$fldname.selectedIndex <= 0) {\n" .
@@ -3016,7 +3078,9 @@ function generate_layout_validation($form_id) {
         " var i = 0;\n" .
         " for (; i < f.$fldname.length; ++i) if (f.$fldname[i].checked) break;\n" .
         " if (i >= f.$fldname.length) {\n" .
-        "  		errMsgs[errMsgs.length] = '" . addslashes(xl_layout_label($fldtitle)) . "'; \n" .
+        "   alert(\"" . addslashes(xl('Please choose a value for')) .
+        ":\\n" . addslashes(xl_layout_label($fldtitle)) . "\");\n" .
+        "   return false;\n" .
         " }\n";
         break;
       case  2:
@@ -3046,6 +3110,7 @@ function generate_layout_validation($form_id) {
         "";
           break;
     }
+    echo " }\n";
   }
 }
 
