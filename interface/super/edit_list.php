@@ -817,6 +817,23 @@ function mysubmit() {
    }
   }
  }
+ else if (f['opt[1][id]']) {
+   // Check for duplicate IDs.
+   for (var i = 1; f['opt[' + i + '][id]']; ++i) {
+     var ikey = 'opt[' + i + '][id]';
+     if (f[ikey].value == '') continue;
+     for (var j = i+1; f['opt[' + j + '][id]']; ++j) {
+       var jkey = 'opt[' + j + '][id]';
+       if (f[ikey].value.toUpperCase() == f[jkey].value.toUpperCase()) {
+         alert('<?php echo xls('Error: duplicated ID') ?>' + ': ' + f[jkey].value);
+         f[jkey].scrollIntoView();
+         f[jkey].focus();
+         f[jkey].select();
+         return;
+       }
+     }
+   }
+ }
  f.submit();
 }
 
