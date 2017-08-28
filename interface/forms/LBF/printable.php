@@ -35,19 +35,6 @@ $formid = empty($_REQUEST['formid']) ? 0 : (0 + $_REQUEST['formid']);
 // True if to display as a form to complete, false to display as information.
 $isform = empty($_REQUEST['isform']) ? 0 : 1;
 
-// Html2pdf fails to generate checked checkboxes properly, so write plain HTML
-// if we are doing a visit-specific form to be completed.
-$PDF_OUTPUT = ($formid && $isform) ? false : true;
-// $PDF_OUTPUT = false; // debugging
-
-if ($PDF_OUTPUT) {
-  require_once("$srcdir/html2pdf/html2pdf.class.php");
-  $pdf = new HTML2PDF('P', 'Letter', 'en');
-  $pdf->setTestTdInOnePage(false); // Turn off error message for TD contents too big.
-  $pdf->pdf->SetDisplayMode('real');
-  ob_start();
-}
-
 $CPR = 4; // cells per row
 
 // Collect some top-level information about this layout.
@@ -61,6 +48,27 @@ if (!empty($jobj['size'   ])) $FONTSIZE = intval($jobj['size']);
 if (isset($jobj['services'])) $LBF_SERVICES_SECTION = $jobj['services'];
 if (isset($jobj['products'])) $LBF_PRODUCTS_SECTION = $jobj['products'];
 if (isset($jobj['diags'   ])) $LBF_DIAGS_SECTION = $jobj['diags'];
+
+// Check access control.
+if (!empty($jobj['aco'])) $LBF_ACO = explode('|', $jobj['aco']);
+if (!acl_check('admin', 'super') && !empty($LBF_ACO)) {
+  if (!acl_check($LBF_ACO[0], $LBF_ACO[1])) {
+    die(xlt('Access denied'));
+  }
+}
+
+// Html2pdf fails to generate checked checkboxes properly, so write plain HTML
+// if we are doing a visit-specific form to be completed.
+$PDF_OUTPUT = ($formid && $isform) ? false : true;
+// $PDF_OUTPUT = false; // debugging
+
+if ($PDF_OUTPUT) {
+  require_once("$srcdir/html2pdf/html2pdf.class.php");
+  $pdf = new HTML2PDF('P', 'Letter', 'en');
+  $pdf->setTestTdInOnePage(false); // Turn off error message for TD contents too big.
+  $pdf->pdf->SetDisplayMode('real');
+  ob_start();
+}
 
 if ($visitid && (isset($LBF_SERVICES_SECTION) || isset($LBF_DIAGS_SECTION) || isset($LBF_PRODUCTS_SECTION))) {
   require_once("$srcdir/FeeSheetHtml.class.php");
