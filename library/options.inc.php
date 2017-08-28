@@ -328,8 +328,12 @@ function generate_form_field($frow, $currvalue) {
 
   $disabled = strpos($frow['edit_options'], '0') === FALSE ? '' : 'disabled';
 
-  $lbfchange = (strpos($frow['form_id'], 'LBF') === 0 || strpos($frow['form_id'], 'LBT') === 0) ?
-    "checkSkipConditions();" : "";
+  $lbfchange = (
+    strpos($frow['form_id'], 'LBF') === 0 ||
+    strpos($frow['form_id'], 'LBT') === 0 ||
+    $frow['form_id'] == 'DEM'             ||
+    $frow['form_id'] == 'HIS'
+  ) ? "checkSkipConditions();" : "";
   $lbfonchange = $lbfchange ? "onchange='$lbfchange'" : "";
 
   // generic single-selection list or Race and Ethnicity.
@@ -2801,7 +2805,9 @@ function display_layout_tabs_data_editable($formtype, $result1, $result2='') {
     "WHERE form_id = ? AND uor > 0 " .
     "ORDER BY group_name, seq", array($formtype) );
 
-	$first = true;
+  $first = true;
+  $condition_str = '';
+
 	while ($frow = sqlFetchArray($fres)) {
 		$this_group = $frow['group_name'];
 		$group_name = substr($this_group, 1);
@@ -2834,6 +2840,22 @@ function display_layout_tabs_data_editable($formtype, $result1, $result2='') {
 					$backup_list = $group_fields['list_backup_id'];
                     $condition_str = get_conditions_str($condition_str,$group_fields);
 					$currvalue  = '';
+
+          // Accumulate skip conditions into a JSON expression for the browser side.
+          // Cloned from interface/forms/LBF/new.php.
+          $conditions = empty($group_fields['conditions']) ? array() : unserialize($group_fields['conditions']);
+          foreach ($conditions as $condition) {
+            if (empty($condition['id'])) continue;
+            $andor = empty($condition['andor']) ? '' : $condition['andor'];
+            if ($condition_str) $condition_str .= ",\n";
+            $condition_str .= "{" .
+              "target:'"   . addslashes($field_id)              . "', " .
+              "id:'"       . addslashes($condition['id'])       . "', " .
+              "itemid:'"   . addslashes($condition['itemid'])   . "', " .
+              "operator:'" . addslashes($condition['operator']) . "', " .
+              "value:'"    . addslashes($condition['value'])    . "', " .
+              "andor:'"    . addslashes($andor)                 . "'}";
+          }
 
 					if ($formtype == 'DEM') {
 					  if (strpos($field_id, 'em_') === 0) {
@@ -2873,7 +2895,9 @@ function display_layout_tabs_data_editable($formtype, $result1, $result2='') {
 					  disp_end_cell();
 					  $titlecols_esc = htmlspecialchars( $titlecols, ENT_QUOTES);
                       $field_id_label = 'label_'.$group_fields['field_id'];
-					  echo "<td class='label' colspan='$titlecols_esc' id='$field_id_label' ";
+					  echo "<td class='label' colspan='$titlecols_esc'";
+            // This ID is used by skip conditions.
+            echo " id='label_id_" . attr($field_id) . "'";
 					  echo ">";
 					  $cell_count += $titlecols;
 					}
@@ -2895,7 +2919,9 @@ function display_layout_tabs_data_editable($formtype, $result1, $result2='') {
 					  disp_end_cell();
 					  $datacols_esc = htmlspecialchars( $datacols, ENT_QUOTES);
                       $field_id = 'text_'.$group_fields['field_id'];
-					  echo "<td class='text data' colspan='$datacols_esc' id='$field_id'";
+					  echo "<td class='text data' colspan='$datacols_esc'";
+            // This ID is used by skip conditions.
+            echo " id='value_id_" . attr($field_id) . "'";
 					  echo ">";
 					  $cell_count += $datacols;
 					}

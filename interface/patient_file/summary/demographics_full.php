@@ -101,6 +101,10 @@ $(document).ready(function(){
       return msg;              // Gecko, WebKit, Chrome <34
     }
   });
+
+  if (window.checkSkipConditions) {
+    checkSkipConditions();
+  }
 });
 
 var mypcc = '<?php echo $GLOBALS['phone_country_code'] ?>';
@@ -443,6 +447,7 @@ $display_style = 'block';
 
 $group_seq=0; // this gives the DIV blocks unique IDs
 
+$condition_str = '';
 ?>
 <br>
   <div class="section-header">
@@ -740,6 +745,12 @@ $group_seq=0; // this gives the DIV blocks unique IDs
 <br>
 
 <script language="JavaScript">
+
+// Array of skip conditions for the checkSkipConditions() function.
+var skipArray = [
+<?php echo $condition_str; ?>
+];
+
 // hard code validation for old validation, in the new validation possible to add match rules
 <?php if($GLOBALS['new_validate'] == 0) { ?>
  // fix inconsistently formatted phone numbers from the database

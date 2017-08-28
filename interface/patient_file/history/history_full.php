@@ -209,6 +209,9 @@ $(document).ready(function(){
         }
     }
     tabbify();
+    if (window.checkSkipConditions) {
+      checkSkipConditions();
+    }
 });
 </script>
 
@@ -229,9 +232,7 @@ if (!is_array($result)) {
   $result = getHistoryData($pid);
 }
 
-$fres = sqlStatement("SELECT * FROM layout_options " .
-  "WHERE form_id = 'HIS' AND uor > 0 " .
-  "ORDER BY group_name, seq");
+$condition_str = '';
 ?>
 
 <?php
@@ -277,7 +278,14 @@ $constraints = LBF_Validation::generate_validate_constraints("HIS");
 </body>
 
 <script language="JavaScript">
+
+// Array of skip conditions for the checkSkipConditions() function.
+var skipArray = [
+<?php echo $condition_str; ?>
+];
+
 <?php echo $date_init; // setup for popup calendars ?>
+
 </script>
 
 <script language='JavaScript'>
