@@ -1145,8 +1145,8 @@ if ($lastgroup) echo " </optgroup>\n";
 <?php xl('With selected:', 'e');?>
 <input type='button' name='deletefields' id='deletefields' value='<?php xl('Delete','e'); ?>' style="font-size:90%" disabled="disabled" />
 <input type='button' name='movefields' id='movefields' value='<?php xl('Move to...','e'); ?>' style="font-size:90%" disabled="disabled" /></span>
-+<?php } else { ?>
-+<input type='button' value='<?php echo xla('New Layout'); ?>' onclick='edit_layout_props("")' />&nbsp;
+<?php } else { ?>
+<input type='button' value='<?php echo xla('New Layout'); ?>' onclick='edit_layout_props("")' />&nbsp;
 <?php } ?>
 </p></div>
 </div>
