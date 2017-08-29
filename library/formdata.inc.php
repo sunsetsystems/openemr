@@ -272,6 +272,7 @@ function strip_escape_custom($s) {
       //strip slashes if magic quotes turned on
       if (get_magic_quotes_gpc() && empty($GLOBALS['sanitize_all_escapes'])) {
         $s = stripslashes($s);
+      }
       return $s;
 }
 

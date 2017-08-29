@@ -788,6 +788,7 @@ function upgradeFromSqlFile($filename) {
     else if (!$skipping && preg_match('/^#ConvertLayoutProperties/', $line)) {
       echo "Converting layout properties ...<br />\n";
       convertLayoutProperties();
+    }
     else if (preg_match('/^#EndIf/', $line)) {
       $skipping = false;
     }

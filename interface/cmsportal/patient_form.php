@@ -40,7 +40,7 @@ if ($_POST['bn_save']) {
   // configured as unused.
   $fres = sqlStatement("SELECT * FROM layout_options WHERE " .
     "form_id = 'DEM' AND field_id != '' AND (uor > 0 OR field_id = 'cmsportal_login') " .
-    "ORDER BY group_name, seq");
+    "ORDER BY group_id, seq");
   while ($frow = sqlFetchArray($fres)) {
     $data_type = $frow['data_type'];
     $field_id  = $frow['field_id'];
@@ -213,7 +213,7 @@ function validate() {
 
 <?php
 $lores = sqlStatement("SELECT * FROM layout_options " .
-  "WHERE form_id = ? AND uor > 0 ORDER BY group_name, seq",
+  "WHERE form_id = ? AND uor > 0 ORDER BY group_id, seq",
   array('DEM'));
 
 // Will be used to indicate if this user does not yet have a portal login.
