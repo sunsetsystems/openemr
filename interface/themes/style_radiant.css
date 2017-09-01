@@ -8382,7 +8382,9 @@ body.main-left .fa {
   color: #fff !important;
 }
 #navigation-slide li a.collapsed_lv2:before,
-#navigation-slide * li a.collapsed_lv2:before {
+#navigation-slide * li a.collapsed_lv2:before,
+#navigation-slide li a.collapsed_lv3:before,
+#navigation-slide * li a.collapsed_lv3:before {
   font-size: 0;
   display: block;
   float: left;
@@ -8398,11 +8400,15 @@ body.main-left .fa {
   /* bottom, add background color here */
 }
 #navigation-slide li a.expanded_lv2,
-#navigation-slide * li a.expanded_lv2 {
+#navigation-slide * li a.expanded_lv2,
+#navigation-slide li a.expanded_lv3,
+#navigation-slide * li a.expanded_lv3 {
   display: block;
 }
 #navigation-slide li a.expanded_lv2:before,
-#navigation-slide * li a.expanded_lv2:before {
+#navigation-slide * li a.expanded_lv2:before,
+#navigation-slide li a.expanded_lv3:before,
+#navigation-slide * li a.expanded_lv3:before {
   font-size: 0;
   display: block;
   float: left;

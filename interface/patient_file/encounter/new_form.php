@@ -140,27 +140,9 @@ function findPosX(id)
 <?php //DYNAMIC FORM RETREIVAL
 include_once("$srcdir/registry.inc");
 
-function myGetRegistered($state="1", $limit="unlimited", $offset="0") {
-  $sql = "SELECT category, nickname, name, state, directory, id, sql_run, " .
-    "unpackaged, date FROM registry WHERE " .
-    "state LIKE \"$state\" ORDER BY category, priority, name";
-  if ($limit != "unlimited") $sql .= " limit $limit, $offset";
-  $res = sqlStatement($sql);
-  if ($res) {
-    for($iter=0; $row=sqlFetchArray($res); $iter++) {
-      $all[$iter] = $row;
-    }
-  }
-  else {
-    return false;
-  }
-  return $all;
-}
-
-$reg = myGetRegistered();
+$reg = getFormsByCategory();
 $old_category = '';
-
-  $DivId=1;
+$DivId=1;
 
 // To see if the encounter is locked. If it is, no new forms can be created
 $encounterLocked = false;
