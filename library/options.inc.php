@@ -2910,6 +2910,10 @@ function display_layout_tabs_data($formtype, $result1, $result2='') {
 					  $datacols_esc = htmlspecialchars( $datacols, ENT_QUOTES);
 					  $field_id = 'text_'.$group_fields['field_id'];
 					  echo "<td class='text data' colspan='$datacols_esc' id='" . attr($field_id) . "'  data-value='" . attr($currvalue) . "'";
+            if (!$skip_this_field && $data_type == 3) {
+              // Textarea gets a light grey border.
+              echo " style='border:1px solid #cccccc'";
+            }
 					  echo ">";
 					  $cell_count += $datacols;
 					} else {
