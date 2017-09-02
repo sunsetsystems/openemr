@@ -749,12 +749,6 @@ function warehouse_changed(sel) {
 <?php
   $shrow = getHistoryData($pid);
 
-  /********************************************************************
-  // Load array of properties for this layout and its groups.
-  $grparr = array();
-  getLayoutProperties($formname, $grparr);
-  ********************************************************************/
-
   // Determine if this layout uses edit option "I" anywhere.
   // If not we default to only the first group being initially open.
   $tmprow = sqlQuery("SELECT form_id FROM layout_options " .
@@ -877,6 +871,7 @@ function warehouse_changed(sel) {
       }
       $group_levels .= $this_levels[$i++];
       $gname = $grparr[substr($group_levels, 0, $i)]['grp_title'];
+      $subtitle = $grparr[substr($group_levels, 0, $i)]['grp_subtitle'];
       // Compute a short unique identifier for this group.
       $group_seq = 'lbf' . $group_levels;
       $group_name = $gname;
@@ -896,7 +891,14 @@ function warehouse_changed(sel) {
       }
 
       $group_table_active = true;
-      echo " <table border='0' cellspacing='0' cellpadding='0'>\n";
+      echo " <table border='0' cellspacing='0' cellpadding='0' class='lbfdata'>\n";
+
+      if ($subtitle) {
+        // There is a group subtitle so show it.
+        echo "<tr><td class='bold' style='color:#0000ff' colspan='$CPR'>" . text($subtitle) . "</td></tr>\n";
+        echo "<tr><td class='bold' style='height:4pt' colspan='$CPR'></td></tr>\n";
+      }
+
       $display_style = 'none';
 
       // Initialize historical data array and write date headers.
