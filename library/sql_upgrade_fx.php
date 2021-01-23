@@ -984,6 +984,9 @@ function upgradeFromSqlFile($filename, $path = '')
             }
             // convert all *text types to use default null setting
         } elseif (preg_match('/^#IfTextNullFixNeeded/', $line)) {
+
+            $mydbname = databaseName();
+
             $items_to_convert = sqlStatement(
                 "SELECT col.`table_name` AS table_name, col.`column_name` AS column_name,
       col.`data_type` AS data_type, col.`column_comment` AS column_comment
@@ -1024,7 +1027,7 @@ function upgradeFromSqlFile($filename, $path = '')
         } elseif (preg_match('/^#IfInnoDBMigrationNeeded/', $line)) {
             // find MyISAM tables and attempt to convert them
             //tables that need to skip InnoDB migration (stay at MyISAM for now)
-            $tables_skip_migration = array('form_eye_mag');
+            $tables_skip_migration = array('form_eye_mag', 'history_data');
 
             $tables_list = getTablesList(array('engine' => 'MyISAM'));
 

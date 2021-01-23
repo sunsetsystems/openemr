@@ -400,7 +400,7 @@ ALTER TABLE `patient_data` ADD COLUMN `prot_indi_effdate` TEXT;
 #EndIf
 
 #IfRow2D layout_options form_id DEM field_id guardiansname
-UPDATE `layout_options` SET group_name='8Guardian',title='Name',seq='10' WHERE form_id='DEM' AND field_id='guardiansname' AND group_name LIKE '%Contact';
+##NotIPPF UPDATE `layout_options` SET group_name='8Guardian',title='Name',seq='10' WHERE form_id='DEM' AND field_id='guardiansname' AND group_name LIKE '%Contact';
 #EndIf
 
 #IfNotColumnType patient_data guardiansname TEXT

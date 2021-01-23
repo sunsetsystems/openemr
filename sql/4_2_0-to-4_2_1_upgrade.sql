@@ -12331,7 +12331,7 @@ INSERT INTO `supported_external_dataloads` (`load_type`, `load_source`, `load_re
 INSERT INTO `supported_external_dataloads` (`load_type`, `load_source`, `load_release_date`, `load_filename`, `load_checksum`) VALUES ('ICD10', 'CMS', '2015-10-01', 'Reimbursement_Mapping_pr_2016.zip', '3c780dd103d116aa57980decfddd4f19');
 #EndIf
 
-#IfNotRow2D list_options list_id transactions option_id LBTref
+#IfNotRow layout_options form_id LBTptreq
 UPDATE list_options SET title = 'Layout-Based Transaction Forms', seq = 9 WHERE list_id = 'lists' AND option_id = 'transactions';
 UPDATE list_options SET option_id = 'LBTref'   WHERE list_id = 'transactions' AND option_id = 'Referral';
 UPDATE list_options SET option_id = 'LBTptreq' WHERE list_id = 'transactions' AND option_id = 'Patient Request';
