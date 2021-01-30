@@ -25,7 +25,7 @@
  * @author    Bill Cernansky (www.mi-squared.com)
  * @author    Brady Miller <brady.g.miller@gmail.com>
  * @author    Stephen Waite <stephen.waite@cmsvt.com>
- * @copyright Copyright (c) 2008-2014, 2016 Rod Roark <rod@sunsetsystems.com>
+ * @copyright Copyright (c) 2008-2014, 2016, 2021 Rod Roark <rod@sunsetsystems.com>
  * @copyright Copyright (c) 2018 Brady Miller <brady.g.miller@gmail.com>
  * @copyright Copyright (c) 2019 Stephen Waite <stephen.waite@cmsvt.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
@@ -230,14 +230,14 @@ if ($form_step == 1) {
         " -h " . escapeshellarg($sqlconf["host"]) .
         " --port=" . escapeshellarg($sqlconf["port"]) .
         " --routines" .
-        " --hex-blob --opt --quote-names -r " . escapeshellarg($file_to_compress) . " $mysql_ssl " .
+        " --hex-blob --opt --quote-names --no-tablespaces -r " . escapeshellarg($file_to_compress) . " $mysql_ssl " .
         escapeshellarg($sqlconf["dbase"]);
     } else {
         $cmd = escapeshellcmd($mysql_dump_cmd) . " -u " . escapeshellarg($sqlconf["login"]) .
         " -p" . escapeshellarg($sqlconf["pass"]) .
         " -h " . escapeshellarg($sqlconf["host"]) .
         " --port=" . escapeshellarg($sqlconf["port"]) .
-        " --hex-blob --opt --quote-names -r " . escapeshellarg($file_to_compress) . " $mysql_ssl " .
+        " --hex-blob --opt --quote-names --no-tablespaces -r " . escapeshellarg($file_to_compress) . " $mysql_ssl " .
         escapeshellarg($sqlconf["dbase"]);
     }
 
@@ -414,14 +414,14 @@ if ($form_step == 102) {
                     " -p" . escapeshellarg($sqlconf["pass"]) .
                     " -h " . escapeshellarg($sqlconf["host"]) .
                     " --port=" . escapeshellarg($sqlconf["port"]) .
-                    " --hex-blob --opt --quote-names $mysql_ssl " .
+                    " --hex-blob --opt --quote-names --no-tablespaces $mysql_ssl " .
                     escapeshellarg($sqlconf["dbase"]) . " $tables";
             } else {
                 $cmd .= escapeshellcmd($mysql_dump_cmd) . " -u " . escapeshellarg($sqlconf["login"]) .
                     " -p" . escapeshellarg($sqlconf["pass"]) .
                     " -h " . escapeshellarg($sqlconf["host"]) .
                     " --port=" . escapeshellarg($sqlconf["port"]) .
-                    " --hex-blob --opt --quote-names $mysql_ssl " .
+                    " --hex-blob --opt --quote-names --no-tablespaces $mysql_ssl " .
                     escapeshellarg($sqlconf["dbase"]) . " $tables";
             }
             if (IS_WINDOWS) {
@@ -438,7 +438,7 @@ if ($form_step == 102) {
                  " -p" . escapeshellarg($sqlconf["pass"]) .
                  " -h " . escapeshellarg($sqlconf["host"]) .
                  " --port=" . escapeshellarg($sqlconf["port"]) .
-                 " --hex-blob --skip-opt --quote-names --complete-insert --no-create-info $mysql_ssl";
+                 " --hex-blob --skip-opt --quote-names --no-tablespaces --complete-insert --no-create-info $mysql_ssl";
         // Individual lists.
         if (is_array($_POST['form_sel_lists'])) {
             foreach ($_POST['form_sel_lists'] as $listid) {
@@ -604,7 +604,7 @@ if ($form_step == 301) {
     " -p" . escapeshellarg($sqlconf["pass"]) .
     " -h " . escapeshellarg($sqlconf["host"]) .
     " --port=" . escapeshellarg($sqlconf["port"]) .
-    " --hex-blob --opt --quote-names -r " . escapeshellarg($BACKUP_EVENTLOG_FILE) . " $mysql_ssl " .
+    " --hex-blob --opt --quote-names --no-tablespaces -r " . escapeshellarg($BACKUP_EVENTLOG_FILE) . " $mysql_ssl " .
     escapeshellarg($sqlconf["dbase"]) . " --tables log_comment_encrypt_backup log_backup api_log_backup";
 # Set Eventlog Flag when it is done
     $eventlog = 1;
