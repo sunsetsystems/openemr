@@ -984,9 +984,6 @@ function upgradeFromSqlFile($filename, $path = '')
             }
             // convert all *text types to use default null setting
         } elseif (preg_match('/^#IfTextNullFixNeeded/', $line)) {
-
-            $mydbname = databaseName();
-
             $items_to_convert = sqlStatement(
                 "SELECT col.`table_name` AS table_name, col.`column_name` AS column_name,
       col.`data_type` AS data_type, col.`column_comment` AS column_comment
