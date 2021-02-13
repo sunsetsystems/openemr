@@ -4224,6 +4224,6 @@ function isOption($options, $test)
 
     $options = json_decode($options, true); // all should now be json
 
-    return !is_null($options) && in_array($test, $options, true) ? true : false; // finally the truth!
+    return is_array($options) && in_array($test, $options, true); // finally the truth!
 }
 ?>
