@@ -1860,37 +1860,53 @@
             "label": "IPPF Stats",
             "menu_id": "rep0",
             "target": "rep",
-            "url": "/interface/reports/ippf_statistics.php?t=i",
+            "url": "/interface/reports/ippf_statistics_2.php?t=i",
             "children": [],
             "requirement": 0,
             "acl_req": [
               "acct",
               "rep_a"
-            ]
+            ],
+            "global_req": "gbl_menu_stats_ippf"
           },
           {
             "label": "GCAC Stats",
             "menu_id": "rep0",
             "target": "rep",
-            "url": "/interface/reports/ippf_statistics.php?t=g",
+            "url": "/interface/reports/ippf_statistics_2.php?t=g",
             "children": [],
             "requirement": 0,
             "acl_req": [
               "acct",
               "rep_a"
-            ]
+            ],
+            "global_req": "gbl_menu_stats_gcac"
           },
           {
             "label": "MA Stats",
             "menu_id": "rep0",
             "target": "rep",
-            "url": "/interface/reports/ippf_statistics.php?t=m",
+            "url": "/interface/reports/ippf_statistics_2.php?t=m",
             "children": [],
             "requirement": 0,
             "acl_req": [
               "acct",
               "rep_a"
-            ]
+            ],
+            "global_req": "gbl_menu_stats_ma"
+          },
+          {
+            "label": "CCSPT",
+            "menu_id": "rep0",
+            "target": "rep",
+            "url": "/interface/reports/cervical_cancer.php",
+            "children": [],
+            "requirement": 0,
+            "acl_req": [
+              "acct",
+              "rep_a"
+            ],
+            "global_req": "gbl_menu_stats_cc"
           },
           {
             "label": "CYP",
@@ -1902,7 +1918,8 @@
             "acl_req": [
               "acct",
               "rep_a"
-            ]
+            ],
+            "global_req": "gbl_menu_stats_cyp"
           },
           {
             "label": "Daily Record",
@@ -1914,7 +1931,73 @@
             "acl_req": [
               "acct",
               "rep_a"
-            ]
+            ],
+            "global_req": "gbl_menu_stats_daily"
+          },
+          {
+            "label": "C3",
+            "menu_id": "rep0",
+            "target": "rep",
+            "url": "/interface/reports/ippf_c3.php",
+            "children": [],
+            "requirement": 0,
+            "acl_req": [
+              "acct",
+              "rep_a"
+            ],
+            "global_req": "gbl_menu_stats_c3"
+          },
+          {
+            "label": "SINADI",
+            "menu_id": "rep0",
+            "target": "rep",
+            "url": "/interface/reports/uruguay_sinadi.php",
+            "children": [],
+            "requirement": 0,
+            "acl_req": [
+              "acct",
+              "rep_a"
+            ],
+            "global_req": "gbl_menu_stats_sinadi"
+          },
+          {
+            "label": "IVE Client List",
+            "menu_id": "rep0",
+            "target": "rep",
+            "url": "/interface/reports/ive_client_list.php",
+            "children": [],
+            "requirement": 0,
+            "acl_req": [
+              "acct",
+              "rep_a"
+            ],
+            "global_req": "gbl_menu_ive_clients"
+          },
+          {
+            "label": "Service and Client Volume",
+            "menu_id": "rep0",
+            "target": "rep",
+            "url": "/interface/reports/visits/visits_report.php",
+            "children": [],
+            "requirement": 0,
+            "acl_req": [
+              "acct",
+              "rep_a"
+            ],
+            "global_req": "gbl_menu_service_and_client_volume"
+          },
+          {
+            "label": "Visits by Item",
+            "menu_id": "rep0",
+            "target": "rep",
+            "url": "/interface/reports/famp_services_products_visits.php",
+            "children": [],
+            "requirement": 0,
+            "acl_req": [
+              "acct",
+              "rep_a"
+            ],
+            "global_req": "gbl_menu_visits_by_item"
           }
         ],
         "requirement": 0,
