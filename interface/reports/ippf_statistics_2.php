@@ -1723,7 +1723,7 @@ if ($form_output == 3) {
 <title><?php echo text($report_title); ?></title>
 
 <?php if ($running_online) { ?>
-<?php Header::setupHeader('datetime-picker'); ?>
+<?php Header::setupHeader(['datetime-picker', 'report-helper']); ?>
 <?php } else { ?>
 <?php Header::setupHeader(); ?>
 <?php } ?>
@@ -1756,6 +1756,13 @@ $(function () {
         <?php require($GLOBALS['srcdir'] . '/js/xl/jquery-datetimepicker-2-5-4.js.php'); ?>
         <?php // can add any additional javascript settings to datetimepicker here; need to prepend first setting with a comma ?>
     });
+
+<?php if ($form_output != 3 && count($form_by_arr) == 1) { ?>
+    // Enable fixed headers when scrolling the report.
+    if (window.oeFixedHeaderSetup) {
+        oeFixedHeaderSetup(document.getElementById('mymaintable'));
+    }
+<?php } ?>
 });
 
 var mypcc = '<?php echo $GLOBALS['phone_country_code'] ?>';
@@ -1817,12 +1824,6 @@ function content_changed(click) {
   }
  }
 }
-
-<?php if ($form_output != 3 && count($form_by_arr) == 1) { ?>
-$(document).ready(function() {
-  oeFixedHeaderSetup(document.getElementById('mymaintable'));
-});
-<?php } ?>
 
 </script>
 
