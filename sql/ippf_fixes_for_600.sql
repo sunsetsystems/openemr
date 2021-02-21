@@ -134,3 +134,12 @@ INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`dat
 INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`,`conditions`) VALUES ('DEM', 'guardianworkphone'  , '8', 'Work Phone'  ,100, 2, 1,20,63, '', 1, 1, '', '', 'Work Phone', 0, '');
 INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`,`conditions`) VALUES ('DEM', 'guardianemail'  , '8', 'Email'  ,110, 2, 1,20,63, '', 1, 1, '', '', 'Guardian Email Address', 0, '');
 
+UPDATE `layout_options` SET `data_type` = 51 WHERE `data_type` = 41;
+
+DELETE FROM layout_options WHERE form_id NOT IN (SELECT grp_form_id FROM layout_group_properties);
+
+-- Above we added some fields to layout groups that might not exist. Fix that here.
+UPDATE layout_options SET uor = 0, group_id =
+  (SELECT MAX(grp_group_id) FROM layout_group_properties WHERE grp_form_id = layout_options.form_id)
+  WHERE (form_id = 'HIS' OR form_id = 'DEM') AND group_id NOT IN
+  (SELECT grp_group_id FROM layout_group_properties WHERE grp_form_id = layout_options.form_id);

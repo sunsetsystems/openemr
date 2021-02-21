@@ -445,7 +445,7 @@ while ($frow = sqlFetchArray($fres)) {
     if (($cell_count + $titlecols + $datacols) > $CPR || $cell_count == 0 || $prepend_blank_row || $jump_new_row) {
         end_row();
         if ($prepend_blank_row) {
-            echo "  <tr><td class='text' colspan='" . attr($CPR) . "'>&nbsp;</td></tr>\n";
+            echo "  <tr><td class='text' style='font-size:25%' colspan='" . attr($CPR) . "'>&nbsp;</td></tr>\n";
         }
         if (isOption($edit_options, 'RS')) {
             echo " <tr class='RS'>";

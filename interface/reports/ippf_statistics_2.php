@@ -1949,7 +1949,7 @@ function content_changed(click) {
      </td>
      <td valign='top' class='detail'>
 <?php
-        // 10th parameter here ensures no selection is shown unless chosen.
+        // 12th parameter here ensures no selection is shown unless chosen.
         echo generate_select_list(
             'form_chargecat',
             'chargecats',
@@ -1959,9 +1959,11 @@ function content_changed(click) {
             '',
             '',
             '',
-            $running_online ? null : array('disabled' => 'disabled'),
-            true,
-            true
+            $running_online ? null : array('disabled' => 'disabled'), // $custom_attributes
+            false,  // $multiple
+            '',     // $backup_list
+            true,   // $ignore_default
+            true    // $include_inactive
         );
 ?>
      </td>

@@ -224,7 +224,7 @@ function tableNameFromLayout($layout_id)
     }
     if ($layout_id == "DEM") {
         $tablename = "patient_data";
-    } elseif ($layout_id == "HIS") {
+    } elseif (substr($layout_id, 0, 3) == "HIS") {
         $tablename = "history_data";
     } elseif ($layout_id == "SRH") {
         $tablename = "lists_ippf_srh";
@@ -359,8 +359,8 @@ if (!empty($_POST['formaction']) && ($_POST['formaction'] == "save") && $layout_
         $data_type = trim($iter['datatype']);
         $listval = $data_type == 34 ? trim($iter['contextName']) : trim($iter['list_id']);
         $action = $iter['action'];
-        if ($action == 'value') {
-            $action = 'value=' . $iter['value'];
+        if ($action == 'value' || $action == 'hsval') {
+            $action .= '=' . $iter['value'];
         }
 
         // Skip conditions for the line are stored as a serialized array.
@@ -723,19 +723,16 @@ function writeFieldLine($linedata)
     echo "  </td>";
 
     echo "  <td class='text-center optcell'>";
-    if (
-        $linedata['data_type'] == 2 || $linedata['data_type'] == 3 ||
-        $linedata['data_type'] == 21 || $linedata['data_type'] == 22 ||
-        $linedata['data_type'] == 23 || $linedata['data_type'] == 25 ||
-        $linedata['data_type'] == 27 || $linedata['data_type'] == 28 ||
-        $linedata['data_type'] == 32 || $linedata['data_type'] == 15 ||
-        $linedata['data_type'] == 40
-    ) {
-      // Show the width field
+
+    if (in_array(
+        $linedata['data_type'],
+        array(1, 2, 3, 15, 21, 22, 23, 25, 26, 27, 28, 32, 33, 37, 40, 51)
+    )) {
+        // Show the width field
         echo "<input type='text' name='fld[" . attr($fld_line_no) . "][lengthWidth]' value='" .
         attr($linedata['fld_length']) .
         "' size='2' maxlength='10' class='form-control optin' title='" . xla('Width') . "' />";
-        if ($linedata['data_type'] == 3 || $linedata['data_type'] == 40) {
+        if (in_array($linedata['data_type'],array(3, 40))) {
             // Show the height field
             echo "<input type='text' name='fld[" . attr($fld_line_no) . "][lengthHeight]' value='" .
             attr($linedata['fld_rows']) .
@@ -766,7 +763,8 @@ function writeFieldLine($linedata)
         $linedata['data_type'] == 25 || $linedata['data_type'] == 26 ||
         $linedata['data_type'] == 27 || $linedata['data_type'] == 32 ||
         $linedata['data_type'] == 33 || $linedata['data_type'] == 34 ||
-        $linedata['data_type'] == 36 || $linedata['data_type'] == 43
+        $linedata['data_type'] == 36 || $linedata['data_type'] == 37 ||
+        $linedata['data_type'] == 43
     ) {
         $type = "";
         $disp = "style='display: none'";
@@ -875,7 +873,11 @@ function writeFieldLine($linedata)
       array(0 => array('id' => '', 'itemid' => '', 'operator' => '', 'value' => '')) :
         unserialize($linedata['conditions'], ['allowed_classes' => false]);
     $action = empty($conditions['action']) ? 'skip' : $conditions['action'];
-    $action_value = $action == 'skip' ? '' : substr($action, 6);
+    $action_value = '';
+    if ($action != 'skip') {
+        $action_value = substr($action, 6);
+        $action = substr($action, 0, 5); // "value" or "hsval"
+    }
     //
     $extra_html .= "<div id='ext_" . attr($fld_line_no) . "' " .
       "style='width: 750px; border: 1px solid var(--black);" .
@@ -886,8 +888,9 @@ function writeFieldLine($linedata)
       "  <th colspan='3' class='text-left font-weight-bold'>" .
       xlt('For') . " " . text($linedata['field_id']) . " " .
       "<select class='form-control' name='fld[" . attr($fld_line_no) . "][action]' onchange='actionChanged(" . attr_js($fld_line_no) . ")'>" .
-      "<option value='skip'  " . ($action == 'skip' ? 'selected' : '') . ">" . xlt('hide this field') . "</option>" .
-      "<option value='value' " . ($action != 'skip' ? 'selected' : '') . ">" . xlt('set value to') . "</option>" .
+      "<option value='skip'  " . ($action == 'skip'  ? 'selected' : '') . ">" . xlt('hide this field' ) . "</option>" .
+      "<option value='value' " . ($action == 'value' ? 'selected' : '') . ">" . xlt('set value to'    ) . "</option>" .
+      "<option value='hsval' " . ($action == 'hsval' ? 'selected' : '') . ">" . xlt('hide else set to') . "</option>" .
       "</select>" .
       "<input type='text' class='form-control' name='fld[" . attr($fld_line_no) . "][value]' value='" . attr($action_value) . "' size='15' />" .
       " " . xlt('if') .
@@ -1262,7 +1265,7 @@ function setListItemOptions(lino, seq, init) {
   var list_id   = f['fld[' + i + '][list_id]'].value;
   // WARNING: If new data types are defined the following test may need enhancing.
   // We're getting out if the type does not generate multiple fields with different names.
-  if (data_type != '21' && data_type != '22' && data_type != '23' && data_type != '25') {
+  if (data_type != '21' && data_type != '22' && data_type != '23' && data_type != '25' && data_type != '37') {
     f[target].style.display = 'none';
     return;
   }
@@ -1730,7 +1733,7 @@ echo "{id: 'A',text:" . xlj('Age') . ",ctx:['4'],ctxExcp:['0']},
 	{id: 'F',text:" . xlj('Add Time to Date') . ",ctx:['4'],ctxExcp:['0']},
 	{id: 'C',text:" . xlj('Capitalize') . ",ctx:['0'],ctxExcp:['4','15','40']},
 	{id: 'D',text:" . xlj('Dup Check') . "},
-	{id: 'E',text:" . xlj('Dup Check on only Edit') . "},
+	{id: 'E',text:" . xlj('Dup Check on only Edit, or Extra billing codes OK') . "},
 	{id: 'W',text:" . xlj('Dup Check on only New') . "},
 	{id: 'G',text:" . xlj('Graphable') . "},
 	{id: 'I',text:" . xlj('Initially Open Group') . "},

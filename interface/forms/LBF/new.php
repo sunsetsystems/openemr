@@ -533,9 +533,14 @@ if (!empty($_POST['bn_save']) || !empty($_POST['bn_save_print']) || !empty($_POS
                 frcd = frc;
                 frc = f[matches[1]];
             }
-            // For LBFs we will allow only one code in a field.
-            var s = ''; // frc.value;
-            var sd = ''; // frcd ? frcd.value : s;
+            // Allow only one code in a field unless edit option E is present.
+            var s = '';
+            var sd = '';
+            if ((' ' + frc.className + ' ').indexOf(' EditOptionE ') > -1) {
+                s = frc.value;
+                sd = frcd ? frcd.value : s;
+            }
+            //
             if (code) {
                 if (s.length > 0) {
                     s += ';';
@@ -932,7 +937,7 @@ if (!empty($_POST['bn_save']) || !empty($_POST['bn_save_print']) || !empty($_POS
                 }
 
                 // Accumulate action conditions into a JSON expression for the browser side.
-                accumActionConditions($field_id, $condition_str, $frow['conditions']);
+                accumActionConditions($frow, $condition_str);
 
                 $currvalue = '';
 
