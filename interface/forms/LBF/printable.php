@@ -54,6 +54,8 @@ $grparr = array();
 getLayoutProperties($formname, $grparr, '*');
 $lobj = $grparr[''];
 $formtitle = $lobj['grp_title'];
+$grp_last_update = $lobj['grp_last_update'];
+
 if (!empty($lobj['grp_columns'])) {
     $CPR = intval($lobj['grp_columns']);
 }
@@ -194,7 +196,7 @@ div.section table {
  width: 100%;
 }
 div.section td.stuff {
- vertical-align: bottom;
+ vertical-align: top;
 <?php if ($isblankform) { ?>
  height: 16pt;
 <?php } ?>
@@ -615,6 +617,8 @@ if ($fs && isset($LBF_DIAGS_SECTION)) {
 } // End Services Section
 
 ?>
+
+<p style='text-align:center' class='small'>Rev. <?php echo substr($grp_last_update, 0, 10); ?></p>
 
 </form>
 <?php
