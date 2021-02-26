@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 2008-2010 Rod Roark <rod@sunsetsystems.com>
+# Copyright (C) 2008-2021 Rod Roark <rod@sunsetsystems.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -182,51 +182,52 @@ OEDBNAME=`grep '^\$dbase' sites/$SITEID/sqlconf.php | cut -d \' -f 2 | cut -d \"
 OEDBUSER=`grep '^\$login' sites/$SITEID/sqlconf.php | cut -d \' -f 2 | cut -d \" -f 2`
 OEDBPASS=`grep '^\$pass'  sites/$SITEID/sqlconf.php | cut -d \' -f 2 | cut -d \" -f 2`
 SLDBNAME=''
-# SL support is becoming obsolete, but we're leaving it in for now.
-if [ -f ../sql-ledger.sql ]; then
-  SLDBNAME=`grep '^\$sl_dbname' interface/globals.php | cut -d \' -f 2`
-  SLDBUSER=`grep '^\$sl_dbuser' interface/globals.php | cut -d \' -f 2`
-  SLDBPASS=`grep '^\$sl_dbpass' interface/globals.php | cut -d \' -f 2`
-fi
-# Likewise, external phpGACL is discouraged because it will not work
-# with multiple sites.
+
+# SQL-Ledger support is obsolete.
+#if [ -f ../sql-ledger.sql ]; then
+#  SLDBNAME=`grep '^\$sl_dbname' interface/globals.php | cut -d \' -f 2`
+#  SLDBUSER=`grep '^\$sl_dbuser' interface/globals.php | cut -d \' -f 2`
+#  SLDBPASS=`grep '^\$sl_dbpass' interface/globals.php | cut -d \' -f 2`
+#fi
+
+# External phpGACL is obsolete.
 GADIR=''
 GACONFIGDIR=''
 GADBNAME=''
-if [ -f ../phpgacl.tar.gz ]; then
-  GADIR=`grep '^\s*\$phpgacl_location' library/acl.inc | cut -d \" -f 2`
-  GACONFIGDIR="$GADIR"
-  mkdir ../phpgacl
-  cd    ../phpgacl
-  dlg_info "Extracting $BAKDIR/phpgacl.tar.gz ..."
-  tar zxf ../phpgacl.tar.gz
-  if [ $? -ne 0 ]; then
-    dlg_msg "Error: tar could not extract '$BAKDIR/phpgacl.tar.gz'."
-    exit 1
-  fi
-  if [ -f ../phpgacl.sql.gz ]; then
-    GADBNAME=`grep '^\s*var \$_db_name'     gacl.class.php | cut -d \' -f 2`
-    GADBUSER=`grep '^\s*var \$_db_user'     gacl.class.php | cut -d \' -f 2`
-    GADBPASS=`grep '^\s*var \$_db_password' gacl.class.php | cut -d \' -f 2`
-  fi
-elif [ -e gacl ]; then
-  grep '^\s*\$phpgacl_location' library/acl.inc > /dev/null
-  if [ $? -eq 0 ]; then
-    GACONFIGDIR="$OEDIR/gacl"
-    if [ -f ../phpgacl.sql.gz ]; then
-      cd gacl
-      GADBNAME=`grep '^\s*var \$_db_name'     gacl.class.php | cut -d \' -f 2`
-      GADBUSER=`grep '^\s*var \$_db_user'     gacl.class.php | cut -d \' -f 2`
-      GADBPASS=`grep '^\s*var \$_db_password' gacl.class.php | cut -d \' -f 2`
-      cd ..
-    fi
-  fi
-fi
-#
+#if [ -f ../phpgacl.tar.gz ]; then
+#  GADIR=`grep '^\s*\$phpgacl_location' library/acl.inc | cut -d \" -f 2`
+#  GACONFIGDIR="$GADIR"
+#  mkdir ../phpgacl
+#  cd    ../phpgacl
+#  dlg_info "Extracting $BAKDIR/phpgacl.tar.gz ..."
+#  tar zxf ../phpgacl.tar.gz
+#  if [ $? -ne 0 ]; then
+#    dlg_msg "Error: tar could not extract '$BAKDIR/phpgacl.tar.gz'."
+#    exit 1
+#  fi
+#  if [ -f ../phpgacl.sql.gz ]; then
+#    GADBNAME=`grep '^\s*var \$_db_name'     gacl.class.php | cut -d \' -f 2`
+#    GADBUSER=`grep '^\s*var \$_db_user'     gacl.class.php | cut -d \' -f 2`
+#    GADBPASS=`grep '^\s*var \$_db_password' gacl.class.php | cut -d \' -f 2`
+#  fi
+#elif [ -e gacl ]; then
+#  grep '^\s*\$phpgacl_location' library/acl.inc > /dev/null
+#  if [ $? -eq 0 ]; then
+#    GACONFIGDIR="$OEDIR/gacl"
+#    if [ -f ../phpgacl.sql.gz ]; then
+#      cd gacl
+#      GADBNAME=`grep '^\s*var \$_db_name'     gacl.class.php | cut -d \' -f 2`
+#      GADBUSER=`grep '^\s*var \$_db_user'     gacl.class.php | cut -d \' -f 2`
+#      GADBPASS=`grep '^\s*var \$_db_password' gacl.class.php | cut -d \' -f 2`
+#      cd ..
+#    fi
+#  fi
+#fi
+
 SLDIR=''
-if [ -f ../sql-ledger.tar.gz ]; then
-  SLDIR=`dirname $OEDIR`/sql-ledger
-fi
+#if [ -f ../sql-ledger.tar.gz ]; then
+#  SLDIR=`dirname $OEDIR`/sql-ledger
+#fi
 
 dlg_yesno "Do you want to specify site ID, locations or database names for the restore?"
 
@@ -439,7 +440,9 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-mysql --password="$MYROOTPASS" --execute "GRANT ALL PRIVILEGES ON $OEDBNAME.* TO '$OEDBUSER'@'localhost' IDENTIFIED BY '$OEDBPASS'" $OEDBNAME
+mysql --password="$MYROOTPASS" --execute "CREATE USER '$OEDBUSER'@'localhost' IDENTIFIED BY '$OEDBPASS'" $OEDBNAME
+mysql --password="$MYROOTPASS" --execute "GRANT ALL PRIVILEGES ON $OEDBNAME.* TO '$OEDBUSER'@'localhost' WITH GRANT OPTION" $OEDBNAME
+
 mysql --user=$OEDBUSER --password="$OEDBPASS" $OEDBNAME < openemr.sql
 if [ $? -ne 0 ]; then
   dlg_msg "Error: Restore to database '$OEDBNAME' failed."
