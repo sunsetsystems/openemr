@@ -7,7 +7,7 @@
  * @link      http://www.open-emr.org
  * @author    Rod Roark <rod@sunsetsystems.com>
  * @author    Brady Miller <brady.g.miller@gmail.com>
- * @copyright Copyright (c) 2006-2016 Rod Roark <rod@sunsetsystems.com>
+ * @copyright Copyright (c) 2006-2021 Rod Roark <rod@sunsetsystems.com>
  * @copyright Copyright (c) 2017 Brady Miller <brady.g.miller@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
@@ -65,11 +65,13 @@ function genWarehouseList($tag_name, $currvalue, $title, $class = '')
 
     while ($lrow = sqlFetchArray($lres)) {
         $whid = $lrow['option_id'];
+        $facid = 0 + $lrow['option_value'];
         if ($whid != $currvalue && !$allow_multiple && checkWarehouseUsed($whid)) {
             continue;
         }
+        // Value identifies both warehouse and facility to support validation.
+        echo "<option value='$whid|$facid'";
 
-        echo "<option value='" . attr($whid) . "'";
         if (
             (strlen($currvalue) == 0 && $lrow['is_default']) ||
             (strlen($currvalue)  > 0 && $whid == $currvalue)
@@ -127,14 +129,42 @@ td {
 
  function validate() {
   var f = document.forms[0];
-  if (f.form_source_lot.value == '0' && f.form_lot_number.value.search(/\S/) < 0) {
-   alert('<?php echo xls('A lot number is required'); ?>');
+
+  // Transaction date validation. Must not be later than today or before 2000.
+  if (f.form_trans_type.value > '0') {
+   if (f.form_sale_date.value > '<?php echo date('Y-m-d') ?>' || f.form_sale_date.value < '2000-01-01') {
+    alert('<?php echo xls('Transaction date must not be in the future or before 2000'); ?>');
+    return false;
+   }
+  }
+
+  // Get source and target facility IDs.
+  var facfrom = 0;
+  var facto = 0;
+  var a = f.form_source_lot.value.split('|', 2);
+  var lotfrom = parseInt(a[0]);
+  if (a.length > 1) facfrom = parseInt(a[1]);
+  a = f.form_warehouse_id.value.split('|', 2);
+  if (a.length > 1) facto = parseInt(a[1]);
+
+  if (lotfrom == '0' && f.form_lot_number.value.search(/\S/) < 0) {
+   alert('<?php echo xla('A lot number is required'); ?>');
    return false;
   }
+
+  /********************************************************************
   if (f.form_trans_type.value == '6' && f.form_distributor_id.value == '') {
    alert('<?php echo xls('A distributor is required'); ?>');
    return false;
   }
+  ********************************************************************/
+
+  // Check the case of a transfer between different facilities.
+  if (f.form_trans_type.value == '4' && facto != facfrom) {
+   if (!confirm('<?php echo xl('Warning: Source and target facilities differ. Continue anyway?'); ?>'))
+    return false;
+  }
+
   return true;
  }
 
@@ -154,10 +184,12 @@ td {
   else if (type == '3') { // return
     showSourceLot = false;
   }
+  /********************************************************************
   else if (type == '6') { // distribution
     showSourceLot = false;
     showDistributor = true;
   }
+  ********************************************************************/
   else if (type == '4') { // transfer
     showCost = false;
   }
@@ -177,7 +209,7 @@ td {
   document.getElementById('row_cost'      ).style.display = showCost      ? '' : 'none';
   document.getElementById('row_source_lot').style.display = showSourceLot ? '' : 'none';
   document.getElementById('row_notes'     ).style.display = showNotes     ? '' : 'none';
-  document.getElementById('row_distributor').style.display = showDistributor ? '' : 'none';
+  // document.getElementById('row_distributor').style.display = showDistributor ? '' : 'none';
  }
 
     $(function () {
@@ -210,7 +242,14 @@ if ($_POST['form_save'] || $_POST['form_delete']) {
     $form_quantity = $_POST['form_quantity'] + 0;
     $form_cost = sprintf('%0.2f', $_POST['form_cost']);
     $form_source_lot = $_POST['form_source_lot'] + 0;
-    $form_distributor_id = $_POST['form_distributor_id'] + 0;
+
+    list($form_source_lot, $form_source_facility) = explode('|', $_POST['form_source_lot']);
+    $form_source_lot = intval($form_source_lot);
+
+    list($form_warehouse_id) = explode('|', $_POST['form_warehouse_id']);
+
+    $form_distributor_id = intval($_POST['form_distributor_id'] ?? 0);
+    $form_expiration = $_POST['form_expiration'] ?? '';
 
   // Some fixups depending on transaction type.
     if ($form_trans_type == '3') { // return
@@ -263,9 +302,9 @@ if ($_POST['form_save'] || $_POST['form_delete']) {
                         array(
                             $_POST['form_lot_number'],
                             $_POST['form_manufacturer'],
-                            (empty($_POST['form_expiration']) ? "NULL" : $_POST['form_expiration']),
+                            (empty($form_expiration) ? "NULL" : $form_expiration),
                             $_POST['form_vendor_id'],
-                            $_POST['form_warehouse_id'],
+                            $form_warehouse_id,
                             $form_quantity,
                             $drug_id,
                             $lot_id
@@ -280,34 +319,49 @@ if ($_POST['form_save'] || $_POST['form_delete']) {
             if ($form_quantity < 0) {
                 $info_msg = xl('Transaction failed, quantity is less than zero');
             } else {
-                $lot_id = sqlInsert(
-                    "INSERT INTO drug_inventory ( " .
-                    "drug_id, lot_number, manufacturer, expiration, " .
-                    "vendor_id, warehouse_id, on_hand " .
-                    ") VALUES ( " .
-                    "?, "                            .
-                    "?, " .
-                    "?, " .
-                    "?, "  .
-                    "?, " .
-                    "?, " .
-                    "? "  .
-                    ")",
-                    array(
-                        $drug_id,
-                        $_POST['form_lot_number'],
-                        $_POST['form_manufacturer'],
-                        (empty($_POST['form_expiration']) ? "NULL" : $_POST['form_expiration']),
-                        $_POST['form_vendor_id'],
-                        $_POST['form_warehouse_id'],
-                        $form_quantity
-                    )
+                $exptest = $form_expiration ?
+                    ("expiration = '" . add_escape_custom($form_expiration) . "'") : "expiration IS NULL";
+                $crow = sqlQuery(
+                    "SELECT count(*) AS count from drug_inventory " .
+                    "WHERE lot_number = ? " .
+                    "AND warehouse_id = ? " .
+                    "AND $exptest " .
+                    "AND destroy_date IS NULL",
+                    array($_POST['form_lot_number'], $form_warehouse_id)
                 );
+                if ($crow['count']) {
+                    $info_msg = xl('Transaction failed, duplicate lot');
+                }
+                else {
+                    $lot_id = sqlInsert(
+                        "INSERT INTO drug_inventory ( " .
+                        "drug_id, lot_number, manufacturer, expiration, " .
+                        "vendor_id, warehouse_id, on_hand " .
+                        ") VALUES ( " .
+                        "?, "                            .
+                        "?, " .
+                        "?, " .
+                        "?, "  .
+                        "?, " .
+                        "?, " .
+                        "? "  .
+                        ")",
+                        array(
+                            $drug_id,
+                            $_POST['form_lot_number'],
+                            $_POST['form_manufacturer'],
+                            (empty($form_expiration) ? "NULL" : $form_expiration),
+                            $_POST['form_vendor_id'],
+                            $form_warehouse_id,
+                            $form_quantity
+                        )
+                    );
+                }
             }
         }
 
         // Create the corresponding drug_sales transaction.
-        if ($_POST['form_save'] && $form_quantity) {
+        if ($_POST['form_save'] && $form_quantity && !$info_msg) {
             $form_notes = $_POST['form_notes'];
             $form_sale_date = $_POST['form_sale_date'];
             if (empty($form_sale_date)) {
@@ -316,11 +370,12 @@ if ($_POST['form_save'] || $_POST['form_delete']) {
 
             sqlStatement(
                 "INSERT INTO drug_sales ( " .
-                "drug_id, inventory_id, prescription_id, pid, encounter, user, " .
-                "sale_date, quantity, fee, xfer_inventory_id, distributor_id, notes " .
+                "drug_id, inventory_id, prescription_id, pid, encounter, user, sale_date, " .
+                "quantity, fee, xfer_inventory_id, distributor_id, notes, trans_type " .
                 ") VALUES ( " .
                 "?, " .
                 "?, '0', '0', '0', " .
+                "?, " .
                 "?, " .
                 "?, " .
                 "?, " .
@@ -337,7 +392,8 @@ if ($_POST['form_save'] || $_POST['form_delete']) {
                     (0 - $form_cost),
                     $form_source_lot,
                     $form_distributor_id,
-                    $form_notes
+                    $form_notes,
+                    $form_trans_type
                 )
             );
 
@@ -420,8 +476,6 @@ generate_form_field(
   <td class="font-weight-bold text-nowrap align-top"><?php echo xlt('Warehouse'); ?>:</td>
   <td>
 <?php
-  // generate_select_list("form_warehouse_id", 'warehouse',
-  //   $row['warehouse_id'], xl('Location of this lot'), xl('Unassigned'));
 if (
     !genWarehouseList(
         "form_warehouse_id",
@@ -451,9 +505,9 @@ if (
 foreach (
     array(
     '0' => xl('None{{Transaction}}'),
-    '2' => xl('Purchase'),
+    '2' => xl('Purchase/Receipt'),
     '3' => xl('Return'),
-    '6' => xl('Distribution'),
+    // '6' => xl('Distribution'),
     '4' => xl('Transfer'),
     '5' => xl('Adjustment'),
     ) as $key => $value
@@ -512,7 +566,7 @@ generate_form_field(array('data_type' => 14, 'field_id' => 'distributor_id',
     <option value='0'> </option>
 <?php
 $lres = sqlStatement("SELECT " .
-  "di.inventory_id, di.lot_number, di.on_hand, lo.title " .
+  "di.inventory_id, di.lot_number, di.on_hand, lo.title, lo.option_value " .
   "FROM drug_inventory AS di " .
   "LEFT JOIN list_options AS lo ON lo.list_id = 'warehouse' AND " .
   "lo.option_id = di.warehouse_id AND lo.activity = 1 " .
@@ -520,7 +574,7 @@ $lres = sqlStatement("SELECT " .
   "di.on_hand > 0 AND di.destroy_date IS NULL " .
   "ORDER BY di.lot_number, lo.title, di.inventory_id", array ($drug_id,$lot_id));
 while ($lrow = sqlFetchArray($lres)) {
-    echo "<option value='" . attr($lrow['inventory_id']) . "'>";
+    echo "<option value='" . attr($lrow['inventory_id']) . '|' . attr($lrow['option_value'])  . "'>";
     echo text($lrow['lot_number']);
     if (!empty($lrow['title'])) {
         echo " / " . text($lrow['title']);

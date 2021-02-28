@@ -1,6 +1,6 @@
 <?php
 
- // Copyright (C) 2006-2017 Rod Roark <rod@sunsetsystems.com>
+ // Copyright (C) 2006-2021 Rod Roark <rod@sunsetsystems.com>
  //
  // This program is free software; you can redistribute it and/or
  // modify it under the terms of the GNU General Public License
@@ -107,15 +107,26 @@ function set_related_target(codetype, code, selector, codedesc, target_element, 
     var f = document.forms[0];
     var s = f[target_element].value;
     if (code) {
-        if(limit>0) s = codetype + ':' + code;
+        if (limit > 0) {
+            s = codetype + ':' + code;
+        }
         else {
-            if (s.length > 0) s += ';';
+            if (codetype != 'PROD') {
+                // Return an error message if a service code is already selected.
+                if (s.indexOf(codetype + ':') == 0 || s.indexOf(';' + codetype + ':') > 0) {
+                    return '<?php echo xls('A code of this type is already selected. Erase the field first if you need to replace it.') ?>';
+                }
+            }     
+            if (s.length > 0) {
+                s += ';';
+            }
             s += codetype + ':' + code;
         }
     } else {
         s = '';
     }
     f[target_element].value = s;
+    return '';
 }
 
 // This is for callback by the find-code popup.
@@ -135,6 +146,28 @@ function sel_related(getter = '') {
  dlgopen('../patient_file/encounter/find_code_dynamic.php' + getter, '_blank', 900, 800);
 }
 
+// onclick handler for "allow inventory" checkbox.
+function dispensable_changed() {
+ var f = document.forms[0];
+ var dis = !f.form_dispensable.checked;
+ f.form_allow_multiple.disabled = dis;
+ f.form_allow_combining.disabled = dis;
+ return true;
+}
+
+function validate(f) {
+ var saving = f.form_save.clicked ? true : false;
+ f.form_save.clicked = false;
+ if (saving) {
+  if (f.form_name.value.search(/[^\s]/) < 0) {
+   alert('<?php echo xl('Product name is required'); ?>');
+   return false;
+  }
+ }
+ top.restoreSession();
+ return true;
+}
+
 </script>
 
 </head>
@@ -144,7 +177,7 @@ function sel_related(getter = '') {
 // If we are saving, then save and close the window.
 // First check for duplicates.
 //
-if ($_POST['form_save']) {
+if (!empty($_POST['form_save'])) {
     if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
         CsrfUtils::csrfNotVerified();
     }
@@ -176,7 +209,7 @@ if ($_POST['form_save']) {
     }
 }
 
-if (($_POST['form_save'] || $_POST['form_delete']) && !$alertmsg) {
+if ((!empty($_POST['form_save']) || !empty($_POST['form_delete'])) && !$alertmsg) {
     if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
         CsrfUtils::csrfNotVerified();
     }
@@ -198,9 +231,11 @@ if (($_POST['form_save'] || $_POST['form_delete']) && !$alertmsg) {
                 "route = ?, " .
                 "cyp_factor = ?, " .
                 "related_code = ?, " .
+                "dispensable = ?, " .
                 "allow_multiple = ?, " .
                 "allow_combining = ?, " .
-                "active = ? " .
+                "active = ?, " .
+                "consumable = ? " .
                 "WHERE drug_id = ?",
                 array(
                     trim($_POST['form_name']),
@@ -215,9 +250,11 @@ if (($_POST['form_save'] || $_POST['form_delete']) && !$alertmsg) {
                     trim($_POST['form_route']),
                     trim($_POST['form_cyp_factor']),
                     trim($_POST['form_related_code']),
+                    (empty($_POST['form_dispensable'    ]) ? 0 : 1),
                     (empty($_POST['form_allow_multiple' ]) ? 0 : 1),
                     (empty($_POST['form_allow_combining']) ? 0 : 1),
                     (empty($_POST['form_active']) ? 0 : 1),
+                    (empty($_POST['form_consumable'     ]) ? 0 : 1),
                     $drug_id
                 )
             );
@@ -236,8 +273,10 @@ if (($_POST['form_save'] || $_POST['form_delete']) && !$alertmsg) {
             "INSERT INTO drugs ( " .
             "name, ndc_number, drug_code, on_order, reorder_point, max_level, form, " .
             "size, unit, route, cyp_factor, related_code, " .
-            "allow_multiple, allow_combining, active " .
+            "dispensable, allow_multiple, allow_combining, active, consumable " .
             ") VALUES ( " .
+            "?, " .
+            "?, " .
             "?, " .
             "?, " .
             "?, " .
@@ -266,9 +305,11 @@ if (($_POST['form_save'] || $_POST['form_delete']) && !$alertmsg) {
                 trim($_POST['form_route']),
                 trim($_POST['form_cyp_factor']),
                 trim($_POST['form_related_code']),
+                (empty($_POST['form_dispensable'    ]) ? 0 : 1),
                 (empty($_POST['form_allow_multiple' ]) ? 0 : 1),
                 (empty($_POST['form_allow_combining']) ? 0 : 1),
-                (empty($_POST['form_active']) ? 0 : 1)
+                (empty($_POST['form_active'         ]) ? 0 : 1),
+                (empty($_POST['form_consumable'     ]) ? 0 : 1)
             )
         );
     }
@@ -305,8 +346,8 @@ if (($_POST['form_save'] || $_POST['form_delete']) && !$alertmsg) {
 
                 // Add prices for this drug ID and selector.
                 foreach ($iter['price'] as $key => $value) {
-                         $value = $value + 0;
                     if ($value) {
+                         $value = $value + 0;
                          sqlStatement(
                              "INSERT INTO prices ( " .
                              "pr_id, pr_selector, pr_level, pr_price ) VALUES ( " .
@@ -356,8 +397,10 @@ if ($drug_id) {
     $row = array(
     'name' => '',
     'active' => '1',
+    'dispensable' => '1',
     'allow_multiple' => '1',
     'allow_combining' => '',
+    'consumable' => '0',
     'ndc_number' => '',
     'on_order' => '0',
     'reorder_point' => '0',
@@ -373,7 +416,8 @@ if ($drug_id) {
 $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
 ?>
 <h3 class="ml-1"><?php echo text($title);?></h3>
-<form method='post' name='theform' action='add_edit_drug.php?drug=<?php echo attr_url($drug_id); ?>'>
+<form method='post' name='theform' action='add_edit_drug.php?drug=<?php echo attr_url($drug_id); ?>'
+ onsubmit='return validate(this);'>
     <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
 
     <div class="form-group">
@@ -382,15 +426,26 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
     </div>
 
     <div class="form-group mt-3">
-        <label class="font-weight-bold"><?php echo xlt('Active{{Drug}}'); ?>:</label>
+        <label class="font-weight-bold"><?php echo xlt('Attributes'); ?>:</label>
         <input type='checkbox' name='form_active' value='1'<?php
         if ($row['active']) {
             echo ' checked';
         } ?> />
+        <?php echo xlt('Active{{Drug}}'); ?>
+        <input type='checkbox' name='form_consumable' value='1'<?php
+        if ($row['consumable']) {
+            echo ' checked';
+        } ?> />
+        <?php echo xlt('Consumable'); ?>
     </div>
 
     <div class="form-group mt-3">
         <label class="font-weight-bold"><?php echo xlt('Allow'); ?>:</label>
+        <input type='checkbox' name='form_dispensable' value='1' onclick='dispensable_changed();'<?php
+        if ($row['dispensable']) {
+            echo ' checked';
+        } ?> />
+        <?php echo xlt('Inventory'); ?>
         <input type='checkbox' name='form_allow_multiple' value='1'<?php
         if ($row['allow_multiple']) {
             echo ' checked';
@@ -423,7 +478,7 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
         <label class="font-weight-bold"><?php echo xlt('Limits'); ?>:</label>
         <table class="table table-borderless pl-5">
             <tr>
-                <td class="align-top text-nowrap"></td>
+                <td class="align-top text-nowrap"><?php echo $GLOBALS['gbl_min_max_months'] ? xl('Months') : xl('Units'); ?></td>
                 <td class="align-top text-nowrap"><?php echo xlt('Global'); ?></td>
                     <?php
                     // One column header per warehouse title.
@@ -591,7 +646,10 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
     </div>
 
     <div class="btn-group">
-        <button type='submit' class="btn btn-primary btn-save" name='form_save' value='<?php echo  $drug_id ? xla('Update') : xla('Add') ; ?>'><?php echo  $drug_id ? xla('Update') : xla('Add') ; ?></button>
+        <button type='submit' class="btn btn-primary btn-save" name='form_save'
+         value='<?php echo  $drug_id ? xla('Update') : xla('Add') ; ?>'
+         onclick='return this.clicked = true;'
+         ><?php echo $drug_id ? xla('Update') : xla('Add') ; ?></button>
         <?php if (AclMain::aclCheckCore('admin', 'super') && $drug_id) { ?>
         <button class="btn btn-danger" type='submit' name='form_delete' value='<?php echo xla('Delete'); ?>'><?php echo xla('Delete'); ?></button>
         <?php } ?>
@@ -600,14 +658,19 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
 </form>
 
 <script>
+
 $(function () {
   $('[data-toggle="tooltip"]').tooltip();
 });
+
+dispensable_changed();
+
 <?php
 if ($alertmsg) {
     echo "alert('" . addslashes($alertmsg) . "');\n";
 }
 ?>
+
 </script>
 
 </body>
