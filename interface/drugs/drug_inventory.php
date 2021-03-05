@@ -14,17 +14,31 @@ require_once("$srcdir/options.inc.php");
 use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Core\Header;
 
-// Check authorization.
-$thisauth = AclMain::aclCheckCore('admin', 'drugs');
-if (!$thisauth) {
+// Check authorizations.
+$auth_admin = AclMain::aclCheckCore('admin', 'drugs');
+$auth_lots  = $auth_admin                             ||
+    AclMain::aclCheckCore('inventory', 'lots'       ) ||
+    AclMain::aclCheckCore('inventory', 'purchases'  ) ||
+    AclMain::aclCheckCore('inventory', 'transfers'  ) ||
+    AclMain::aclCheckCore('inventory', 'adjustments') ||
+    AclMain::aclCheckCore('inventory', 'consumption') ||
+    AclMain::aclCheckCore('inventory', 'destruction');
+$auth_anything = $auth_lots                           ||
+    AclMain::aclCheckCore('inventory', 'sales'      ) ||
+    AclMain::aclCheckCore('inventory', 'reporting'  );
+if (!$auth_anything) {
     die(xlt('Not authorized'));
 }
+// Note if user is restricted to any facilities and/or warehouses.
+$is_user_restricted = isUserRestricted();
 
 // For each sorting option, specify the ORDER BY argument.
 //
 $ORDERHASH = array(
   'prod' => 'd.name, d.drug_id, di.expiration, di.lot_number',
+  'act'  => 'd.active, d.name, d.drug_id, di.expiration, di.lot_number',
   'ndc'  => 'd.ndc_number, d.name, d.drug_id, di.expiration, di.lot_number',
+  'con'  => 'd.consumable, d.name, d.drug_id, di.expiration, di.lot_number',
   'form' => 'lof.title, d.name, d.drug_id, di.expiration, di.lot_number',
   'lot'  => 'di.lot_number, d.name, d.drug_id, di.expiration',
   'wh'   => 'lo.title, d.name, d.drug_id, di.expiration, di.lot_number',
@@ -36,6 +50,7 @@ $ORDERHASH = array(
 $form_facility = 0 + empty($_REQUEST['form_facility']) ? 0 : $_REQUEST['form_facility'];
 $form_show_empty = empty($_REQUEST['form_show_empty']) ? 0 : 1;
 $form_show_inactive = empty($_REQUEST['form_show_inactive']) ? 0 : 1;
+$form_consumable = isset($_REQUEST['form_consumable']) ? intval($_REQUEST['form_consumable']) : 0;
 
 // Incoming form_warehouse, if not empty is in the form "warehouse/facility".
 // The facility part is an attribute used by JavaScript logic.
@@ -57,22 +72,30 @@ if ($form_warehouse) {
 if (!$form_show_inactive) {
     $where .= " AND d.active = 1";
 }
+if ($form_consumable) {
+    if ($form_consumable == 1) {
+        $where .= " AND d.consumable = '1'";
+    } else {
+        $where .= " AND d.consumable != '1'";
+    }
+}
 
 $dion = $form_show_empty ? "" : "AND di.on_hand != 0";
 
 // get drugs
-$res = sqlStatement("SELECT d.*, " .
-  "di.inventory_id, di.lot_number, di.expiration, di.manufacturer, " .
-  "di.on_hand, lo.title, lo.option_value AS facid, f.name AS facname " .
-  "FROM drugs AS d " .
-  "LEFT JOIN drug_inventory AS di ON di.drug_id = d.drug_id " .
-  "AND di.destroy_date IS NULL $dion " .
-  "LEFT JOIN list_options AS lo ON lo.list_id = 'warehouse' AND " .
-  "lo.option_id = di.warehouse_id AND lo.activity = 1 " .
-  "LEFT JOIN facility AS f ON f.id = lo.option_value " .         
-  "LEFT JOIN list_options AS lof ON lof.list_id = 'drug_form' AND " .
-  "lof.option_id = d.form AND lof.activity = 1 " .
-  "$where ORDER BY d.active DESC, $orderby"
+$res = sqlStatement(
+    "SELECT d.*, " .
+    "di.inventory_id, di.lot_number, di.expiration, di.manufacturer, di.on_hand, " .
+    "di.warehouse_id, lo.title, lo.option_value AS facid, f.name AS facname " .
+    "FROM drugs AS d " .
+    "LEFT JOIN drug_inventory AS di ON di.drug_id = d.drug_id " .
+    "AND di.destroy_date IS NULL $dion " .
+    "LEFT JOIN list_options AS lo ON lo.list_id = 'warehouse' AND " .
+    "lo.option_id = di.warehouse_id AND lo.activity = 1 " .
+    "LEFT JOIN facility AS f ON f.id = lo.option_value " .         
+    "LEFT JOIN list_options AS lof ON lof.list_id = 'drug_form' AND " .
+    "lof.option_id = d.form AND lof.activity = 1 " .
+    "$where ORDER BY d.active DESC, $orderby"
 );
 
  function generateEmptyTd($n)
@@ -106,36 +129,52 @@ $res = sqlStatement("SELECT d.*, " .
  }
  function mapToTable($row)
  {
+    global $auth_admin, $auth_lots;
     $today = date('Y-m-d');
      if ($row) {
          echo " <tr class='detail'>\n";
          $lastid = $row['drug_id'];
-         echo "<td title='" . xla('Click to edit') . "' onclick='dodclick(" . attr(addslashes($lastid)) . ")'>" .
-         "<a href='' onclick='return false'>" .
-         text($row['name']) . "</a></td>\n";
+        if ($auth_admin) {
+            echo "<td title='" . xla('Click to edit') . "' onclick='dodclick(" . attr(addslashes($lastid)) . ")'>" .
+            "<a href='' onclick='return false'>" .
+            text($row['name']) . "</a></td>\n";
+        }
+        else {
+            echo "  <td>" . text($row['name']) . "</td>\n";
+        }
          echo "  <td>" . ($row['active'] ? xlt('Yes') : xlt('No')) . "</td>\n";
+         echo "  <td>" . ($row['consumable'] ? xlt('Yes') : xlt('No')) . "</td>\n";
          echo "  <td>" . text($row['ndc_number']) . "</td>\n";
          echo "  <td>" .
          generate_display_field(array('data_type' => '1','list_id' => 'drug_form'), $row['form']) .
          "</td>\n";
          echo "  <td>" . text($row['size']) . "</td>\n";
-         echo "  <td>" .
+         echo "  <td title='" . xlt('Measurement Units') . "'>" .
          generate_display_field(array('data_type' => '1','list_id' => 'drug_units'), $row['unit']) .
          "</td>\n";
 
-        if ($row['dispensable']) {
-            echo "  <td title='" . xla('Click to receive (add) new lot') . "' onclick='doiclick(" .
-                attr(addslashes($lastid)) . ",0)' title='" . xla('Add new lot and transaction') . "'>" .
-                "<a href='' onclick='return false'>" . xlt('New') . "</a></td>\n";
+        if ($auth_lots && $row['dispensable']) {
+            echo "  <td onclick='doiclick($lastid,0)' title='" .
+                xla('Purchase or Transfer') . "' style='padding:0'>" .
+                "<input type='button' value='" . xla('Tran') . "'style='padding:0' /></td>\n";
         } else {
-            echo "  <td title='" . xla('Inventory not enabled for this product') . "'>&nbsp;</td>\n";
+            echo "  <td title='" . xla('Not applicable') . "'>&nbsp;</td>\n";
         }
 
          if (!empty($row['inventory_id'][0])) {
              echo "<td>";
              foreach ($row['inventory_id'] as $key => $value) {
-                 echo "<div title='" . xla('Click to edit') . "' onclick='doiclick(" . attr(addslashes($lastid)) . "," . attr(addslashes($row['inventory_id'][$key])) . ")'>" .
-                 "<a href='' onclick='return false'>" . text($row['lot_number'][$key]) . "</a></div>";
+                if ($auth_lots) {
+                    echo "<div title='" .
+                        xla('Adjustment, Consumption, Return, or Edit') .
+                        "' onclick='doiclick(" . attr(addslashes($lastid)) . "," .
+                        attr(addslashes($row['inventory_id'][$key])) . ")'>" .
+                        "<a href='' onclick='return false'>" .
+                        text($row['lot_number'][$key]) .
+                        "</a></div>";
+                } else {
+                    echo "  <div>" . text($row['lot_number'][$key]) . "</div>\n";
+                }
              }
              echo "</td>\n<td>";
 
@@ -209,12 +248,13 @@ a, a:visited, a:hover {
 
 // callback from add_edit_drug.php or add_edit_drug_inventory.php:
 function refreshme() {
- location.reload();
+ // Avoiding reload() here because it generates a browser warning about repeating a POST.
+ location.href = location.href;
 }
 
 // Process click on drug title.
 function dodclick(id) {
- dlgopen('add_edit_drug.php?drug=' + id, '_blank', 725, 475);
+ dlgopen('add_edit_drug.php?drug=' + id, '_blank', 900, 600);
 }
 
 // Process click on drug QOO or lot.
@@ -266,6 +306,9 @@ echo "   <select name='form_facility' onchange='facchanged()'>\n";
 echo "    <option value=''>-- " . xl('All Facilities') . " --\n";
 while ($frow = sqlFetchArray($fres)) {
     $facid = $frow['id'];
+    if ($is_user_restricted && !isFacilityAllowed($facid)) {
+        continue;
+    }
     echo "    <option value='$facid'";
     if ($facid == $form_facility) {
         echo " selected";
@@ -283,15 +326,36 @@ $lres = sqlStatement(
     "WHERE list_id = 'warehouse' ORDER BY seq, title"
 );
 while ($lrow = sqlFetchArray($lres)) {
-    echo "    <option value='" . $lrow['option_id'] . "/" . $lrow['option_value'] . "'";
-    echo " id='fac" . $lrow['option_value'] . "'";
-    if (strlen($form_warehouse)  > 0 && $lrow['option_id'] == $form_warehouse) {
+    $whid  = $lrow['option_id'];
+    $facid = $lrow['option_value'];
+    if ($is_user_restricted && !isWarehouseAllowed($facid, $whid)) {
+        continue;
+    }
+    echo "    <option value='" . attr("$whid/$facid") . "'";
+    echo " id='fac" . attr($facid) . "'";
+    if (strlen($form_warehouse)  > 0 && $whid == $form_warehouse) {
         echo " selected";
     }
     echo ">" . xl_list_label($lrow['title']) . "</option>\n";
 }
 echo "   </select>\n";
 ?>
+   &nbsp;
+   <select name='form_consumable'>
+<?php
+foreach (array(
+    '0' => xl('All Product Types'),
+    '1' => xl('Consumable Only'),
+    '2' => xl('Non-Consumable Only'),
+) as $key => $value) {
+    echo "    <option value='$key'";
+    if ($key == $form_consumable) {
+        echo " selected";
+    }
+    echo ">" . text($value) . "</option>\n";
+}
+?>
+   </select>&nbsp;
   </td>
   <td>
    <input type='checkbox' name='form_show_empty' value='1'<?php if ($form_show_empty) echo " checked"; ?> />
@@ -320,6 +384,9 @@ echo "   </select>\n";
     <?php echo xlt('Act'); ?>
   </th>
   <th>
+    <?php echo xlt('Cons'); ?>
+  </th>
+  <th>
    <?php echo xlt('NDC'); ?> </a>
   </th>
   <th>
@@ -328,11 +395,11 @@ echo "   </select>\n";
   <th>
     <?php echo xlt('Size'); ?>
   </th>
-  <th>
+  <th title='<?php echo xlt('Measurement Units'); ?>'>
     <?php echo xlt('Unit'); ?>
   </th>
-  <th>
-    <?php echo xlt('New'); ?>
+  <th title='<?php echo xla('Purchase or Transfer'); ?>'>
+    <?php echo xlt('Tran'); ?>
   </th>
   <th>
     <?php echo xlt('Lot'); ?> </a>
@@ -355,6 +422,9 @@ echo "   </select>\n";
 <?php
  $prevRow = '';
 while ($row = sqlFetchArray($res)) {
+    if (!empty($row['inventory_id']) && $is_user_restricted && !isWarehouseAllowed($row['facid'], $row['warehouse_id'])) {
+        continue;
+    }
     $row = processData($row);
     if ($prevRow == '') {
         $prevRow = $row;

@@ -1126,7 +1126,7 @@ $GLOBALS_METADATA = array(
         'default_rendering_provider' => array(
             xl('Default Rendering Provider in Fee Sheet'),
             array(
-                '0' => xl('Please Select'),
+                '0' => xl('Logged in User if provider, otherwise Current Provider'),
                 '1' => xl('Current Provider'),
                 '2' => xl('Current Logged in User'),
             ),

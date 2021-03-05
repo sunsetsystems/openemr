@@ -7,8 +7,10 @@
  * @link      http://www.open-emr.org
  * @author    Roberto Vasquez <robertogagliotta@gmail.com>
  * @author    Brady Miller <brady.g.miller@gmail.com>
+ * @author    Rod Roark <rod@sunsetsystems.com>
  * @copyright Copyright (c) 2015 Roberto Vasquez <robertogagliotta@gmail.com>
  * @copyright Copyright (c) 2017-2019 Brady Miller <brady.g.miller@gmail.com>
+ * @copyright Copyright (c) 2021 Rod Roark <rod@sunsetsystems.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
@@ -143,27 +145,64 @@ if (isset($_POST["privatemode"]) && $_POST["privatemode"] == "user_admin") {
             //END (CHEMED)
         }
 
-        if ($GLOBALS['restrict_user_facility'] && $_POST["schedule_facility"]) {
-            $sqlBindArray = [];
-            $scheduledFacilityString = "";
-            foreach ($_POST["schedule_facility"] as $scheduledFacility) {
-                $scheduledFacilityString .= "?,";
-                array_push($sqlBindArray, $scheduledFacility);
+        if (!empty($GLOBALS['gbl_fac_warehouse_restrictions']) || !empty($GLOBALS['restrict_user_facility'])) {
+            if (empty($_POST["schedule_facility"])) {
+                $_POST["schedule_facility"] = array();
             }
-            if (!empty($scheduledFacilityString)) {
-                $scheduledFacilityString = substr($scheduledFacilityString, 0, -1);
+            $tmpres = sqlStatement(
+                "SELECT * FROM users_facility WHERE " .
+                "tablename = ? AND table_id = ?",
+                array('users', $_POST["id"])
+            );
+            // $olduf will become an array of entries to delete.
+            $olduf = array();
+            while ($tmprow = sqlFetchArray($tmpres)) {
+                $olduf[$tmprow['facility_id'] . '/' . $tmprow['warehouse_id']] = true;
             }
-            array_unshift($sqlBindArray, $_POST["id"]);
-            sqlStatement("delete from users_facility
-            where tablename='users'
-            and table_id= ?
-            and facility_id not in (" . $scheduledFacilityString . ")", $sqlBindArray);
-
-            foreach ($_POST["schedule_facility"] as $tqvar) {
-                sqlStatement("replace into users_facility set
-                facility_id = ?,
-                tablename='users',
-                table_id = ?", array($tqvar, $_POST["id"]));
+            // Now process the selection of facilities and warehouses.
+            foreach($_POST["schedule_facility"] as $tqvar) {
+                if (($i = strpos($tqvar, '/')) !== false) {
+                    $facid = substr($tqvar, 0, $i);
+                    $whid = substr($tqvar, $i + 1);
+                    // If there was also a facility-only selection for this warehouse then remove it.
+                    if (isset($olduf["$facid/"])) {
+                        $olduf["$facid/"] = true;
+                    }
+                }
+                else {
+                    $facid = $tqvar;
+                    $whid = '';
+                }
+                if (!isset($olduf["$facid/$whid"])) {
+                    sqlStatement(
+                        "INSERT INTO users_facility SET tablename = ?, table_id = ?, " .
+                        "facility_id = ?, warehouse_id = ?",
+                        array('users', $_POST["id"], $facid, $whid)
+                    );
+                }
+                $olduf["$facid/$whid"] = false;
+                if ($facid == $deffacid) {
+                    $deffacid = 0;
+                }
+            }
+            // Now delete whatever is left over for this user.
+            foreach ($olduf as $key => $value) {
+                if ($value && ($i = strpos($key, '/')) !== false) {
+                    $facid = substr($key, 0, $i);
+                    $whid = substr($key, $i + 1);
+                    sqlStatement(
+                        "DELETE FROM users_facility WHERE " .
+                        // The following screws up by matching all warehouse_id values when it's
+                        // an empty string. This needs debugging in sql.inc.
+                        /**********************************************
+                        "tablename = ? AND table_id = ? AND facility_id = ? AND warehouse_id = ?",
+                        array('users', $_POST["id"], $facid, $whid));
+                        **********************************************/
+                        "tablename = 'users' AND table_id = " . add_escape_custom($_POST["id"]) .
+                        " AND facility_id = '" . add_escape_custom($facid) . "'" .
+                        " AND warehouse_id = '" . add_escape_custom($whid) . "'"
+                    );
+                }
             }
         }
 

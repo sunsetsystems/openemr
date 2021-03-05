@@ -26,7 +26,7 @@ if (!AclMain::aclCheckCore('admin', 'drugs')) {
 
 // Write a line of data for one template to the form.
 //
-function writeTemplateLine($selector, $dosage, $period, $quantity, $refills, $prices, $taxrates)
+function writeTemplateLine($selector, $dosage, $period, $quantity, $refills, $prices, $taxrates, $pkgqty)
 {
     global $tmpl_line_no;
     ++$tmpl_line_no;
@@ -52,6 +52,14 @@ function writeTemplateLine($selector, $dosage, $period, $quantity, $refills, $pr
     echo "  <td class='tmplcell drugsonly'>";
     echo "<input class='form-control' name='form_tmpl[" . attr($tmpl_line_no) . "][refills]' value='" . attr($refills) . "' size='3' maxlength='5'>";
     echo "</td>\n";
+
+    /******************************************************************
+    echo "  <td class='tmplcell drugsonly'>";
+    echo "<input type='text' class='form-control' name='form_tmpl[" . attr($tmpl_line_no) .
+        "][pkgqty]' value='" . attr($pkgqty) . "' size='3' maxlength='5'>";
+    echo "</td>\n";
+    ******************************************************************/
+
     foreach ($prices as $pricelevel => $price) {
         echo "  <td class='tmplcell'>";
         echo "<input class='form-control' name='form_tmpl[" . attr($tmpl_line_no) . "][price][" . attr($pricelevel) . "]' value='" . attr($price) . "' size='6' maxlength='12'>";
@@ -81,16 +89,17 @@ echo ' ' . xlt('Drug'); ?></title>
 <?php Header::setupHeader(["opener"]); ?>
 
 <style>
-<?php if ($GLOBALS['sell_non_drug_products'] == 2) { ?>
-.drugsonly {
-    display: none;
-}
+
+<?php if ($GLOBALS['sell_non_drug_products'] == 2) { // "Products but no prescription drugs and no templates" ?>
+.drugsonly { display:none; }
+<?php } else { ?>
+.drugsonly { }
 <?php } ?>
 
 <?php if (empty($GLOBALS['ippf_specific'])) { ?>
-.ippfonly {
-    display: none;
-}
+.ippfonly { display:none; }
+<?php } else { ?>
+.ippfonly { }
 <?php } ?>
 
 </style>
@@ -161,6 +170,13 @@ function validate(f) {
  if (saving) {
   if (f.form_name.value.search(/[^\s]/) < 0) {
    alert('<?php echo xl('Product name is required'); ?>');
+   return false;
+  }
+ }
+ var deleting = f.form_delete.clicked ? true : false;
+ f.form_delete.clicked = false;
+ if (deleting) {
+  if (!confirm('<?php echo xls('This will permanently delete all lots of this product. Related reports will be incomplete or incorrect. Are you sure?'); ?>')) {
    return false;
   }
  }
@@ -336,12 +352,19 @@ if ((!empty($_POST['form_save']) || !empty($_POST['form_delete'])) && !$alertmsg
 
                 sqlStatement(
                     "INSERT INTO drug_templates ( " .
-                    "drug_id, selector, dosage, period, quantity, refills, taxrates " .
-                    ") VALUES ( ?, ?, ?, ?, ?, ?, ? )",
-                    array($drug_id, $selector, trim($iter['dosage']), trim($iter['period']),
-                    trim($iter['quantity']),
-                    trim($iter['refills']),
-                    $taxrates)
+                    "drug_id, selector, dosage, period, quantity, refills, taxrates, pkgqty " .
+                    ") VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )",
+                    array(
+                        $drug_id,
+                        $selector,
+                        trim($iter['dosage']),
+                        trim($iter['period']),
+                        trim($iter['quantity']),
+                        trim($iter['refills']),
+                        $taxrates,
+                        // floatval(trim($iter['pkgqty']))
+                        1.0
+                    )
                 );
 
                 // Add prices for this drug ID and selector.
@@ -478,9 +501,11 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
         <label class="font-weight-bold"><?php echo xlt('Limits'); ?>:</label>
         <table class="table table-borderless pl-5">
             <tr>
-                <td class="align-top text-nowrap"><?php echo $GLOBALS['gbl_min_max_months'] ? xl('Months') : xl('Units'); ?></td>
-                <td class="align-top text-nowrap"><?php echo xlt('Global'); ?></td>
-                    <?php
+                <td class="align-top font-weight-bold">
+                    <?php echo $GLOBALS['gbl_min_max_months'] ? xlt('Months') : xlt('Units'); ?>
+                </td>
+                <td class="align-top"><?php echo xlt('Global'); ?></td>
+<?php
                     // One column header per warehouse title.
                     $pwarr = array();
                     $pwres = sqlStatement(
@@ -495,12 +520,12 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
                     );
                     while ($pwrow = sqlFetchArray($pwres)) {
                         $pwarr[] = $pwrow;
-                        echo "     <td class='align-top text-nowrap'>" . text($pwrow['title']) . "</td>\n";
+                        echo "     <td class='align-top'>" . text($pwrow['title']) . "</td>\n";
                     }
-                    ?>
+?>
             </tr>
             <tr>
-                <td class="align-top text-nowrap"><?php echo xlt('Min'); ?>&nbsp;</td>
+                <td class="align-top"><?php echo xlt('Min'); ?>&nbsp;</td>
                 <td class="align-top">
                     <input class="form-control" size='5' name='form_reorder_point' maxlength='7' value='<?php echo attr($row['reorder_point']) ?>' title='<?php echo xla('Reorder point, 0 if not applicable'); ?>' data-toggle="tooltip" data-placement="top" />
                 </td>
@@ -516,7 +541,7 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
                 ?>
             </tr>
             <tr>
-                <td class="align-top text-nowrap"><?php echo xlt('Max'); ?>&nbsp;</td>
+                <td class="align-top"><?php echo xlt('Max'); ?>&nbsp;</td>
                 <td>
                     <input class='form-control' size='5' name='form_max_level' maxlength='7' value='<?php echo attr($row['max_level']) ?>' title='<?php echo xla('Maximum reasonable inventory, 0 if not applicable'); ?>' data-toggle="tooltip" data-placement="top" />
                 </td>
@@ -542,11 +567,11 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
     </div>
 
     <div class="form-group mt-3 drugsonly">
-        <label class="font-weight-bold"><?php echo xlt('Pill Size'); ?>:</label>
+        <label class="font-weight-bold"><?php echo xlt('Size'); ?>:</label>
         <input class="form-control" size="5" name="form_size" maxlength="7" value='<?php echo attr($row['size']) ?>' />
     </div>
 
-    <div class="form-group mt-3 drugsonly">
+    <div class="form-group mt-3 drugsonly" title='<?php echo xlt('Measurement Units'); ?>'>
         <label class="font-weight-bold"><?php echo xlt('Units'); ?>:</label>
         <?php
             generate_form_field(array('data_type' => 1,'field_id' => 'unit','list_id' => 'drug_units','empty_title' => 'SKIP'), $row['unit']);
@@ -560,7 +585,7 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
         ?>
     </div>
 
-    <div class="form-group mt-3 ippfonly">
+    <div class="form-group mt-3 ippfonly" style='display:none'> <!-- Removed per CV 2017-03-29 -->
         <label class="font-weight-bold"><?php echo xlt('CYP Factor'); ?>:</label>
         <input class="form-control" size="10" name="form_cyp_factor" maxlength="20" value='<?php echo attr($row['cyp_factor']) ?>' />
     </div>
@@ -580,8 +605,8 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
                 <td class='drugsonly font-weight-bold'><?php echo xlt('Name'); ?></td>
                 <td class='drugsonly font-weight-bold'><?php echo xlt('Schedule'); ?></td>
                 <td class='drugsonly font-weight-bold'><?php echo xlt('Interval'); ?></td>
-                <td class='drugsonly font-weight-bold'><?php echo xlt('Qty'); ?></td>
-                <td class='drugsonly font-weight-bold'><?php echo xlt('Refills'); ?></td>
+                <td class='drugsonly font-weight-bold'><?php echo xlt('Basic Units'); ?></td>
+                <td class='drugsonly font-weight-bold'><?php echo xlt('Refills' ); ?></td>
                 <?php
                 // Show a heading for each price level.  Also create an array of prices
                 // for new template lines.
@@ -632,14 +657,15 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
                         $trow['quantity'],
                         $trow['refills'],
                         $prices,
-                        $trow['taxrates']
+                        $trow['taxrates'],
+                        $trow['pkgqty']
                     );
                 }
             }
 
             for ($i = 0; $i < $blank_lines; ++$i) {
                 $selector = $GLOBALS['sell_non_drug_products'] == 2 ? $row['name'] : '';
-                writeTemplateLine($selector, '', '', '', '', $emptyPrices, '');
+                writeTemplateLine($selector, '', '', '', '', $emptyPrices, '', '1');
             }
             ?>
         </table>
@@ -651,7 +677,9 @@ $title = $drug_id ? xl("Update Drug") : xl("Add Drug");
          onclick='return this.clicked = true;'
          ><?php echo $drug_id ? xla('Update') : xla('Add') ; ?></button>
         <?php if (AclMain::aclCheckCore('admin', 'super') && $drug_id) { ?>
-        <button class="btn btn-danger" type='submit' name='form_delete' value='<?php echo xla('Delete'); ?>'><?php echo xla('Delete'); ?></button>
+        <button class="btn btn-danger" type='submit' name='form_delete'
+         onclick='return this.clicked = true;' value='<?php echo xla('Delete'); ?>'
+         ><?php echo xla('Delete'); ?></button>
         <?php } ?>
         <button type='button' class="btn btn-secondary btn-cancel" onclick='window.close()'><?php echo xla('Cancel'); ?></button>
     </div>

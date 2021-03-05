@@ -1370,6 +1370,7 @@ CREATE TABLE `drug_templates` (
   `quantity` int(11) NOT NULL default '0',
   `refills` int(11) NOT NULL default '0',
   `taxrates` varchar(255) default NULL,
+  `pkgqty` float NOT NULL DEFAULT 1.0 COMMENT 'Number of product items per template item',
   PRIMARY KEY  (`drug_id`,`selector`)
 ) ENGINE=InnoDB;
 
@@ -1390,10 +1391,10 @@ CREATE TABLE `drugs` (
   `max_level` float NOT NULL DEFAULT 0.0,
   `last_notify` date NULL,
   `reactions` text,
-  `form` int(3) NOT NULL default '0',
+  `form` varchar(31) NOT NULL default '0',
   `size` varchar(25) NOT NULL default '',
-  `unit` int(11) NOT NULL default '0',
-  `route` int(11) NOT NULL default '0',
+  `unit` varchar(31) NOT NULL default '0',
+  `route` varchar(31) NOT NULL default '0',
   `substitute` int(11) NOT NULL default '0',
   `related_code` varchar(255) NOT NULL DEFAULT '' COMMENT 'may reference a related codes.code',
   `cyp_factor` float NOT NULL DEFAULT 0 COMMENT 'quantity representing a years supply',
@@ -6435,7 +6436,8 @@ CREATE TABLE `log` (
   `log_from` VARCHAR(20) DEFAULT 'open-emr',
   `menu_item_id` INT(11) DEFAULT NULL,
   `ccda_doc_id` INT(11) DEFAULT NULL COMMENT 'CCDA document id from ccda',
-  PRIMARY KEY  (`id`)
+  PRIMARY KEY  (`id`),
+  KEY `patient_id` (`patient_id`),
 ) ENGINE=InnoDB AUTO_INCREMENT=1;
 
 
@@ -8474,6 +8476,8 @@ CREATE TABLE `voids` (
   `amount1`                decimal(12,2) NOT NULL DEFAULT 0  COMMENT 'for checkout,receipt total voided adjustments',
   `amount2`                decimal(12,2) NOT NULL DEFAULT 0  COMMENT 'for checkout,receipt total voided payments',
   `other_info`             text                              COMMENT 'for checkout,receipt the old invoice refno',
+  `reason`                 varchar(31)   NOT NULL DEFAULT '',
+  `notes`                  varchar(255)  NOT NULL DEFAULT '',
   PRIMARY KEY (`void_id`),
   KEY datevoided (date_voided),
   KEY pidenc (patient_id, encounter_id)
@@ -8669,7 +8673,8 @@ CREATE TABLE `users_facility` (
   `tablename` varchar(64) NOT NULL,
   `table_id` int(11) NOT NULL,
   `facility_id` int(11) NOT NULL,
-  PRIMARY KEY (`tablename`,`table_id`,`facility_id`)
+  `warehouse_id` varchar(31) NOT NULL DEFAULT '',
+  PRIMARY KEY (`tablename`,`table_id`,`facility_id`,`warehouse_id`)
 ) ENGINE=InnoDB COMMENT='joins users or patient_data to facility table';
 
 -- -----------------------------------------------------------------------------------

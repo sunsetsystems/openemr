@@ -129,3 +129,40 @@ ALTER TABLE `layout_group_properties` ADD COLUMN `grp_last_update` timestamp;
 #IfMissingColumn layout_group_properties grp_referrals
 ALTER TABLE `layout_group_properties` ADD COLUMN `grp_referrals` tinyint(1) not null default 0;
 #EndIf
+
+#IfMissingColumn users_facility warehouse_id
+ALTER TABLE `users_facility` ADD COLUMN `warehouse_id` varchar(31) NOT NULL default '';
+ALTER TABLE `users_facility` DROP PRIMARY KEY, ADD PRIMARY KEY (`tablename`,`table_id`,`facility_id`,`warehouse_id`);
+#EndIf
+
+#IfNotColumnType drugs form varchar(31)
+ALTER TABLE `drugs` CHANGE `form`  `form`  varchar(31) NOT NULL default '0';
+#EndIf
+#IfNotColumnType drugs unit varchar(31)
+ALTER TABLE `drugs` CHANGE `unit`  `unit`  varchar(31) NOT NULL default '0';
+#EndIf
+#IfNotColumnType drugs route varchar(31)
+ALTER TABLE `drugs` CHANGE `route` `route` varchar(31) NOT NULL default '0';
+#EndIf
+
+#IfMissingColumn drug_templates pkgqty
+ALTER TABLE `drug_templates` ADD COLUMN `pkgqty` float NOT NULL DEFAULT 1.0 COMMENT 'Number of product items per template item';
+#EndIf
+
+#IfMissingColumn voids reason
+ALTER TABLE `voids` ADD COLUMN `reason` VARCHAR(31) default '';
+#EndIf
+
+#IfMissingColumn voids notes
+ALTER TABLE `voids` ADD COLUMN `notes` VARCHAR(255) default '';
+#EndIf
+
+#IfNotRow2D list_options list_id lists option_id void_reasons
+INSERT INTO list_options (list_id, option_id, title, seq, is_default) VALUES ('lists','void_reasons','Void Reasons', 1,0);
+INSERT INTO list_options (list_id, option_id, title, seq, is_default) VALUES ('void_reasons','one'  ,'Reason 1',10,1);
+INSERT INTO list_options (list_id, option_id, title, seq, is_default) VALUES ('void_reasons','two'  ,'Reason 2',20,0);
+#EndIf
+
+#IfNotIndex log patient_id
+CREATE INDEX `patient_id` ON `log` (`patient_id`);
+#EndIf

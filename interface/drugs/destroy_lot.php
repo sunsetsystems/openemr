@@ -7,7 +7,7 @@
  * @link      http://www.open-emr.org
  * @author    Rod Roark <rod@sunsetsystems.com>
  * @author    Brady Miller <brady.g.miller@gmail.com>
- * @copyright Copyright (c) 2006 Rod Roark <rod@sunsetsystems.com>
+ * @copyright Copyright (c) 2006-2021 Rod Roark <rod@sunsetsystems.com>
  * @copyright Copyright (c) 2017 Brady Miller <brady.g.miller@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
@@ -57,6 +57,15 @@ if (!$lot_id) {
             <?php // can add any additional javascript settings to datetimepicker here; need to prepend first setting with a comma ?>
         });
     });
+
+    function validate(f) {
+        if (!confirm('<?php echo xls('Really destroy this lot?'); ?>')) {
+            return false;
+        }
+        top.restoreSession();
+        return true;
+    }
+
 </script>
 
 </head>
@@ -102,9 +111,11 @@ if ($_POST['form_save']) {
 
  $row = sqlQuery("SELECT * FROM drug_inventory WHERE drug_id = ? " .
   "AND inventory_id = ?", array($drug_id,$lot_id));
-    ?>
+?>
 
-<form method='post' name='theform' action='destroy_lot.php?drug=<?php echo attr_url($drug_id); ?>&lot=<?php echo attr_url($lot_id); ?>'>
+<form method='post' name='theform' onsubmit='return validate(this);'
+ action='destroy_lot.php?drug=<?php echo attr_url($drug_id) ?>&lot=<?php echo attr_url($lot_id) ?>'>
+
 <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
 
 <center>

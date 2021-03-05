@@ -29,8 +29,8 @@
 <script type="text/html" id="category-options">
     <div>
         <div data-bind="text:title" class = "feesheet-title"></div>
-        <div data-bind="foreach:codes">
-            <div class='code-choice' data-bind="click: toggle_code">
+        <div data-bind="foreach:codes" style="-webkit-column-count:3; -moz-column-count:3; column-count:3;">
+            <div class='code-choice' style="width:100%; display:inline;">
                 <input type="checkbox" data-bind="checked: selected"/>
                 <span data-bind="text:description,click: toggle_code"></span>
             </div>

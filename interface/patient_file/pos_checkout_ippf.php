@@ -52,8 +52,11 @@
 require_once("$srcdir/patient.inc");
 require_once("$srcdir/options.inc.php");
 require_once("../../custom/code_types.inc.php");
+require_once("$srcdir/FeeSheet.class.php");
+require_once("$srcdir/checkout_receipt_array.inc.php");
 
 use OpenEMR\Billing\BillingUtilities;
+use OpenEMR\Billing\SLEOB;
 use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Core\Header;
@@ -1045,13 +1048,6 @@ function generate_receipt($patient_id, $encounter=0)
             </div><!-- end col -->
         </div><!-- end row -->
     </div><!-- end container -->
-    <script>
-<?php
-if ($alertmsg) {
-  echo " alert('" . addslashes($alertmsg) . "');\n";
-}
-?>
-    </script>
 </body>
 </html>
 <?php
@@ -1491,15 +1487,15 @@ if (!empty($_POST['form_save']) && !$alertmsg) {
         array($patient_id, $encounter_id)
     );
 
-    $form_amount = $_POST['form_amount'];
+    $form_amount = $_POST['form_totalpay'];
     $lines = $_POST['line'];
 
-    for ($lino = 0; $lines[$lino]['code_type']; ++$lino) {
+    for ($lino = 0; !empty($lines[$lino]['code_type']); ++$lino) {
         $line = $lines[$lino];
         $code_type = $line['code_type'];
         $code      = $line['code'];
         $id        = $line['id'];
-        $chargecat = $line['chargecat'];
+        $chargecat = $line['chargecat'] ?? '';
         $amount    = formatMoneyNumber(trim($line['amount']));
         $linetax   = 0;
 
@@ -1519,7 +1515,7 @@ if (!empty($_POST['form_save']) && !$alertmsg) {
             foreach ($taxes as $taxid => $taxarr) {
                 $taxamount = $line['tax'][$i++] + 0;
                 if ($taxamount != 0) {
-                    addBilling(
+                    BillingUtilities::addBilling(
                         $encounter_id,
                         'TAX',
                         $taxid,
@@ -1549,15 +1545,22 @@ if (!empty($_POST['form_save']) && !$alertmsg) {
                 if ($memo === '') {
                     $memo = formData('form_discount_type');
                 }
+                sqlBeginTrans();
+                $sequence_no = sqlQuery(
+                    "SELECT IFNULL(MAX(sequence_no),0) + 1 AS increment FROM ar_activity WHERE " .
+                    "pid = ? AND encounter = ?",
+                    array($patient_id, $encounter_id)
+                );
                 $query = "INSERT INTO ar_activity ( " .
-                    "pid, encounter, code_type, code, modifier, payer_type, " .
+                    "pid, encounter, sequence_no, code_type, code, modifier, payer_type, " .
                     "post_user, post_time, post_date, session_id, memo, adj_amount " .
                     ") VALUES ( " .
-                    "?, ?, ?, ?, '', '0', ?, ?, ?, '0', ?, ? " .
+                    "?, ?, ?, ?, ?, '', '0', ?, ?, ?, '0', ?, ? " .
                     ")";
                 sqlStatement($query, array(
                     $patient_id,
                     $encounter_id,
+                    $sequence_no['increment'],
                     $code_type,
                     $code,
                     $_SESSION['authUserID'],
@@ -1566,6 +1569,7 @@ if (!empty($_POST['form_save']) && !$alertmsg) {
                     $memo,
                     $adjust
                 ));
+                sqlCommitTrans();
             }
         }
 
@@ -1599,21 +1603,29 @@ if (!empty($_POST['form_save']) && !$alertmsg) {
             $amount  = formatMoneyNumber(trim($_POST['form_discount']) * $form_amount / 100);
         }
         $memo = formData('form_discount_type');
+        sqlBeginTrans();
+        $sequence_no = sqlQuery(
+            "SELECT IFNULL(MAX(sequence_no),0) + 1 AS increment FROM ar_activity WHERE " .
+            "pid = ? AND encounter = ?",
+            array($patient_id, $encounter_id)
+        );
         $query = "INSERT INTO ar_activity ( " .
-            "pid, encounter, code, modifier, payer_type, post_user, post_time, " .
+            "pid, encounter, sequence_no, code, modifier, payer_type, post_user, post_time, " .
             "post_date, session_id, memo, adj_amount " .
             ") VALUES ( " .
-            "?, ?, '', '', '0', ?, ?, ?, '0', ?, ? " .
+            "?, ?, ?, '', '', '0', ?, ?, ?, '0', ?, ? " .
             ")";
         sqlStatement($query, array(
             $patient_id,
             $encounter_id,
+            $sequence_no['increment'],
             $_SESSION['authUserID'],
             $this_bill_date,
             $postdate,
             $memo,
             $amount
         ));
+        sqlCommitTrans();
     }
 
     // Post the payments.
@@ -1627,7 +1639,7 @@ if (!empty($_POST['form_save']) && !$alertmsg) {
                 $refno  = $line['refno'];
                 if ($method !== '' && $refno !== '') $method .= " $refno";
                 $session_id = 0; // Is this OK?
-                arPostPayment($patient_id, $encounter_id, $session_id, $amount, '', 0, $method, 0, $this_bill_date,'', $postdate);
+                SLEOB::arPostPayment($patient_id, $encounter_id, $session_id, $amount, '', 0, $method, 0, $this_bill_date,'', $postdate);
             }
         }
     }
@@ -1639,7 +1651,7 @@ if (!empty($_POST['form_save']) && !$alertmsg) {
             $invoice_refno = formData('form_irnumber', 'P', true);
         }
         else {
-            $invoice_refno = add_escape_custom(updateInvoiceRefNumber());
+            $invoice_refno = add_escape_custom(BillingUtilities::updateInvoiceRefNumber());
         }
         if ($invoice_refno) {
             sqlStatement(
@@ -1664,7 +1676,14 @@ $form_notes  = empty($_GET['form_notes' ]) ? '' : $_GET['form_notes'];
 // If "regen" encounter ID was given, then we must generate a new receipt ID.
 //
 if (!$alertmsg && $patient_id && !empty($_GET['regen'])) {
-    doVoid($patient_id, $encounter_id, false, '', $form_reason, $form_notes);
+    BillingUtilities::doVoid(
+        $patient_id,
+        $encounter_id,
+        false,
+        '',
+        $form_reason,
+        $form_notes
+);
     $current_checksum = invoiceChecksum($patient_id, $encounter_id);
     $_GET['enc'] = $encounter_id;
 }
@@ -1694,11 +1713,11 @@ if ($patient_id && !empty($_GET['enc'])) {
 // Or for "voidall" undo all checkouts for the encounter.
 //
 if (!$alertmsg && $patient_id && !empty($_GET['void'])) {
-    doVoid($patient_id, $encounter_id, true, '', $form_reason, $form_notes);
+    BillingUtilities::doVoid($patient_id, $encounter_id, true, '', $form_reason, $form_notes);
     $current_checksum = invoiceChecksum($patient_id, $encounter_id);
 }
 else if (!$alertmsg && $patient_id && !empty($_GET['voidall'])) {
-    doVoid($patient_id, $encounter_id, true, 'all', $form_reason, $form_notes);
+    BillingUtilities::doVoid($patient_id, $encounter_id, true, 'all', $form_reason, $form_notes);
     $current_checksum = invoiceChecksum($patient_id, $encounter_id);
 }
 
@@ -2223,6 +2242,7 @@ if (!empty($_GET['framed'])) echo '&framed=1';
 echo "' onsubmit='return validate()'>\n";
 echo "<input type='hidden' name='form_pid' value='$patient_id' />\n";
 ?>
+<input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
 
 <center>
 
